@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>/*__TITLE__*/</title>
 <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -89,8 +89,31 @@ main{max-width:1180px;margin:0 auto;padding:22px 24px 70px}
 .sq span{padding-top:2px}
 @media(max-width:860px){.ovg{grid-template-columns:1fr}}
 .back{display:inline-block;color:#9fb3a8;font-size:13px;text-decoration:none;margin-bottom:6px}.back:hover{color:#fff;text-decoration:underline}
+
+.fi{flex-wrap:wrap;position:relative;align-items:flex-start}
+.fi .ft{flex:1;min-width:0}
+.fi .acts{display:flex;gap:6px;flex-basis:100%;margin:2px 0 4px 30px;opacity:0;transition:opacity .12s}
+.fi.todo .acts,.fi:hover .acts,.fi:focus-within .acts,.fi.open .acts{opacity:1}
+.fi:not(.todo):not(.skipped) .acts{position:absolute;right:0;top:3px;flex-basis:auto;margin:0}.fi:not(.todo):not(.skipped){padding-right:70px}
+.acts button{all:unset;cursor:pointer;font-size:12px;font-weight:600;padding:2px 9px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.acts button:hover{border-color:var(--acc);color:var(--acc)}.acts button:focus-visible{outline:3px solid #2a8cff;outline-offset:1px}
+.ico.n{background:#eceff5;color:#8b9a92}
+.fi.skipped .ft>span.t{text-decoration:line-through;color:var(--mut)}
+.why{display:block;font-style:normal;font-size:12.5px;color:var(--mut);margin-top:2px}
+.fm{flex-basis:100%;margin:6px 0 4px 30px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fbfdfc}
+.fm textarea{width:100%;min-height:62px;border:1px solid #c3cec7;border-radius:8px;padding:8px 10px;font:inherit;font-size:13.5px;resize:vertical;background:#fff}
+.fm .rt{margin:8px 0;font-size:12.5px;display:flex;gap:8px;align-items:flex-start}
+.rt .dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none;background:#8b9a92}
+.rt.a .dot{background:#2f9e6a}.rt.b .dot{background:#e0a21a}.rt.err .dot{background:var(--bad)}.rt.err{color:var(--bad)}
+.fm .row{display:flex;gap:8px;align-items:center}
+.fm .go{all:unset;cursor:pointer;background:var(--side);color:#fff;font-size:13px;font-weight:600;padding:6px 14px;border-radius:9px}
+.fm .go[disabled]{opacity:.5;cursor:default}.fm .go:focus-visible,.fm .cx:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
+.fm .cx{all:unset;cursor:pointer;font-size:13px;color:var(--mut);padding:6px 8px}
+.sent{flex-basis:100%;margin:2px 0 4px 30px;font-size:12.5px;border-radius:8px;padding:5px 10px;background:#e8f0fb;color:#1f4a99}
+.sent.done{background:#e6f4ec;color:#0f6b40}.sent.failed{background:#fbe5e3;color:#8c1d18}
+.qb{display:block;font-size:12.5px;color:#ffd37a;font-weight:600;margin-top:4px}
 </style></head><body>
-<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p></div><div class="mini" id="mini" aria-label="Готовность по проектам"></div></div>
+<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><span class="qb" id="qb"></span></div><div class="mini" id="mini" aria-label="Readiness by project"></div></div>
 <div class="tabs" role="tablist" id="tabs"></div></header>
 <main id="main"></main>
 <script>window.PANEL=/*__DATA__*/null;</script>
@@ -98,26 +121,26 @@ main{max-width:1180px;margin:0 auto;padding:22px 24px 70px}
 (function(){
 var P=window.PANEL,$=function(i){return document.getElementById(i)};
 var IC={y:'✓',bad:'!',p:'◐',q:'○',ok:'✓',part:'◐',no:'–'};
-$('t').textContent=P.title;$('sub').textContent=P.sub+(P.updated?' Обновлено '+P.updated+'.':'');
+$('t').textContent=P.title;$('sub').textContent=P.sub+(P.updated?' Updated '+P.updated+'.':'');
 var m='<span></span>'+P.ladderSteps.map(function(s){return '<span class="h">'+s+'</span>'}).join('');
 P.projects.forEach(function(p){m+='<b>'+p+'</b>'+P.ladder[p].map(function(s,i){return '<i class="'+s+'" title="'+P.ladderSteps[i]+'"></i>'}).join('')});
 $('mini').innerHTML=m;
 var problems=0;P.stages.forEach(function(s){s.facts.forEach(function(f){if(f[0]==='q'||f[0]==='bad')problems++})});
-var tabs=[['ov','Обзор'],['work','Ход работы'],['deploy','Выкладка'],['qa','Качество'],['dec','Решения и вопросы']];
-$('tabs').innerHTML=tabs.map(function(t,i){return '<button role="tab" id="tab-'+t[0]+'" aria-controls="p-'+t[0]+'" aria-selected="'+(i===0)+'" tabindex="'+(i?-1:0)+'">'+t[1]+(t[0]==='deploy'?'<span class="cnt">'+P.dDone+' из '+P.dTotal+'</span>':'')+'</button>'}).join('');
+var tabs=[['ov','Overview'],['work','Progress'],['deploy','Deployment'],['qa','Quality'],['dec','Decisions and questions']];
+$('tabs').innerHTML=tabs.map(function(t,i){return '<button role="tab" id="tab-'+t[0]+'" aria-controls="p-'+t[0]+'" aria-selected="'+(i===0)+'" tabindex="'+(i?-1:0)+'">'+t[1]+(t[0]==='deploy'?'<span class="cnt">'+P.dDone+' of '+P.dTotal+'</span>':'')+'</button>'}).join('');
 function ul(a,c){return '<ul class="'+c+'">'+a+'</ul>'}
-var hi=P.blockers.filter(function(b){return b.sev==='high'}).length,mid=P.blockers.filter(function(b){return b.sev==='mid'}).length,lo=P.blockers.filter(function(b){return b.sev==='low'}).length,SV={high:'критично',mid:'важно',low:'мелочь'};
-var ov='<p class="ans">Можно выпускать? '+(P.ready?'Да':'Нет')+'<span'+(P.ready?' style="color:var(--ok)"':'')+'>.</span></p><p class="why">'+(P.summary||'')+'</p><div class="chips"><span class="chip"><i class="dt h"></i><b>'+hi+'</b> критичных</span><span class="chip"><i class="dt m"></i><b>'+mid+'</b> важных</span><span class="chip"><i class="dt l"></i><b>'+lo+'</b> мелких</span><span class="chip"><i class="dt k"></i>выложено <b>'+P.dDone+'</b> из '+P.dTotal+' шагов</span></div>'+
-'<div class="ovg"><div><h2>Что мешает выпуску</h2><ol class="bl">'+P.blockers.map(function(b){return '<li class="bk '+b.sev+'"><h3><span class="sv '+b.sev+'">'+SV[b.sev]+'</span>'+b.t+b.proj.map(function(p){return '<span class="pj">'+p+'</span>'}).join('')+'</h3><p>'+b.why+'</p><div class="td"><b>Что сделать</b>'+b.todo+'<button type="button" data-stage="'+b.stage+'">этап '+b.stage+'</button></div></li>'}).join('')+'</ol></div><div><h2>Что делать по порядку</h2><ol class="sq">'+P.nextSteps.map(function(x){return '<li><span>'+x+'</span></li>'}).join('')+'</ol></div></div>';
+var hi=P.blockers.filter(function(b){return b.sev==='high'}).length,mid=P.blockers.filter(function(b){return b.sev==='mid'}).length,lo=P.blockers.filter(function(b){return b.sev==='low'}).length,SV={high:'critical',mid:'important',low:'minor'};
+var ov='<p class="ans">Ready to release? '+(P.ready?'Yes':'No')+'<span'+(P.ready?' style="color:var(--ok)"':'')+'>.</span></p><p class="why">'+(P.summary||'')+'</p><div class="chips"><span class="chip"><i class="dt h"></i><b>'+hi+'</b> critical</span><span class="chip"><i class="dt m"></i><b>'+mid+'</b> important</span><span class="chip"><i class="dt l"></i><b>'+lo+'</b> minor</span><span class="chip"><i class="dt k"></i>deployed <b>'+P.dDone+'</b> of '+P.dTotal+' steps</span></div>'+
+'<div class="ovg"><div><h2>What blocks the release</h2><ol class="bl">'+P.blockers.map(function(b){return '<li class="bk '+b.sev+'"><h3><span class="sv '+b.sev+'">'+SV[b.sev]+'</span>'+b.t+b.proj.map(function(p){return '<span class="pj">'+p+'</span>'}).join('')+'</h3><p>'+b.why+'</p><div class="td"><b>To do</b>'+b.todo+'<button type="button" data-stage="'+b.stage+'">stage '+b.stage+'</button></div></li>'}).join('')+'</ol></div><div><h2>What to do, in order</h2><ol class="sq">'+P.nextSteps.map(function(x){return '<li><span>'+x+'</span></li>'}).join('')+'</ol></div></div>';
 // work
-var w='<div class="md"><div class="list" role="tablist" aria-orientation="vertical" aria-label="Этапы" id="stl">'+P.stages.map(function(s,i){return '<button class="item" role="tab" data-i="'+i+'" aria-selected="'+(i===0)+'"><span class="bd '+s.state+'">'+s.n+'</span><span class="tt">'+s.title+'</span><span class="vv">'+s.verdict+'</span></button>'}).join('')+'</div><div class="det" id="det" role="tabpanel" tabindex="0"></div></div>';
+var w='<div class="md"><div class="list" role="tablist" aria-orientation="vertical" aria-label="Stages" id="stl">'+P.stages.map(function(s,i){return '<button class="item" role="tab" data-i="'+i+'" aria-selected="'+(i===0)+'"><span class="bd '+s.state+'">'+s.n+'</span><span class="tt">'+s.title+'</span><span class="vv">'+s.verdict+'</span></button>'}).join('')+'</div><div class="det" id="det" role="tabpanel" tabindex="0"></div></div>';
 // deploy
-var d='<div class="md"><div class="list" id="dl">'+P.deploy.map(function(x,i){return '<button class="item" data-i="'+i+'" aria-selected="'+(i===0)+'"><span class="bd '+x.cls+'">'+x.n+'</span><span class="tt">'+x.title+'</span><span class="vv">'+x.done+' из '+x.total+' · '+x.stateText+'<span class="bar" style="display:block"><i style="width:'+Math.round(100*x.done/Math.max(x.total,1))+'%"></i></span></span></button>'}).join('')+'<button class="item" data-i="r" aria-selected="false"><span class="bd no">↺</span><span class="tt">Откат</span><span class="vv">описан</span></button></div><div class="det" id="ddet" tabindex="0"></div></div>';
+var d='<div class="md"><div class="list" id="dl">'+P.deploy.map(function(x,i){return '<button class="item" data-i="'+i+'" aria-selected="'+(i===0)+'"><span class="bd '+x.cls+'">'+x.n+'</span><span class="tt">'+x.title+'</span><span class="vv">'+x.done+' of '+x.total+' · '+x.stateText+'<span class="bar" style="display:block"><i style="width:'+Math.round(100*x.done/Math.max(x.total,1))+'%"></i></span></span></button>'}).join('')+'<button class="item" data-i="r" aria-selected="false"><span class="bd no">↺</span><span class="tt">Rollback</span><span class="vv">described</span></button></div><div class="det" id="ddet" tabindex="0"></div></div>';
 // qa
 var pr=P.projects;
-var q='<table class="mx"><thead><tr><th></th>'+pr.map(function(p){return '<th>'+p+'</th>'}).join('')+'</tr></thead><tbody>'+P.checks.map(function(c,ci){return '<tr><td class="k">'+c.name+(c.hint?'<small>'+c.hint+'</small>':'')+'</td>'+pr.map(function(p){var x=c.cells[p];return '<td><button data-c="'+ci+'" data-p="'+p+'" class="'+x[0]+'" aria-pressed="false">'+IC[x[0]]+' '+x[1]+'</button></td>'}).join('')+'</tr>'}).join('')+'</tbody></table><div class="note" id="note" aria-live="polite">Нажмите на ячейку, чтобы увидеть пояснение.</div>';
+var q='<table class="mx"><thead><tr><th></th>'+pr.map(function(p){return '<th>'+p+'</th>'}).join('')+'</tr></thead><tbody>'+P.checks.map(function(c,ci){return '<tr><td class="k">'+c.name+(c.hint?'<small>'+c.hint+'</small>':'')+'</td>'+pr.map(function(p){var x=c.cells[p];return '<td><button data-c="'+ci+'" data-p="'+p+'" class="'+x[0]+'" aria-pressed="false">'+IC[x[0]]+' '+x[1]+'</button></td>'}).join('')+'</tr>'}).join('')+'</tbody></table><div class="note" id="note" aria-live="polite">Click a cell to see the explanation.</div>';
 // dec
-var dc='<div class="two"><div class="det"><h2>Принято</h2><ul>'+P.decisions.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div><div class="det"><h2>Открыто</h2><ul>'+P.questions.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div></div>';
+var dc='<div class="two"><div class="det"><h2>Decided</h2><ul>'+P.decisions.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div><div class="det"><h2>Open</h2><ul>'+P.questions.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div></div>';
 $('main').innerHTML=[['ov',ov],['work',w],['deploy',d],['qa',q],['dec',dc]].map(function(x,i){return '<section role="tabpanel" id="p-'+x[0]+'" aria-labelledby="tab-'+x[0]+'"'+(i?' hidden':'')+'>'+x[1]+'</section>'}).join('');
 // tabs behaviour
 var tb=[].slice.call(document.querySelectorAll('#tabs button'));
@@ -125,23 +148,63 @@ function show(k){tb.forEach(function(b){var on=b.id==='tab-'+k;b.setAttribute('a
 tb.forEach(function(b,i){b.addEventListener('click',function(){show(b.id.slice(4))});b.addEventListener('keydown',function(e){var n=e.key==='ArrowRight'?i+1:e.key==='ArrowLeft'?i-1:null;if(n===null)return;n=(n+tb.length)%tb.length;tb[n].focus();show(tb[n].id.slice(4))})});
 // stage detail
 var cur=0;
+
+var FORM=null,INBOX={},ROUTE=null,BUSY=false;
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function hm(ts){var d=new Date(ts);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)}
+function routeText(r){if(!r)return ['b','Finding where to send this…'];
+ if(r.route==='active')return ['a','Open session:'+(r.name?' <b>'+esc(r.name)+'</b>':'')+(r.branch?' (branch '+esc(r.branch)+')':'')+'. If it is waiting for input, the message wakes it; if it is busy, the message arrives as soon as it is free.'];
+ if(r.route==='bg')return ['b','No session is open. A closed session of this feature will be resumed in the background with its previous context and receive the message. To watch it: <code>claude attach</code>.'];
+ return ['b','No suitable session. The message will wait for the first session that starts working on this feature (a branch named after it).']}
+function statusLine(e){if(!e)return '';var st=e.state,when=hm(e.ts),who=e.sessionName||'';
+ if(st==='done')return '<div class="sent done">Done'+(e.note?': '+esc(e.note):'')+'</div>';
+ if(st==='failed')return '<div class="sent failed">Not delivered: '+esc(e.error||'error')+'</div>';
+ if(st==='delivered')return '<div class="sent">'+(e.route==='bg'?'Sent at '+when+'. The session is running in the background, waiting for the reply. To watch it: <code>claude attach</code>.':'Delivered at '+hm(e.deliveredAt||e.ts)+(who?' to session '+esc(who):'')+', waiting for the reply.')+'</div>';
+ return '<div class="sent">Sent at '+when+'. '+(e.route==='active'?'Waiting to be delivered'+(who?' to session '+esc(who):'')+'.':'Waiting for a session on this feature.')+'</div>'}
+function factLi(s,f,fi){var fid=(s.fids||[])[fi],kind=f[0],live=P.live&&fid,skipped=kind==='n',open=FORM&&FORM.fid===fid;
+ var acts='';
+ if(live){if(skipped)acts='<span class="acts"><button type="button" data-a="unskip">Restore</button></span>';
+  else acts='<span class="acts">'+(kind==='y'?'':'<button type="button" data-a="do">Do it</button>')+'<button type="button" data-a="ask">Ask</button>'+(kind==='y'?'':'<button type="button" data-a="skip">Not needed</button>')+'</span>'}
+ var form='';
+ if(open){var rt=FORM.a==='skip'?['a','Applies immediately: the item stops counting as unfinished, and your decision stays in the dashboard with your reason.']:routeText(ROUTE),
+  ph={do:'What exactly to do, if you want to specify (optional)',ask:'Your question about this item',skip:'Why this is not needed (the reason is kept in the dashboard)'}[FORM.a],
+  lab={do:'Send to the session',ask:'Send the question',skip:'Mark as "not needed"'}[FORM.a];
+  form='<div class="fm"><textarea id="ftext" placeholder="'+ph+'" aria-label="'+ph+'">'+esc(FORM.text||'')+'</textarea><div class="rt '+(FORM.err?'err':rt[0])+'"><span class="dot"></span><span>'+(FORM.err?esc(FORM.err):rt[1])+'</span></div><div class="row"><button type="button" class="go" data-go="1"'+(BUSY?' disabled':'')+'>'+lab+'</button><button type="button" class="cx" data-cx="1">Cancel</button></div></div>'}
+ return '<li class="fi'+(live&&kind!=='y'&&!skipped?' todo':'')+(skipped?' skipped':'')+(open?' open':'')+'" data-fid="'+esc(fid||'')+'"><i class="ico '+kind+'">'+(IC[kind]||'—')+'</i><span class="ft"><span class="t">'+f[1]+'</span>'+(skipped?'<em class="why">not needed: '+esc((s.reasons||{})[fi]||'no reason given')+'</em>':'')+'</span>'+acts+form+(live?statusLine(INBOX[fid]):'')+'</li>'}
+function queue(){var n=0;Object.keys(INBOX).forEach(function(k){var e=INBOX[k];if(e.state==='new'||e.state==='delivered')n++});var q=$('qb');if(q)q.textContent=n?'Waiting for a reply: '+n:''}
 function renderStage(i){cur=i;var s=P.stages[i];
  document.querySelectorAll('#stl .item').forEach(function(b){b.setAttribute('aria-selected',+b.dataset.i===i)});
- var tg={ok:['ok','Сделано'],part:['part','Готово не до конца'],bad:['bad','Были ошибки или переделки'],no:['no','Не начато']}[s.state];
- $('det').innerHTML='<h2>'+s.n+'. '+s.title+'</h2><p class="vv"><span class="tag '+tg[0]+'">'+tg[1]+'</span>'+(s.unplanned?'<span class="tag bad">не было в плане</span>':'')+s.verdict+'</p><div class="pf"><div><h3>Что входило в этап</h3>'+(s.plan.length?ul(s.plan.map(function(p){return '<li>'+p+'</li>'}).join(''),'plan'):'<div class="empty">В плане этого этапа не было</div>')+'</div><div><h3>Что сделано, что нет</h3>'+ul(s.facts.map(function(f){return '<li><i class="ico '+f[0]+'">'+IC[f[0]]+'</i><span>'+f[1]+'</span></li>'}).join(''),'fact')+'</div></div><div class="nav"><button id="pv"'+(i===0?' disabled':'')+'>← '+(i?'Этап '+P.stages[i-1].n:'')+'</button><button id="nx"'+(i===P.stages.length-1?' disabled':'')+'>'+(i<P.stages.length-1?'Этап '+P.stages[i+1].n:'')+' →</button></div>';
- $('pv').onclick=function(){renderStage(cur-1)};$('nx').onclick=function(){renderStage(cur+1)};}
+ var tg={ok:['ok','Done'],part:['part','Partly done'],bad:['bad','Had mistakes or rework'],no:['no','Not started']}[s.state];
+ $('det').innerHTML='<h2>'+s.n+'. '+s.title+'</h2><p class="vv"><span class="tag '+tg[0]+'">'+tg[1]+'</span>'+(s.unplanned?'<span class="tag bad">not in the plan</span>':'')+s.verdict+'</p><div class="pf"><div><h3>What the stage included</h3>'+(s.plan.length?ul(s.plan.map(function(p){return '<li>'+p+'</li>'}).join(''),'plan'):'<div class="empty">This stage was not in the plan</div>')+'</div><div><h3>What was done, what was not</h3>'+ul(s.facts.map(function(f,fi){return factLi(s,f,fi)}).join(''),'fact')+'</div></div><div class="nav"><button id="pv"'+(i===0?' disabled':'')+'>← '+(i?'Stage '+P.stages[i-1].n:'')+'</button><button id="nx"'+(i===P.stages.length-1?' disabled':'')+'>'+(i<P.stages.length-1?'Stage '+P.stages[i+1].n:'')+' →</button></div>';
+ $('pv').onclick=function(){renderStage(cur-1)};$('nx').onclick=function(){renderStage(cur+1)};queue();}
+function post(body){return fetch('/api/act',{method:'POST',headers:{'Content-Type':'application/json','X-Whatnow':'1'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})}
+$('det').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var li=b.closest('.fi');
+ if(b.dataset.a==='unskip'){post({feature:P.slug,fid:li.dataset.fid,action:'unskip'}).then(function(r){if(r.ok)location.hash='work/'+P.stages[cur].n,location.reload()});return}
+ if(b.dataset.a){FORM={fid:li.dataset.fid,a:b.dataset.a,text:''};ROUTE=null;renderStage(cur);var t=$('ftext');if(t)t.focus();
+  if(b.dataset.a!=='skip')fetch('/api/route?feature='+encodeURIComponent(P.slug)).then(function(r){return r.json()}).then(function(r){ROUTE=r;if(FORM){FORM.text=($('ftext')||{}).value||FORM.text;renderStage(cur);var t2=$('ftext');if(t2)t2.focus()}}).catch(function(){});return}
+ if(b.dataset.cx){FORM=null;renderStage(cur);return}
+ if(b.dataset.go&&!BUSY){var txt=($('ftext').value||'').trim();BUSY=true;FORM.text=txt;FORM.err='';renderStage(cur);
+  post({feature:P.slug,fid:FORM.fid,action:FORM.a,text:txt}).then(function(r){BUSY=false;
+   if(!r.ok){FORM.err=(r.j&&r.j.error)||'could not send';renderStage(cur);return}
+   if(FORM.a==='skip'){location.hash='work/'+P.stages[cur].n;location.reload();return}
+   if(r.j.entry)INBOX[r.j.entry.fid]=r.j.entry;FORM=null;renderStage(cur)}).catch(function(){BUSY=false;FORM.err='no connection to the server';renderStage(cur)})}});
+function pollInbox(){fetch('/api/inbox',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){var m={};(j.entries||[]).filter(function(e){return e.feature===P.slug}).forEach(function(e){m[e.fid]=e});
+ if(JSON.stringify(m)!==JSON.stringify(INBOX)){INBOX=m;if(!FORM)renderStage(cur);else queue()}}).catch(function(){})}
 $('stl').addEventListener('click',function(e){var b=e.target.closest('.item');if(b)renderStage(+b.dataset.i)});
 renderStage(0);
+(function(){var m=/^#work\/(\d+)(?:\/([0-9a-f]{10}):(do|ask|skip))?$/.exec(location.hash);if(!m)return;var idx=P.stages.map(function(s){return s.n}).indexOf(+m[1]);if(idx<0)return;
+ show('work');if(m[2]&&P.live){FORM={fid:m[2],a:m[3],text:''};ROUTE=null}renderStage(idx)})();
+if(P.live){pollInbox();setInterval(pollInbox,3000)}
 // deploy detail
 function renderDeploy(i){document.querySelectorAll('#dl .item').forEach(function(b){b.setAttribute('aria-selected',b.dataset.i==i)});
- if(i==='r'){$('ddet').innerHTML='<h2>Откат</h2><p class="vv">Если что-то пошло не так</p>'+ul(P.rollback.map(function(x){return '<li><i class="ico q">–</i><span>'+x+'</span></li>'}).join(''),'chk');return}
- var x=P.deploy[i];$('ddet').innerHTML='<h2>'+x.n+'. '+x.title+'</h2><p class="vv"><span class="tag '+x.tag+'">'+x.stateText+'</span>'+x.sub+'. Выполнено '+x.done+' из '+x.total+'</p>'+ul(x.items.map(function(t){return '<li><i class="ico '+t.s+'">'+IC[t.s]+'</i><span>'+t.t+'</span></li>'}).join(''),'chk');}
+ if(i==='r'){$('ddet').innerHTML='<h2>Rollback</h2><p class="vv">If something goes wrong</p>'+ul(P.rollback.map(function(x){return '<li><i class="ico q">–</i><span>'+x+'</span></li>'}).join(''),'chk');return}
+ var x=P.deploy[i];$('ddet').innerHTML='<h2>'+x.n+'. '+x.title+'</h2><p class="vv"><span class="tag '+x.tag+'">'+x.stateText+'</span>'+x.sub+'. Done '+x.done+' of '+x.total+'</p>'+ul(x.items.map(function(t){return '<li><i class="ico '+t.s+'">'+IC[t.s]+'</i><span>'+t.t+'</span></li>'}).join(''),'chk');}
 $('dl').addEventListener('click',function(e){var b=e.target.closest('.item');if(b)renderDeploy(b.dataset.i==='r'?'r':+b.dataset.i)});
 renderDeploy(0);
 $('p-ov').addEventListener('click',function(e){var b=e.target.closest('button[data-stage]');if(!b)return;show('work');renderStage(+b.dataset.stage-1);document.getElementById('tab-work').focus()});
 // qa note
 $('p-qa').addEventListener('click',function(e){var b=e.target.closest('button[data-c]');if(!b)return;var c=P.checks[+b.dataset.c],x=c.cells[b.dataset.p];
  document.querySelectorAll('.mx button').forEach(function(y){y.setAttribute('aria-pressed',y===b)});
- $('note').innerHTML='<b>'+c.name+', '+b.dataset.p+':</b> '+x[1]+(x[2]?'. '+x[2]:'. Пояснений нет.')});
+ $('note').innerHTML='<b>'+c.name+', '+b.dataset.p+':</b> '+x[1]+(x[2]?'. '+x[2]:'. No explanation.')});
 })();
 </script></body></html>

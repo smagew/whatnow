@@ -7,8 +7,17 @@ This script (1) keeps the live state of each session in <home>/sessions/<session
 
 It never prints, never blocks, and always exits 0, so a bug here cannot disturb a session.
 <home> is $WHATNOW_HOME or ~/.whatnow.
+
+Two more modes deliver messages typed on the whatnow page (see inbox in common.py):
+  --deliver  (UserPromptSubmit, synchronous) prints pending messages for this session; Claude Code
+             adds that stdout to the context of the prompt being sent.
+  --watch    (Stop and SessionStart, asyncRewake) waits in the background while the session is idle
+             and, when a message arrives, exits with code 2: Claude Code then wakes the idle session
+             and shows stderr to Claude as a system reminder.
 """
-import json, os, re, subprocess, sys, tempfile, time
+import json, os, re, signal, subprocess, sys, tempfile, time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 HOME = os.environ.get('WHATNOW_HOME') or os.path.expanduser('~/.whatnow')
 MAX_LOG = 5 * 1024 * 1024
@@ -45,18 +54,18 @@ def test_summary(stdout):
     if ran:
         if 'FAILED' in stdout:
             bad = sum(int(n) for n in re.findall(r'(?:failures|errors)=(\d+)', stdout))
-            return 'тесты упали: %d из %s' % (bad, ran.group(1)) if bad else 'тесты упали'
+            return 'tests failed: %d of %s' % (bad, ran.group(1)) if bad else 'tests failed'
         if re.search(r'^OK\b', stdout, re.M):
-            return 'тесты прошли: %s' % ran.group(1)
+            return 'tests passed: %s' % ran.group(1)
     m = re.search(r'OK \((\d+) tests?', stdout or '')
     if m:
-        return 'тесты прошли: %s' % m.group(1)
+        return 'tests passed: %s' % m.group(1)
     m = re.search(r'Tests:\s*(\d+)(?:,\s*Assertions:\s*\d+)?(?:,\s*Failures:\s*(\d+))?', stdout or '')
     if m and m.group(2):
-        return 'тесты упали: %s из %s' % (m.group(2), m.group(1))
+        return 'tests failed: %s of %s' % (m.group(2), m.group(1))
     m = re.search(r'(\d+) passed', stdout or '')
     if m:
-        return 'тесты прошли: %s' % m.group(1)
+        return 'tests passed: %s' % m.group(1)
     return ''
 
 
@@ -73,14 +82,14 @@ def classify(payload, failed):
         code = m.group(1)
     if COMMIT.search(cmd) and not failed:
         msg = commit_message(cmd)
-        return 'commit', True, 'коммит' + (' «%s»' % msg if msg else '')
+        return 'commit', True, 'commit' + (' "%s"' % msg if msg else '')
     if PUSH.search(cmd):
-        return 'push', not failed, 'push в origin' if not failed else 'push не удался'
+        return 'push', not failed, 'push to origin' if not failed else 'push failed'
     if TEST.search(cmd):
         txt = test_summary(stdout) or test_summary(err)
         if failed:
-            return 'tests', False, txt or ('тесты упали' + (' (код %s)' % code if code else ''))
-        return 'tests', True, txt or 'тесты прошли'
+            return 'tests', False, txt or ('tests failed' + (' (exit %s)' % code if code else ''))
+        return 'tests', True, txt or 'tests passed'
     return None, None, ''
 
 
@@ -125,6 +134,82 @@ def write_json_atomic_raw(path, data):
     os.replace(tmp, path)
 
 
+def read_pid(path):
+    try:
+        with open(path) as fh:
+            return int(fh.read().strip())
+    except (OSError, ValueError):
+        return 0
+
+
+def whoami(cwd):
+    top = git(cwd, 'rev-parse', '--show-toplevel')
+    project = os.path.basename(top or cwd.rstrip('/'))
+    import common
+    project = common.config().get('aliases', {}).get(project, project)
+    branch = git(cwd, 'branch', '--show-current') or git(cwd, 'rev-parse', '--short', 'HEAD')
+    return project, branch
+
+
+def deliver(payload):
+    """UserPromptSubmit: print the messages waiting for this session. Printed text reaches Claude."""
+    import common
+    cwd = payload.get('cwd') or os.getcwd()
+    project, branch = whoami(cwd)
+    slug = common.match_feature(common.feature_index(), project, branch)
+    got = common.claim(payload.get('session_id') or '', slug)
+    if got:
+        sys.stdout.write('\n\n'.join(common.format_message(e) for e in got) + '\n')
+    return 0
+
+
+def watch(payload):
+    """Stop / SessionStart: wait while the session is idle; exit 2 when a message arrives (wakes Claude)."""
+    import common
+    sid = payload.get('session_id') or ''
+    cwd = payload.get('cwd') or os.getcwd()
+    project, branch = whoami(cwd)
+    slug = common.match_feature(common.feature_index(), project, branch)
+    if not slug or not sid:
+        return 0                      # a session that belongs to no feature never needs a watcher
+    wdir = os.path.join(HOME, 'watch')
+    os.makedirs(wdir, exist_ok=True)
+    pidf = os.path.join(wdir, '%s.pid' % re.sub(r'[^A-Za-z0-9_-]', '_', sid))
+    try:
+        old = read_pid(pidf)
+        if old and old != os.getpid():
+            os.kill(old, signal.SIGTERM)          # one watcher per session
+    except OSError:
+        pass
+    with open(pidf, 'w') as fh:
+        fh.write(str(os.getpid()))
+    spath = os.path.join(HOME, 'sessions', '%s.json' % re.sub(r'[^A-Za-z0-9_-]', '_', sid))
+    start = time.time()
+    deadline = start + float(os.environ.get('WHATNOW_WATCH_SECONDS', 3300))   # below the hook timeout (3600)
+    try:
+        while time.time() < deadline:
+            got = common.claim(sid, slug)
+            if got:
+                sys.stderr.write('\n\n'.join(common.format_message(e) for e in got) + '\n')
+                sys.stderr.flush()
+                return 2
+            st = read_json(spath)
+            if st.get('state') == 'closed':
+                return 0
+            if time.time() - start > 5 and st.get('state') == 'work' and st.get('t', 0) > (start + 3) * 1000:
+                return 0                  # the user typed: the synchronous hook delivers at that prompt
+            if os.getppid() == 1:
+                return 0                  # Claude Code is gone
+            time.sleep(float(os.environ.get('WHATNOW_WATCH_POLL', 2)))
+        return 0
+    finally:
+        try:
+            if read_pid(pidf) == os.getpid():
+                os.remove(pidf)
+        except OSError:
+            pass
+
+
 def main():
     payload = json.load(sys.stdin)
     event = payload.get('hook_event_name') or ''
@@ -132,13 +217,17 @@ def main():
     cwd = payload.get('cwd') or os.getcwd()
     if not sid:
         return
+    if '--deliver' in sys.argv:
+        return deliver(payload)
+    if '--watch' in sys.argv:
+        return watch(payload)
     spath = os.path.join(HOME, 'sessions', '%s.json' % re.sub(r'[^A-Za-z0-9_-]', '_', sid))
 
     if event == 'SessionEnd':
-        try:
-            os.remove(spath)
-        except OSError:
-            pass
+        prev = read_json(spath)
+        if prev:
+            prev.update(state='closed', what='session closed', t=int(time.time() * 1000))
+            write_json_atomic(spath, prev)
         return
 
     prev = read_json(spath)
@@ -151,26 +240,26 @@ def main():
     }
 
     if event == 'SessionStart':
-        state.update(state='idle', what='сессия началась')
+        state.update(state='idle', what='session started')
     elif event == 'UserPromptSubmit':
-        state.update(state='work', what='получил запрос')
+        state.update(state='work', what='received a prompt')
     elif event in ('PostToolUse', 'PostToolUseFailure'):
         if payload.get('tool_name') == 'Bash':
             kind, ok, text = classify(payload, event == 'PostToolUseFailure')
-            state.update(state='work', what=text or 'выполняет команды')
+            state.update(state='work', what=text or 'running commands')
             if kind:
                 append_event({'ts': state['t'], 'session': sid, 'project': state['project'],
                               'branch': state['branch'], 'kind': kind, 'ok': ok, 'text': text})
         else:
             state.update(state='work')
     elif event == 'Stop':
-        state.update(state='wait', what='ответил, ждёт вас')
+        state.update(state='wait', what='answered, waiting for you')
     elif event == 'Notification':
         ntype = payload.get('notification_type') or ''
         if ntype == 'permission_prompt':
-            state.update(state='wait', what='ждёт разрешения')
+            state.update(state='wait', what='waiting for permission')
         elif ntype == 'idle_prompt':
-            state.update(state='idle', what='простаивает')
+            state.update(state='idle', what='idle')
         else:
             return
     else:
@@ -179,8 +268,9 @@ def main():
 
 
 if __name__ == '__main__':
+    rc = 0
     try:
-        main()
+        rc = main() or 0
     except BaseException:
-        pass
-    sys.exit(0)
+        rc = 0
+    sys.exit(rc)

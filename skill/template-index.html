@@ -1,5 +1,5 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Функции в работе</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Features in progress</title>
 <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#eef1ee;--paper:#fff;--ink:#17231d;--mut:#586860;--line:#d7dfda;--side:#16241e;--ok:#2f9e6a;--part:#e8b13a;--no:#dfe5e1;--bad:#b3261e;--badb:#fbe5e3;--warnb:#fbeccb;--acc:#0b6b4f}
@@ -26,9 +26,10 @@ main{max-width:1100px;margin:0 auto;padding:20px 24px 70px}
 .tg.h{background:var(--badb);color:var(--bad)}.tg.m{background:var(--warnb);color:#7a5200}.tg.s{background:#e3e8f6;color:#2f3d8a}.tg.k{background:#dff3e8;color:#0f6b40}
 .nx{padding:0 18px 8px 84px;font-size:13px;color:var(--mut)}
 .pr{margin:0;padding:2px 18px 10px 84px;display:grid;gap:7px}
-.row{display:grid;grid-template-columns:78px 168px minmax(0,1fr) auto;gap:4px 14px;align-items:center;font-size:13px}
+.row{display:grid;grid-template-columns:78px 330px minmax(0,1fr) auto;gap:4px 14px;align-items:center;font-size:13px}
+.row.lab{font-size:11.5px;color:var(--mut);margin-bottom:-3px}.lbls{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}.lbls span{text-align:center;white-space:nowrap}
 .row .pn{font-weight:700}
-.steps{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}.steps i{height:10px;border-radius:3px;background:var(--no);display:block}
+.steps{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}.steps i{height:12px;border-radius:3px;background:var(--no);display:block;cursor:help}
 .steps i.ok{background:var(--ok)}.steps i.part{background:linear-gradient(90deg,var(--part) 50%,var(--no) 50%)}
 .row .pass{color:var(--mut)}
 .lv{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:600;border-radius:999px;padding:1px 10px;white-space:nowrap}
@@ -46,66 +47,67 @@ main{max-width:1100px;margin:0 auto;padding:20px 24px 70px}
 .done{margin:18px 2px 0;font-size:13px;color:var(--mut)}.done a{color:var(--acc);font-weight:600;margin-left:8px;text-decoration:none}.done a:hover{text-decoration:underline}
 .broken{background:#fbe5e3;color:#8c1d18;border-radius:12px;padding:10px 16px;margin-bottom:16px;font-size:13.5px}
 .welcome{background:#fff;border:1px dashed #b9c8bf;border-radius:16px;padding:34px 24px;text-align:center;color:var(--mut)}.welcome b{display:block;color:var(--ink);font-size:17px;margin-bottom:6px}
-.legend{margin:16px 2px 0;font-size:12.5px;color:var(--mut)}
+.legend{margin:0 0 14px;font-size:13px;color:var(--mut);display:flex;gap:16px;flex-wrap:wrap;align-items:center}.legend b{color:var(--ink);font-weight:600}.legend .k{display:inline-block;width:22px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:6px}.k.ok{background:var(--ok)}.k.part{background:linear-gradient(90deg,var(--part) 50%,var(--no) 50%)}.k.no{background:var(--no)}
 .mockbanner{background:#fbeccb;color:#6d4600;border-radius:10px;padding:7px 14px;font-size:13px;margin-bottom:14px}
-@media(max-width:820px){.row{grid-template-columns:70px 1fr}.row .pass,.row .lvw{grid-column:1/-1}.pr,.nx,.evb,.evl{padding-left:18px}.fh{grid-template-columns:1fr}.ring{grid-row:auto}}
+@media(max-width:820px){.row.lab{display:none}.row{grid-template-columns:70px 1fr}.row .pass,.row .lvw{grid-column:1/-1}.pr,.nx,.evb,.evl{padding-left:18px}.fh{grid-template-columns:1fr}.ring{grid-row:auto}}
 @media(prefers-reduced-motion:reduce){.cdot.pulse,.lv.work i{animation:none}}
 </style></head><body>
-<header><div class="hd"><span class="conn" id="connbox" hidden><span class="cdot pulse" id="cdot"></span><span id="conn"></span></span><h1>Функции в работе</h1><p class="sub" id="sub"></p></div></header>
+<header><div class="hd"><span class="conn" id="connbox" hidden><span class="cdot pulse" id="cdot"></span><span id="conn"></span></span><h1>Features in progress</h1><p class="sub" id="sub"></p></div></header>
 <main>
 <div id="mock"></div><div id="broken"></div>
+<p class="legend" id="legend" hidden><b>Check steps for each project, left to right:</b><span><i class="k ok"></i>passed</span><span><i class="k part"></i>partly</span><span><i class="k no"></i>not passed</span><span>hover a segment for details</span></p>
 <ol class="list" id="list"></ol>
 <div id="free"></div>
 <div class="done" id="done"></div>
-<p class="legend" id="legend" hidden>Шесть сегментов у каждого проекта: Код, Тесты, Ревью, Руками, Staging, Prod. Цвет рамки слева: красный есть критичные проблемы, жёлтый есть важные или давно не обновлялось.</p>
 </main>
 <script>window.IDX_DATA=/*__DATA__*/null;</script>
 <script>
 (function(){
 var D=window.IDX_DATA,$=function(i){return document.getElementById(i)};
-var SHORT=['Код','Тесты','Ревью','Руками','Staging','Prod'];
+var SHORT=['Code','Tests','Review','Manual','Staging','Prod'];
+var STEPS=['Written','Tests','Code review','Verified by hand','Staging','Production'],ST={ok:'passed',part:'partly',no:'not passed'};
 var open={},lastJson='',lastOk=Date.now();
-function ago(d){return d<=0?'сегодня':d===1?'вчера':d+' дн. назад'}
-function agoMs(ms){var s=Math.max(0,Math.round((Date.now()-ms)/1000));if(s<5)return 'только что';if(s<60)return s+' с назад';var m=Math.round(s/60);return m<60?m+' мин назад':Math.round(m/60)+' ч назад'}
+function ago(d){return d<=0?'today':d===1?'yesterday':d+' d ago'}
+function agoMs(ms){var s=Math.max(0,Math.round((Date.now()-ms)/1000));if(s<5)return 'just now';if(s<60)return s+' s ago';var m=Math.round(s/60);return m<60?m+' min ago':Math.round(m/60)+' h ago'}
 function hm(ts){var d=new Date(ts);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2)}
 function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-var LV={work:'работает',wait:'ждёт вас',idle:'сессия открыта'},rank={work:0,wait:1,idle:2};
-function lastPassed(l){var d=-1;for(var i=0;i<6;i++){if(l[i]==='ok')d=i;else break}return d<0?'ничего не пройдено':'пройдено до: '+SHORT[d]}
+var LV={work:'working',wait:'waiting for you',idle:'session open'},rank={work:0,wait:1,idle:2};
+function lastPassed(l){var d=-1;for(var i=0;i<6;i++){if(l[i]==='ok')d=i;else break}return d<0?'nothing passed':'passed up to: '+SHORT[d]}
 function chip(s,withWhat){return '<span class="lv '+s.state+'"><i></i>'+LV[s.state]+(withWhat&&s.what&&s.state==='work'?': '+esc(s.what):'')+' <small class="ago" data-t="'+s.t+'">'+agoMs(s.t)+'</small></span>'}
 function paint(D){
  var F=D.features,evs=D.events||{};
  var tracked={};F.forEach(function(f){f.projects.forEach(function(p){tracked[p]=1})});
  var sess=(D.sessions||[]).filter(function(s){return tracked[s.project]});   // only projects that features belong to
  var active=F.filter(function(f){return !f.done}),finished=F.filter(function(f){return f.done});
- $('sub').textContent='Обновлено '+D.today+'. Функций в работе: '+active.length+(finished.length?', завершено: '+finished.length:'')+'.';
- $('broken').innerHTML=D.broken.length?'<div class="broken"><b>Не удалось прочитать:</b> '+D.broken.map(function(b){return esc(b.id)+' ('+esc(b.error)+')'}).join('; ')+'</div>':'';
- if(!F.length){$('list').innerHTML='<div class="welcome"><b>Пока нет ни одной функции</b>Начните большую работу с навыком whatnow, и она появится здесь.</div>';$('free').innerHTML='';$('done').innerHTML='';$('legend').hidden=true;return}
+ $('sub').textContent='Updated '+D.today+'. Features in progress: '+active.length+(finished.length?', finished: '+finished.length:'')+'.';
+ $('broken').innerHTML=D.broken.length?'<div class="broken"><b>Could not read:</b> '+D.broken.map(function(b){return esc(b.id)+' ('+esc(b.error)+')'}).join('; ')+'</div>':'';
+ if(!F.length){$('list').innerHTML='<div class="welcome"><b>No features yet</b>Start a large piece of work with the whatnow skill and it will show up here.</div>';$('free').innerHTML='';$('done').innerHTML='';$('legend').hidden=true;return}
  active.sort(function(a,b){return (b.h-a.h)||(((b.m||b.stale)?1:0)-((a.m||a.stale)?1:0))||a.pct-b.pct});
  $('list').innerHTML=active.map(function(f){
   var mine=sess.filter(function(s){return s.feature===f.id}).sort(function(a,b){return rank[a.state]-rank[b.state]||b.t-a.t});
   var risk=f.h?'risk':(f.m||f.stale)?'warn':(f.pct>=80?'good':'');
   var c=f.h?'#c3453d':(f.m||f.stale)?'#e0a21a':'#0f7a4a';
   var live=mine.length&&mine[0].state!=='idle'?' live'+mine[0].state:'';
-  var tags=(f.h?'<span class="tg h">'+f.h+' критичных</span>':'')+(f.m?'<span class="tg m">'+f.m+' важных</span>':'')+(f.stale?'<span class="tg s">не обновлялось '+ago(f.days)+'</span>':'')+((!f.h&&!f.m&&!f.stale)?'<span class="tg k">блокеров нет</span>':'');
+  var tags=(f.h?'<span class="tg h">'+f.h+' critical</span>':'')+(f.m?'<span class="tg m">'+f.m+' important</span>':'')+(f.stale?'<span class="tg s">not updated '+ago(f.days)+'</span>':'')+((!f.h&&!f.m&&!f.stale)?'<span class="tg k">no blockers</span>':'');
   var key=f.id,ev=evs[f.id]||[],isOpen=open[key];
   return '<li><div class="f '+risk+live+'">'+
-   '<a class="fh" href="'+esc(f.href)+'"><div class="ring" style="--p:'+f.pct+';--c:'+c+'"><span>'+f.pct+'%</span></div><div><span class="nm">'+esc(f.name)+'</span><div class="tags">'+tags+'<span style="font-size:12px;color:var(--mut)">обновлено '+ago(f.days)+'</span></div></div></a>'+
-   (f.next?'<div class="nx"><b style="font-weight:600;color:var(--ink)">Дальше:</b> '+f.next+'</div>':'')+
-   '<div class="pr">'+f.projects.map(function(p){var l=f.ladder[p],ps=mine.filter(function(s){return s.project===p});
-     return '<div class="row"><span class="pn">'+esc(p)+'</span><span class="steps" aria-hidden="true">'+l.map(function(x){return '<i class="'+x+'"></i>'}).join('')+'</span><span class="pass">'+lastPassed(l)+'</span><span class="lvw">'+(ps[0]?chip(ps[0],true):'')+'</span></div>'}).join('')+'</div>'+
-   (ev.length?'<button type="button" class="evb" data-k="'+esc(key)+'" aria-expanded="'+(!!isOpen)+'">'+(isOpen?'Скрыть события':'События ('+ev.length+')')+'</button>'+(isOpen?'<ul class="evl">'+ev.slice(0,10).map(function(e){return '<li><time>'+hm(e.ts)+'</time><span class="p">'+esc(e.p||'')+'</span><span class="'+e.k+'">'+esc(e.t)+'</span></li>'}).join('')+'</ul>':''):'')+
+   '<a class="fh" href="'+esc(f.href)+'"><div class="ring" style="--p:'+f.pct+';--c:'+c+'"><span>'+f.pct+'%</span></div><div><span class="nm">'+esc(f.name)+'</span><div class="tags">'+tags+'<span style="font-size:12px;color:var(--mut)">updated '+ago(f.days)+'</span></div></div></a>'+
+   (f.next?'<div class="nx"><b style="font-weight:600;color:var(--ink)">Next:</b> '+f.next+'</div>':'')+
+   '<div class="pr"><div class="row lab" aria-hidden="true"><span></span><span class="lbls">'+SHORT.map(function(n){return '<span>'+n+'</span>'}).join('')+'</span><span></span><span></span></div>'+f.projects.map(function(p){var l=f.ladder[p],ps=mine.filter(function(s){return s.project===p});
+     return '<div class="row"><span class="pn">'+esc(p)+'</span><span class="steps" role="img" aria-label="'+esc(p+': '+l.map(function(x,i){return STEPS[i]+' '+ST[x]}).join(', '))+'">'+l.map(function(x,i){var n=(f.notes||{})[p+':'+i];return '<i class="'+x+'" title="'+esc(p+' · '+STEPS[i]+': '+ST[x]+(n?'. '+n:''))+'"></i>'}).join('')+'</span><span class="pass">'+lastPassed(l)+'</span><span class="lvw">'+(ps[0]?chip(ps[0],true):'')+'</span></div>'}).join('')+'</div>'+
+   (ev.length?'<button type="button" class="evb" data-k="'+esc(key)+'" aria-expanded="'+(!!isOpen)+'">'+(isOpen?'Hide events':'Events ('+ev.length+')')+'</button>'+(isOpen?'<ul class="evl">'+ev.slice(0,10).map(function(e){return '<li><time>'+hm(e.ts)+'</time><span class="p">'+esc(e.p||'')+'</span><span class="'+e.k+'">'+esc(e.t)+'</span></li>'}).join('')+'</ul>':''):'')+
    '</div></li>'}).join('');
  var fr=sess.filter(function(s){return !s.feature});
- $('free').innerHTML=fr.length?'<div class="free"><b>Сессии без функции</b> (ветка не связана с функцией)<ul>'+fr.map(function(s){return '<li><b>'+esc(s.project)+'</b><span class="br">'+esc(s.branch)+'</span>'+chip(s,true)+'</li>'}).join('')+'</ul></div>':'';
+ $('free').innerHTML=fr.length?'<div class="free"><b>Sessions without a feature</b> (branch is not linked to a feature)<ul>'+fr.map(function(s){return '<li><b>'+esc(s.project)+'</b><span class="br">'+esc(s.branch)+'</span>'+chip(s,true)+'</li>'}).join('')+'</ul></div>':'';
  $('legend').hidden=false;
- $('done').innerHTML=finished.length?'Завершено:'+finished.map(function(f){return '<a href="'+esc(f.href)+'">'+esc(f.name)+'</a>'}).join(''):'';
+ $('done').innerHTML=finished.length?'Finished:'+finished.map(function(f){return '<a href="'+esc(f.href)+'">'+esc(f.name)+'</a>'}).join(''):'';
 }
 $('list').addEventListener('click',function(e){var b=e.target.closest('.evb');if(!b)return;open[b.dataset.k]=!open[b.dataset.k];paint(window.IDX_DATA)});
 paint(D);
 if(D.mock)$('mock').innerHTML='<div class="mockbanner">'+D.mock+'</div>';
 if(D.live&&/^https?:$/.test(location.protocol)){
  $('connbox').hidden=false;
- function conn(ok){$('cdot').className='cdot'+(ok?' pulse':' off');var s=Math.round((Date.now()-lastOk)/1000);$('conn').textContent=ok?'на связи, обновлено '+(s<3?'только что':s+' с назад'):'нет связи с сервером, показаны последние данные'}
+ function conn(ok){$('cdot').className='cdot'+(ok?' pulse':' off');var s=Math.round((Date.now()-lastOk)/1000);$('conn').textContent=ok?'connected, updated '+(s<3?'just now':s+' s ago'):'no connection to the server, showing the last data'}
  function poll(){fetch('/api/state',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.text()}).then(function(t){lastOk=Date.now();if(t!==lastJson){lastJson=t;window.IDX_DATA=JSON.parse(t);paint(window.IDX_DATA)}conn(true)}).catch(function(){conn(false)})}
  poll();setInterval(poll,3000);
  setInterval(function(){document.querySelectorAll('.ago').forEach(function(e){e.textContent=agoMs(+e.dataset.t)});conn($('cdot').className.indexOf('off')<0)},1000);

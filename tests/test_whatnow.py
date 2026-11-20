@@ -49,8 +49,8 @@ class HookTest(unittest.TestCase):
         kinds = [(e['kind'], e['ok']) for e in self.events()]
         self.assertEqual(kinds, [('commit', True), ('push', True), ('tests', True), ('tests', False)])
         self.assertIn('Add thing', self.events()[0]['text'])
-        self.assertEqual(self.events()[2]['text'], 'тесты прошли: 214')
-        self.assertEqual(self.events()[3]['text'], 'тесты упали: 2 из 214')
+        self.assertEqual(self.events()[2]['text'], 'tests passed: 214')
+        self.assertEqual(self.events()[3]['text'], 'tests failed: 2 of 214')
         self.assertEqual(self.events()[0]['branch'], 'feature/demo-feature')
 
     def test_python_unittest_output_on_stderr(self):
@@ -58,7 +58,7 @@ class HookTest(unittest.TestCase):
                   tool_response={'stdout': '', 'stderr': 'Ran 5 tests in 2.1s\n\nOK\n'})
         self.send(hook_event_name='PostToolUseFailure', tool_name='Bash', tool_input={'command': 'python3 -m unittest'},
                   error='Exit code 1\nRan 5 tests in 1s\n\nFAILED (failures=2)')
-        self.assertEqual([e['text'] for e in self.events()], ['тесты прошли: 5', 'тесты упали: 2 из 5'])
+        self.assertEqual([e['text'] for e in self.events()], ['tests passed: 5', 'tests failed: 2 of 5'])
 
     def test_state_machine(self):
         self.send(hook_event_name='UserPromptSubmit', prompt='secret')
@@ -72,7 +72,7 @@ class HookTest(unittest.TestCase):
         self.send(hook_event_name='Notification', notification_type='idle_prompt')
         self.assertEqual(self.session()['state'], 'idle')
         self.send(hook_event_name='SessionEnd')
-        self.assertFalse(os.path.exists(os.path.join(self.home, 'sessions', 's1.json')))
+        self.assertEqual(self.session()['state'], 'closed')        # kept: the page can resume it later
 
     def test_prompt_text_is_never_stored(self):
         self.send(hook_event_name='UserPromptSubmit', prompt='very secret prompt')

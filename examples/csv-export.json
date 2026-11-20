@@ -1,7 +1,7 @@
 {
- "title": "Экспорт отчёта в CSV",
- "sub": "Проекты backend и web. Пример: все данные вымышленные.",
- "summary": "Код написан и проверен тестами, но ещё не прочитан ревьюером и не выложен.",
+ "title": "CSV export of reports",
+ "sub": "Projects: backend and web. Example: all data is made up.",
+ "summary": "The code is written and covered by tests, but it has not been reviewed and is not deployed yet.",
  "projects": [
   "backend",
   "web"
@@ -12,7 +12,7 @@
    "ok",
    [
     "ok",
-    "Юнит-тесты: 48 прошли"
+    "Unit tests: 48 passed"
    ],
    "no",
    "no",
@@ -25,7 +25,7 @@
    "no",
    [
     "part",
-    "Страницу открывали только в Chrome"
+    "The page was only opened in Chrome"
    ],
    "no",
    "no"
@@ -34,106 +34,106 @@
  "stages": [
   {
    "n": 1,
-   "title": "Разобраться, как строятся отчёты сейчас",
-   "verdict": "Сделано",
+   "title": "Find out how reports are built today",
+   "verdict": "Done",
    "plan": [
-    "Где собираются данные отчёта",
-    "Как отчёт отдаётся в интерфейс",
-    "Оценить объём и риски"
+    "Where the report data is collected",
+    "How the report is handed to the UI",
+    "Estimate the size and the risks"
    ],
    "facts": [
     [
      "y",
-     "<b>backend.</b> Отчёт собирается одним запросом, ограничение по строкам в коде"
+     "<b>backend.</b> The report is built by one query, the row limit is in the code"
     ],
     [
      "y",
-     "<b>web.</b> Таблица отчёта подгружается порциями"
+     "<b>web.</b> The report table is loaded in chunks"
     ],
     [
      "y",
-     "<b>Оценка:</b> 2-3 дня, риск: большие выгрузки"
+     "<b>Estimate:</b> 2-3 days, risk: very large exports"
     ],
     [
      "q",
-     "<b>Не делалось:</b> замер времени на большом отчёте"
+     "<b>Not done:</b> timing on a very large report"
     ]
    ]
   },
   {
    "n": 2,
-   "title": "backend: выгрузка и тесты",
-   "verdict": "Готов, нагрузку не проверяли",
+   "title": "backend: export and tests",
+   "verdict": "Ready, load not tested",
    "proj": "backend",
    "plan": [
-    "Эндпоинт выгрузки",
-    "Потоковая запись, без загрузки всего в память",
-    "Тесты"
+    "Export endpoint",
+    "Streaming write, without loading everything into memory",
+    "Tests"
    ],
    "facts": [
     [
      "y",
-     "Эндпоинт <code>/reports/export</code> отдаёт CSV потоком"
+     "Endpoint <code>/reports/export</code> streams the CSV"
     ],
     [
      "y",
-     "Юнит-тесты: 48 прошли"
+     "Unit tests: 48 passed"
     ],
     [
      "bad",
-     "В первой версии кодировка ломала кириллицу в Excel. Нашли при ручной проверке, исправили (BOM)"
+     "The first version broke Cyrillic in Excel. Found during a manual check, fixed with a BOM"
     ],
     [
      "q",
-     "Проверка на отчёте в миллион строк не проводилась"
+     "Not tested on a report with a million rows"
     ]
    ]
   },
   {
    "n": 3,
-   "title": "web: кнопка «Скачать CSV»",
-   "verdict": "Готов, проверен не везде",
+   "title": "web: \"Download CSV\" button",
+   "verdict": "Ready, not checked everywhere",
    "proj": "web",
    "plan": [
-    "Кнопка и состояние загрузки",
-    "Сообщение об ошибке"
+    "Button and loading state",
+    "Error message"
    ],
    "facts": [
     [
      "y",
-     "Кнопка с индикатором загрузки"
+     "Button with a loading indicator"
     ],
     [
      "p",
-     "Проверено в Chrome. Safari и Firefox не открывали"
+     "Checked in Chrome. Safari and Firefox were not opened"
     ],
     [
      "q",
-     "Сообщение об ошибке при обрыве не проверялось"
+     "The error message on a broken connection was not tested"
     ]
    ]
   },
   {
    "n": 4,
-   "title": "Подготовка к выкладке",
-   "verdict": "Не начато",
+   "title": "Preparing the release",
+   "verdict": "Not started",
    "plan": [
-    "Код-ревью",
+    "Code review",
     "Merge request",
-    "План выкладки"
+    "Deployment plan"
    ],
    "facts": [
     [
      "q",
-     "Код-ревью не проводилось"
+     "No code review yet"
     ],
     [
      "q",
-     "Merge request не создан"
+     "No merge request yet"
     ],
     [
      "y",
-     "План выкладки написан"
+     "Deployment plan written"
     ]
    ]
   }
@@ -142,13 +142,13 @@
   {
    "n": 1,
    "title": "Staging",
-   "sub": "выкладка и проверка",
+   "sub": "deploy and check",
    "items": [
-    "Выложить backend",
-    "Выложить web",
-    "Скачать отчёт на 10 000 строк",
+    "Deploy backend",
+    "Deploy web",
+    "Download a report of 10,000 rows",
     {
-     "t": "Проверить кириллицу в Excel",
+     "t": "Check Cyrillic in Excel",
      "s": "y"
     }
    ]
@@ -156,94 +156,94 @@
   {
    "n": 2,
    "title": "Production",
-   "sub": "после staging",
+   "sub": "after staging",
    "items": [
-    "Выложить backend",
-    "Выложить web",
-    "Проверить логи первые сутки"
+    "Deploy backend",
+    "Deploy web",
+    "Watch the logs for the first day"
    ]
   }
  ],
  "rollback": [
-  "Сначала откатить web, потом backend",
-  "Откат безопасен: данные не меняются"
+  "Roll back web first, then backend",
+  "Rollback is safe: no data is changed"
  ],
  "checks": [
   {
-   "name": "Модульные тесты",
+   "name": "Unit tests",
    "cells": {
     "backend": [
      "ok",
-     "пройдены",
-     "48 тестов"
+     "passed",
+     "48 tests"
     ],
     "web": [
      "part",
-     "частично",
-     "только логика кнопки"
+     "partly",
+     "button logic only"
     ]
    }
   },
   {
-   "name": "Независимое код-ревью",
-   "hint": "другим агентом или человеком",
+   "name": "Independent code review",
+   "hint": "by another agent or a person",
    "cells": {
     "backend": [
      "no",
-     "нет",
+     "no",
      ""
     ],
     "web": [
      "no",
-     "нет",
+     "no",
      ""
     ]
    }
   },
   {
-   "name": "Нагрузочная проверка",
+   "name": "Load test",
    "cells": {
     "backend": [
      "no",
-     "нет",
-     "отчёт в миллион строк не проверяли"
+     "no",
+     "a million-row report was not tested"
     ],
     "web": [
      "na",
-     "не нужно",
+     "not needed",
      ""
     ]
    }
   },
   {
-   "name": "Просмотр в браузере",
+   "name": "Browser check",
    "cells": {
     "backend": [
      "na",
-     "не нужно",
+     "not needed",
      ""
     ],
     "web": [
      "part",
-     "частично",
-     "только Chrome"
+     "partly",
+     "Chrome only"
     ]
    }
   }
  ],
  "decisions": [
-  "Формат: CSV, разделитель «;», кодировка UTF-8 с BOM",
-  "Лимит выгрузки: 1 000 000 строк"
+  "Format: CSV, separator \";\", UTF-8 with BOM",
+  "Export limit: 1,000,000 rows"
  ],
  "questions": [
-  "Нужен ли Excel-формат (xlsx), или достаточно CSV?",
-  "Кто проверяет на больших отчётах?"
+  "Is an Excel format (xlsx) needed, or is CSV enough?",
+  "Who tests on very large reports?"
  ],
  "blockers": [
   {
-   "t": "Не проверена выгрузка большого отчёта",
-   "why": "Потоковая запись проверена только на малых данных. На миллионе строк возможна нехватка памяти или таймаут.",
-   "todo": "Скачать отчёт на 1 000 000 строк на staging и замерить время и память",
+   "t": "A large report export is not tested",
+   "why": "Streaming was only checked on small data. With a million rows memory or a timeout may become a problem.",
+   "todo": "Download a 1,000,000-row report on staging and measure time and memory",
    "proj": [
     "backend"
    ],
@@ -251,9 +251,9 @@
    "sev": "high"
   },
   {
-   "t": "Нет код-ревью и merge request",
-   "why": "Код видел только автор.",
-   "todo": "Открыть merge request и запустить ревью",
+   "t": "No code review and no merge request",
+   "why": "Only the author has seen the code.",
+   "todo": "Open a merge request and run the review",
    "proj": [
     "backend",
     "web"
@@ -262,9 +262,9 @@
    "sev": "mid"
   },
   {
-   "t": "Проверено только в Chrome",
-   "why": "В Safari загрузка файла работает иначе.",
-   "todo": "Открыть кнопку в Safari и Firefox",
+   "t": "Checked in Chrome only",
+   "why": "File downloads work differently in Safari.",
+   "todo": "Open the button in Safari and Firefox",
    "proj": [
     "web"
    ],
@@ -273,9 +273,9 @@
   }
  ],
  "nextSteps": [
-  "Открыть merge request и пройти код-ревью",
-  "Staging: выложить backend, затем web",
-  "Проверить большой отчёт и браузеры",
-  "Production и наблюдение первые сутки"
+  "Open a merge request and get the code review",
+  "Staging: deploy backend, then web",
+  "Check the large report and the browsers",
+  "Production and watch the first day"
  ]
 }

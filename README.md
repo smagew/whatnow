@@ -1,96 +1,133 @@
 # whatnow
 
-Что сейчас с большой функцией: на каком этапе, сколько готово, что проверено, что мешает выпуску и что делать дальше.
+A dashboard that shows where large, multi-project features stand: which stage they are at, how ready they are,
+what has been checked, what blocks the release, and which Claude Code sessions are working on them right now.
 
-Семейство инструментов с одним вопросом на каждый:
-- **whydiff**: почему сделано это изменение
-- **whatsrisky**: что в изменении рискованно
-- **whatnow**: что сейчас с работой: этап, готовность, проверки, блокеры, следующий шаг
+It is made for engineers who run several features in parallel with AI coding agents in the terminal and want
+one place to look, instead of reading long CLI transcripts. It shows progress, not tokens or costs.
 
-## Что это
-Одна главная страница по всем функциям, которые идут параллельно, и отчёт по каждой функции.
-Вы видите: в каких проектах что делается, на какой стадии, сколько процентов, есть ли проблемы,
-что запланировано и что получилось, как идёт выкладка, какие проверки пройдены.
-Токены и подагенты не показываются, это инструмент про продвижение работы, а не про агентов.
+## What you see
+- **Home page**: one card per feature. Readiness in percent, a ladder of six check steps per project
+  (Code, Tests, Review, Manual, Staging, Prod), problems, when it was last updated, the next step, and whether
+  a session is working on it right now.
+- **Feature page** (tabs: Overview, Progress, Deployment, Quality, Decisions and questions): what was planned
+  and what really happened, stage by stage; the deployment plan and how much of it is done; which checks were
+  run in which project; the blockers and what to do next.
+- **Buttons on every item**: *Do it*, *Ask*, *Not needed*. They send your instruction or question into the
+  Claude Code session that works on the feature (see below).
 
-## Как открыть
-`open ~/.whatnow/features/index.html` (если данные лежат в другой папке, см. «Где лежат данные»)
+## Requirements
+- Claude Code (tested with 2.1.329) and Python 3.7+. Only the Python standard library is used.
+- macOS or Linux for autostart. The rest works wherever Claude Code and Python do.
 
-Страница не обновляется сама. Её пересобирает Claude во время работы (навык `whatnow`):
-
-`python3 ~/.claude/skills/whatnow/render.py --index --open`
-
-## Как устроено
+## Install
+```sh
+./install.sh        # copies skill/ into ~/.claude/skills/whatnow
 ```
-feature.json  ->  render.py  ->  panel.html (отчёт функции) + index.html (главная)
+Then ask Claude to start a dashboard for a big piece of work (the `whatnow` skill does this). It writes
+`~/.whatnow/features/<name>/feature.json` and builds the pages. Open them:
+
+```sh
+python3 ~/.claude/skills/whatnow/server.py --open     # live page, updates itself
+python3 ~/.claude/skills/whatnow/render.py --index --open   # static files, rebuilt on demand
 ```
-- `skill/SKILL.md` инструкция для Claude: когда и как вести панель, правила честности
-- `skill/SCHEMA.md` формат `feature.json`
-- `skill/render.py` проверка данных и сборка страниц (только стандартный Python 3)
-- `skill/template.html` отчёт функции, `skill/template-index.html` главная
-- `examples/csv-export.json` полный пример (данные вымышленные)
-- `install.sh` копирует `skill/` в `~/.claude/skills/whatnow`
 
-## Живая страница и хуки
-Статичный `index.html` обновляется только когда Claude пересобирает его. Для страницы, которая
-обновляется сама и показывает, где сейчас идёт работа, есть две части:
+## How it works
+```
+feature.json  ->  render.py  ->  panel.html (feature page) + index.html (home page)
+```
+- The source of truth is one `feature.json` per feature. Claude writes it while it works (stages, checks,
+  blockers, evidence) following the rules in `skill/SKILL.md`. The format is described in `skill/SCHEMA.md`.
+- `render.py` validates the data and **derives** everything that must not be typed by hand: stage colours,
+  counts, percentages, "ready to release?", staleness. It refuses a "passed" without a note saying what
+  was checked, and a blocker that points to a stage that does not exist.
+- Readiness percent comes from the ladder: passed = 1, partly = 0.5, not passed = 0, over every step of every
+  project. It is readiness to release, not the share of code written.
+- A feature with no update for 3 days is marked as not updated recently.
+
+## Live page, hooks and server
+A static `index.html` only changes when it is rebuilt. For a page that updates itself and shows where work is
+happening, there are two parts:
 
 ```
-хуки Claude Code --> hook.py --> ~/.whatnow/sessions/*.json + events.jsonl --> server.py --> страница (опрос каждые 3 с)
+Claude Code hooks -> hook.py -> ~/.whatnow/sessions/*.json + events.jsonl -> server.py -> page (polls every 3 s)
 ```
-- `skill/hook.py` запускается Claude Code на события сессии (запрос, команда, ответ, ожидание разрешения).
-  Он молчит, не блокирует и всегда завершается с кодом 0. Записывает состояние сессии и события
-  `git commit`, `git push`, запуск тестов (остальные команды отбрасывает). Текст запросов не сохраняется.
-- `skill/autostart.py` включает и выключает автозапуск сервера
-- `skill/common.py` общие настройки (папки, порт), читаются из конфига и переменных окружения
-- `skill/server.py` отдаёт страницу на `http://127.0.0.1:7777/` и при каждом запросе перечитывает
-  `feature.json` и данные хуков. Слушает только 127.0.0.1.
-  Запуск: `python3 ~/.claude/skills/whatnow/server.py --open`
-- Сессия привязывается к функции по имени ветки (`feature/<имя-функции>`) или по полю `branches`
-  в `feature.json`. Сессия без функции показывается в колонке своего проекта.
+- `hook.py` is run by Claude Code on session events. It is silent, never blocks and always exits 0. It records
+  the state of each session and the `git commit`, `git push` and test-run events (other commands are dropped).
+  The text of your prompts is never stored.
+- `server.py` serves `http://127.0.0.1:7777/` and re-reads `feature.json` and the hook data on every request.
+  It listens on 127.0.0.1 only.
+- A session is linked to a feature by branch name (`feature/<feature-folder>`) or by `branches` in `feature.json`.
+  A session without a feature is shown in its project's card area as a session without a feature.
 
-Пример подключения хуков: `docs/hooks-settings.example.json` (добавить в `~/.claude/settings.json`,
-слить с уже имеющимися хуками). Без хуков сервер показывает функции, но не сессии и события.
+Install the hooks (backup, merge with your existing hooks, safe to repeat):
+```sh
+python3 ~/.claude/skills/whatnow/hooks_install.py --install     # --dry-run shows the diff, --uninstall removes them
+python3 ~/.claude/skills/whatnow/hooks_install.py --print       # just print the hooks block
+```
+The hooks are: state tracking (async) on session start, prompt, Bash tool use, stop, notification and session end;
+a synchronous `--deliver` hook on prompt submit; and `--watch` hooks (`asyncRewake`) on stop and session start.
+`docs/hooks-settings.example.json` has a copy.
 
-### Автозапуск сервера
-Чтобы страница была доступна всегда, без ручного запуска:
+## Buttons on the feature page
+On a feature page opened through the server every item of a stage has actions:
+- **Do it**: a task. The text goes to the session that works on this feature.
+- **Ask**: your question about the item. The answer comes back in the same session.
+- **Not needed**: a decision with a reason. It applies at once: the item is struck through and stops counting as
+  unfinished. It is stored in `overrides.json` next to `feature.json` (Claude never writes that file, so the
+  two cannot overwrite each other). It follows the item's text, not its position. **Restore** undoes it.
 
-`python3 ~/.claude/skills/whatnow/autostart.py --install`
+**Where *Do it* and *Ask* go.** The message is written to `~/.whatnow/inbox/` and routed:
+1. **A session of the feature is open** (confirmed by `claude agents --json`): the message is addressed to it.
+   If it is idle, the `--watch` hook wakes it (`asyncRewake`: exit code 2 makes Claude Code start a turn).
+   If it is busy, the message arrives when it finishes its answer. Without the watcher it arrives at your next prompt.
+2. **Only a closed session is known:** the server runs `claude --resume <id> --bg "<message>"`. The session continues
+   in the background under the same id with its old context. Watch it with `claude attach <id>`.
+3. **No session is known:** the message waits for the first session that starts working on the feature.
 
-- **macOS:** создаётся LaunchAgent `~/Library/LaunchAgents/whatnow.server.plist`.
-- **Linux:** создаётся пользовательская служба systemd `~/.config/systemd/user/whatnow.service`.
-- **Windows и другие системы:** автозапуск не поддерживается, запускайте сервер вручную.
-- Интерпретатор Python определяется автоматически; если скрипт запущен внутри виртуального окружения,
-  берётся Python, из которого оно создано (служба не сломается, если окружение удалить).
-  Сменили Python: запустите `--install` ещё раз.
-- Логи: `~/.whatnow/server.log`. Проверка: `--status`. Отключение: `--uninstall`. Показать, что будет создано, ничего не записывая: `--install --dry-run`.
-- Сервер слушает только 127.0.0.1, по сети он недоступен.
+When Claude has handled a message it runs `inbox.py resolve <id> "summary"` and the summary shows on the page.
 
-### Конфиг `~/.whatnow/config.json`
+**Safety.** The page accepts writes only from the server's own page: `Host` and `Origin` are checked, the body must be
+JSON, a custom `X-Whatnow` header is required (a site in your browser cannot send it without a CORS preflight, which
+the server never allows) and the body size is limited. `claude` is started without a shell: your text is passed as one
+argument and is never concatenated into a command.
+
+## Autostart
+```sh
+python3 ~/.claude/skills/whatnow/autostart.py --install      # --dry-run, --status, --uninstall
+```
+- macOS: a LaunchAgent `~/Library/LaunchAgents/whatnow.server.plist`. Linux: a systemd user unit
+  `~/.config/systemd/user/whatnow.service`. Other systems: not supported, start the server by hand.
+- The Python interpreter is detected. If you run it inside a virtualenv, the interpreter the venv was made from is used,
+  so the service survives deleting the venv. Run `--install` again after you change your Python.
+- Logs: `~/.whatnow/server.log`.
+
+## Configuration
+`~/.whatnow/config.json` (all keys optional):
 ```json
-{"featuresDir": "/путь/к/features", "aliases": {"имя-папки-репозитория": "имя-проекта"}, "port": 7777}
+{"featuresDir": "/path/to/features", "aliases": {"repo-folder-name": "project-name"}, "port": 7777, "claudeBin": "/path/to/claude"}
 ```
-По умолчанию данные функций лежат в `~/.whatnow/features`, событий нет, алиасов нет.
-`aliases` нужны, если папка репозитория называется иначе, чем проект в `feature.json`.
+- `featuresDir` (or `$FEATURES_DIR`): where the features live. Default `~/.whatnow/features`.
+- `aliases`: use when a repository folder is not named like the project in `feature.json`.
+- `claudeBin`: path to the `claude` executable, for a service whose PATH is short.
+- `$WHATNOW_HOME` changes the root (`~/.whatnow`).
 
-### Тесты
-`python3 -m unittest discover -s tests`
+## Files
+- `skill/SKILL.md`: instructions for Claude: when and how to keep a dashboard, the honesty rules.
+- `skill/SCHEMA.md`: the `feature.json` format.
+- `skill/render.py`: validation, derivation and page building. `template.html` is the feature page, `template-index.html` the home page.
+- `skill/server.py`, `skill/hook.py`, `skill/inbox.py`, `skill/common.py`: live page, hooks, message handling, shared settings.
+- `skill/hooks_install.py`, `skill/autostart.py`: install and remove the hooks and the autostart.
+- `examples/csv-export.json`: a complete example with made-up data.
+- `install.sh`: copies `skill/` into `~/.claude/skills/whatnow`. Edit the files here, then run it again.
 
-## Правила
-- Проценты считаются по лестнице готовности: пройдено = 1, частично = 0,5, нет = 0.
-  Это готовность к выпуску, а не доля написанного кода.
-- Нельзя поставить «пройдено» без пометки, что именно проверили (со ступени «Код-ревью»).
-- Цвета этапов, счётчики выкладки и ответ «Можно выпускать?» считает скрипт, а не человек.
-- Функция без обновления 3 дня помечается как давно не обновлявшаяся.
+## Tests
+```sh
+python3 -m unittest discover -s tests
+```
 
-## Где лежат данные
-По умолчанию `~/.whatnow/features/<имя>/feature.json`, вне репозиториев проектов и не под git.
-Папку может использовать несколько сессий Claude одновременно. Путь можно сменить
-полем `featuresDir` в `~/.whatnow/config.json` или переменной `FEATURES_DIR`; корень данных (`~/.whatnow`) — переменной `WHATNOW_HOME`.
-
-## Правки
-Меняйте файлы в `skill/`, затем запустите `./install.sh`. Исходник здесь, копия в `~/.claude/skills` вторична.
-
-## Что не сделано
-- Хуки пока не подключены к реальной сессии: формат данных взят из документации Claude Code и проверен на тестовых данных, а не на живой сессии.
-- Навык пока не проходил полный цикл работы от начала до выкладки.
+## Limitations
+- Hooks follow the format in the Claude Code documentation. Some paths (for example resuming a closed session
+  from a service) depend on your Claude Code version and macOS permissions.
+- Delivery into an open session needs the hooks to be installed and the session to belong to a feature.
+- The dashboard shows only what was written into `feature.json` and what the hooks saw. It does not read your code.

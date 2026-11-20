@@ -3,6 +3,7 @@
 
     python3 hooks_install.py --install   [--file ~/.claude/settings.json] [--dry-run]
     python3 hooks_install.py --uninstall [--file ...] [--dry-run]
+    python3 hooks_install.py --print        (show the hooks block, change nothing)
 
 Safe by design: refuses to touch a file that is not valid JSON, keeps every other setting and hook,
 is idempotent (running twice changes nothing), makes a timestamped backup next to the file
@@ -10,29 +11,49 @@ before writing, and writes atomically. Our entries are recognised by the hook.py
 """
 import difflib, json, os, shutil, sys, tempfile, time
 
-EVENTS = [('SessionStart', None), ('UserPromptSubmit', None), ('PostToolUse', 'Bash'),
-          ('PostToolUseFailure', 'Bash'), ('Stop', None), ('Notification', None), ('SessionEnd', None)]
+STATE = 'python3 ~/.claude/skills/whatnow/hook.py'
 MARK = 'whatnow/hook.py'
-COMMAND = 'python3 ~/.claude/skills/whatnow/hook.py'
+
+# (event, matcher, command, extra handler fields)
+ENTRIES = [
+    ('SessionStart',       None,   STATE,                 {'async': True}),
+    ('SessionStart',       None,   STATE + ' --watch',    {'asyncRewake': True, 'timeout': 3600}),
+    ('UserPromptSubmit',   None,   STATE,                 {'async': True}),
+    ('UserPromptSubmit',   None,   STATE + ' --deliver',  {'timeout': 10}),
+    ('PostToolUse',        'Bash', STATE,                 {'async': True}),
+    ('PostToolUseFailure', 'Bash', STATE,                 {'async': True}),
+    ('Stop',               None,   STATE,                 {'async': True}),
+    ('Stop',               None,   STATE + ' --watch',    {'asyncRewake': True, 'timeout': 3600}),
+    ('Notification',       None,   STATE,                 {'async': True}),
+    ('SessionEnd',         None,   STATE,                 {'async': True}),
+]
 
 
-def entry(matcher):
-    e = {'hooks': [{'type': 'command', 'command': COMMAND, 'async': True}]}
+def group(matcher, command, extra):
+    handler = dict([('type', 'command'), ('command', command)] + list(extra.items()))
+    g = {'hooks': [handler]}
     if matcher:
-        e = dict([('matcher', matcher)] + list(e.items()))
-    return e
+        g = dict([('matcher', matcher)] + list(g.items()))
+    return g
 
 
-def ours(group):
-    return any(MARK in (h.get('command') or '') for h in group.get('hooks', []))
+def desired():
+    out = {}
+    for event, matcher, command, extra in ENTRIES:
+        out.setdefault(event, []).append(group(matcher, command, extra))
+    return out
+
+
+def ours(g):
+    return any(MARK in (h.get('command') or '') for h in g.get('hooks', []))
 
 
 def install(d):
     hooks = d.setdefault('hooks', {})
-    for event, matcher in EVENTS:
+    for event, want in desired().items():
         groups = hooks.setdefault(event, [])
-        if not any(ours(g) for g in groups):
-            groups.append(entry(matcher))
+        if [g for g in groups if ours(g)] != want:
+            hooks[event] = [g for g in groups if not ours(g)] + want
     return d
 
 
@@ -49,6 +70,9 @@ def uninstall(d):
 
 def main():
     argv = sys.argv[1:]
+    if '--print' in argv:
+        print(json.dumps({'hooks': desired()}, ensure_ascii=False, indent=2))
+        return
     if '--install' not in argv and '--uninstall' not in argv:
         sys.exit(__doc__)
     path = os.path.expanduser(argv[argv.index('--file') + 1] if '--file' in argv else '~/.claude/settings.json')

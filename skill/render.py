@@ -15,7 +15,7 @@ FACT = ('y', 'bad', 'p', 'q')            # done, problem/rework, partial, not do
 LAD = ('ok', 'part', 'no')
 CELL = ('ok', 'part', 'no', 'na')
 SEV = ('high', 'mid', 'low')
-STEPS = ['Написан', 'Тесты', 'Код-ревью', 'Проверен руками', 'На staging', 'На production']
+STEPS = ['Written', 'Tests', 'Code review', 'Verified by hand', 'Staging', 'Production']
 
 
 class DataError(Exception):
@@ -27,7 +27,7 @@ def fail(msg):
 
 
 def stage_state(facts):
-    kinds = [f[0] for f in facts]
+    kinds = ['y' if f[0] == 'n' else f[0] for f in facts]
     if kinds and all(k == 'q' for k in kinds):
         return 'no'
     if 'bad' in kinds:
@@ -37,7 +37,7 @@ def stage_state(facts):
     return 'ok'
 
 
-def prepare(d):
+def prepare(d, overrides=None):
     for key in ('title', 'projects', 'ladder', 'stages'):
         if key not in d:
             fail('missing "%s"' % key)
@@ -81,6 +81,14 @@ def prepare(d):
         for f in s['facts']:
             if not (isinstance(f, list) and len(f) == 2 and f[0] in FACT):
                 fail('stage %s: each fact is [kind, text], kind in %s' % (s['n'], FACT))
+        # ids of facts, and the user's "not needed" decisions (overrides.json, never written by Claude)
+        s['fids'] = [common.fact_id(s['n'], f[1]) for f in s['facts']]
+        s['reasons'] = {}
+        for i, fid in enumerate(s['fids']):
+            o = (overrides or {}).get(fid)
+            if isinstance(o, dict) and o.get('kind') == 'skip' and s['facts'][i][0] != 'y':
+                s['facts'][i] = ['n', s['facts'][i][1]]
+                s['reasons'][str(i)] = o.get('reason', '')
         s['state'] = stage_state(s['facts'])
     nums = {s['n'] for s in d['stages']}
 
@@ -97,13 +105,13 @@ def prepare(d):
         st['total'] = len(items)
         st['done'] = sum(1 for i in items if i['s'] == 'y')
         if any(i['s'] == 'bad' for i in items):
-            st['cls'], st['tag'], st['stateText'] = 'bad', 'bad', 'есть проблема'
+            st['cls'], st['tag'], st['stateText'] = 'bad', 'bad', 'has a problem'
         elif st['done'] == st['total'] and st['total']:
-            st['cls'], st['tag'], st['stateText'] = 'ok', 'ok', 'готово'
+            st['cls'], st['tag'], st['stateText'] = 'ok', 'ok', 'done'
         elif st['done'] == 0:
-            st['cls'], st['tag'], st['stateText'] = 'no', 'no', 'не начато'
+            st['cls'], st['tag'], st['stateText'] = 'no', 'no', 'not started'
         else:
-            st['cls'], st['tag'], st['stateText'] = 'part', 'part', 'в процессе'
+            st['cls'], st['tag'], st['stateText'] = 'part', 'part', 'in progress'
         dTotal += st['total']
         dDone += st['done']
     d['dTotal'], d['dDone'] = dTotal, dDone
@@ -134,15 +142,24 @@ def prepare(d):
     return d
 
 
-def panel_html(src, back=False, back_href='../index.html'):
-    """Validate one feature.json and return (html, data). Nothing is written."""
+def load(src):
+    """Read feature.json, apply overrides.json from the same folder, validate and derive."""
     with open(src, encoding='utf-8') as fh:
-        data = prepare(json.load(fh))
+        raw = json.load(fh)
+    overrides = common.read_json(os.path.join(os.path.dirname(src), 'overrides.json'))
+    return prepare(raw, overrides)
+
+
+def panel_html(src, back=False, back_href='../index.html', live=False):
+    """Validate one feature.json and return (html, data). Nothing is written."""
+    data = load(src)
+    data['live'] = live
+    data['slug'] = os.path.basename(os.path.dirname(os.path.abspath(src)))
     blob = json.dumps(data, ensure_ascii=False).replace('</', '<\\/')
     with open(os.path.join(HERE, 'template.html'), encoding='utf-8') as fh:
         html = fh.read()
     html = html.replace('/*__DATA__*/null', blob, 1).replace('/*__TITLE__*/', data['title'].replace('<', '&lt;'), 1)
-    link = '<a class="back" href="%s">\u2190 Все функции</a>' % back_href if back else ''
+    link = '<a class="back" href="%s">\u2190 All features</a>' % back_href if back else ''
     return html.replace('<!--__BACK__-->', link, 1), data
 
 
@@ -175,6 +192,7 @@ def summary(slug, d, today):
         'why': top['t'] if top else '', 'next': d['nextSteps'][0] if d['nextSteps'] else '',
         'href': '%s/panel.html' % slug,
         'branches': [b for b in d.get('branches', []) if isinstance(b, str)],
+        'notes': d.get('ladderNotes', {}),
     }
 
 
@@ -191,8 +209,7 @@ def collect(root, write=False):
             if write:
                 data = write_panel(src, os.path.join(root, slug, 'panel.html'), back=True)
             else:
-                with open(src, encoding='utf-8') as fh:
-                    data = prepare(json.load(fh))
+                data = load(src)
             feats.append(summary(slug, data, today))
         except (DataError, ValueError, KeyError, TypeError) as e:
             broken.append({'id': slug, 'error': str(e)})
@@ -202,7 +219,7 @@ def collect(root, write=False):
         for p in f['projects']:
             if p not in projects:
                 projects.append(p)
-    return {'today': today.strftime('%d.%m.%Y'), 'projects': projects, 'features': feats, 'broken': broken}
+    return {'today': today.strftime('%Y-%m-%d'), 'projects': projects, 'features': feats, 'broken': broken}
 
 
 def index_html(payload):
