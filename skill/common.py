@@ -84,6 +84,44 @@ def feature_index():
     return out
 
 
+def claude_home():
+    return os.environ.get('CLAUDE_CONFIG_DIR') or os.path.expanduser('~/.claude')
+
+
+def hidden_path():
+    return os.path.join(home(), 'hidden.json')
+
+
+def hidden():
+    d = read_json(hidden_path(), [])
+    return set(d) if isinstance(d, list) else set()
+
+
+def set_hidden(session_id, on):
+    h = hidden()
+    (h.add if on else h.discard)(session_id)
+    atomic_write_json(hidden_path(), sorted(h))
+
+
+def favorites_path():
+    return os.path.join(home(), 'favorites.json')
+
+
+def favorites():
+    """Keys of starred things: "s:<session id>" and "f:<feature slug>"."""
+    d = read_json(favorites_path(), [])
+    return [k for k in d if isinstance(k, str)] if isinstance(d, list) else []
+
+
+def set_favorite(key, on):
+    cur = favorites()
+    if on and key not in cur:
+        cur.append(key)
+    if not on and key in cur:
+        cur.remove(key)
+    atomic_write_json(favorites_path(), cur)
+
+
 def bindings_path():
     return os.path.join(home(), 'bindings.json')
 
@@ -148,6 +186,18 @@ def read_json(path, default=None):
         return {} if default is None else default
 
 
+def feature_version(slug):
+    """Changes whenever the feature's files change; the open page compares it to know it must reload."""
+    base = os.path.join(features_dir(), slug)
+    out = []
+    for name in ('feature.json', 'overrides.json'):
+        try:
+            out.append(str(os.stat(os.path.join(base, name)).st_mtime_ns))
+        except OSError:
+            out.append('0')
+    return ':'.join(out)
+
+
 def fact_id(stage_n, text):
     """Stable id of one fact: survives reordering, changes only when the text changes."""
     return hashlib.sha1(('%s|%s' % (stage_n, text)).encode('utf-8')).hexdigest()[:10]
@@ -160,6 +210,22 @@ ACTIONS = {'do': 'Task: do this item', 'ask': 'Question: answer the user in this
 
 def format_message(e):
     """The text Claude sees when a message from the page is delivered."""
+    if e.get('kind') == 'session':
+        return '\n'.join([
+            '[whatnow] Message from the dashboard.',
+            'User note: %s' % (e.get('text') or ''),
+            'Answer it in this conversation. When you are done, mark the message resolved: '
+            'python3 ~/.claude/skills/whatnow/inbox.py resolve %s "one-line summary".' % e.get('id'),
+        ])
+    if e.get('kind') == 'sync':
+        return '\n'.join([
+            '[whatnow] Sync request for feature "%s".' % e.get('featureTitle', e.get('feature')),
+            'The dashboard may differ from what you last told the user. Compare the feature.json of this feature with '
+            'your latest status: every open item you listed (and who has to act on it), what is done, what was verified, '
+            'and what git really shows (merged branches, commits). Fix what differs, set "who" on every blocker, '
+            'rebuild the dashboard (python3 ~/.claude/skills/whatnow/render.py --index) and mark the message resolved: '
+            'python3 ~/.claude/skills/whatnow/inbox.py resolve %s "what you changed, or: already in sync".' % e.get('id'),
+        ])
     return '\n'.join([
         '[whatnow] Message from the dashboard for feature "%s".' % e.get('featureTitle', e.get('feature')),
         'Stage %s: %s' % (e.get('stage'), e.get('stageTitle', '')),

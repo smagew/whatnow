@@ -24,6 +24,7 @@ ENTRIES = [
     ('PostToolUseFailure', 'Bash', STATE,                 {'async': True}),
     ('Stop',               None,   STATE,                 {'async': True}),
     ('Stop',               None,   STATE + ' --watch',    {'asyncRewake': True, 'timeout': 3600}),
+    ('Stop',               None,   STATE + ' --nudge',    {'asyncRewake': True, 'timeout': 30}),
     ('Notification',       None,   STATE,                 {'async': True}),
     ('SessionEnd',         None,   STATE,                 {'async': True}),
 ]

@@ -84,6 +84,16 @@
             "timeout": 3600
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/skills/whatnow/hook.py --nudge",
+            "asyncRewake": true,
+            "timeout": 30
+          }
+        ]
       }
     ],
     "Notification": [

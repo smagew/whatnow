@@ -69,6 +69,9 @@ The hooks are: state tracking (async) on session start, prompt, Bash tool use, s
 a synchronous `--deliver` hook on prompt submit; and `--watch` hooks (`asyncRewake`) on stop and session start.
 `docs/hooks-settings.example.json` has a copy.
 
+## The Sessions tab
+The home page opens on **Sessions**: every open Claude Code session, grouped by project, newest first, whether or not it belongs to a feature. The list comes from `claude agents`, and what each session is about comes from its transcript (how it started, what you asked last, what Claude answered last), so a session shows up even before it has triggered a hook. Per session: **Ask** (sends a message to that session; a closed session is resumed in the background), **Copy resume command**, **Attach to a feature**, and **Hide** for sessions that do not belong on the page (hidden ids are kept in `~/.whatnow/hidden.json`). Click the star on a session or a feature to put it in the **Favorites** tab (kept in `~/.whatnow/favorites.json`); a starred session stays there after it is closed. The **Features** tab is the portfolio of large features.
+
 ## Buttons on the feature page
 On a feature page opened through the server every item of a stage has actions:
 - **Do it**: a task. The text goes to the session that works on this feature.

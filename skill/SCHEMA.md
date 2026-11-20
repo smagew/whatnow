@@ -33,7 +33,7 @@ Each entry is `"ok" | "part" | "no"` or `["ok", "note"]`. From "Code review" onw
   "plan":  ["what the stage was supposed to include"],
   "facts": [ ["y","done"], ["fixed","problem found and already fixed"], ["bad","open problem"], ["p","partly done"], ["q","not done"] ] }
 ```
-`n` is an integer, strictly increasing. Stage colour is derived: all `q` = grey, any `bad` = red, any `p`/`q` = amber, else green. `fixed` counts as done: the mistake stays visible in the list but does not colour the stage. Use `bad` only for a problem that is still open; change it to `fixed` once it is solved. `unplanned: true` marks work that was not in the plan.
+`n` is an integer, strictly increasing. Stage colour is derived and says how worried to be: all `q` = grey, any `bad` = red, everything done = green, 80% or more done = light green ("almost"), otherwise amber. `fixed` counts as done: the mistake stays visible in the list but does not colour the stage. Use `bad` only for a problem that is still open; change it to `fixed` once it is solved. `unplanned: true` marks work that was not in the plan.
 
 ## deploy
 ```json
@@ -52,9 +52,11 @@ Cell = `[status, label, note]`, status in `ok | part | no | na`. Every project m
 ## blockers
 ```json
 { "t": "title", "why": "concrete risk", "todo": "one action",
-  "proj": ["backend"], "stage": 4, "sev": "high" }
+  "proj": ["backend"], "stage": 4, "sev": "high", "who": "you" }
 ```
-`sev` in `high | mid | low`. `stage` must exist.
+`sev` in `high | mid | low`. `stage` must exist. `who` says who has to act, and the dashboard groups the open items by it:
+`you` (only the user can do it), `look` (the user has to check or decide), `agent` (the agent can do it now), `later` (a later phase).
+An item without `who` lands in a "Not sorted yet" group, so always set it.
 
 ## overrides.json (written by the server, never by Claude)
 Lives next to `feature.json`. It holds the user's "not needed" decisions from the buttons on the feature page:

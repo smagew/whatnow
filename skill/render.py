@@ -16,6 +16,7 @@ DONE = ('y', 'fixed', 'n')                # kinds that count as finished
 LAD = ('ok', 'part', 'no')
 CELL = ('ok', 'part', 'no', 'na')
 SEV = ('high', 'mid', 'low')
+WHO = ('you', 'look', 'agent', 'later')   # who has to act: you / needs your look / the agent / a later phase
 STEPS = ['Written', 'Tests', 'Code review', 'Verified by hand', 'Staging', 'Production']
 
 
@@ -28,14 +29,17 @@ def fail(msg):
 
 
 def stage_state(facts):
+    """Colour of a stage says how worried to be, not whether anything is left:
+    no = nothing done, bad = an open problem, ok = all done, almost = 80% or more done, part = the rest."""
     kinds = ['y' if f[0] in DONE else f[0] for f in facts]
     if kinds and all(k == 'q' for k in kinds):
         return 'no'
     if 'bad' in kinds:
         return 'bad'
-    if 'p' in kinds or 'q' in kinds:
-        return 'part'
-    return 'ok'
+    done = kinds.count('y')
+    if done == len(kinds):
+        return 'ok'
+    return 'almost' if done / len(kinds) >= 0.8 else 'part'
 
 
 def prepare(d, overrides=None):
@@ -91,6 +95,8 @@ def prepare(d, overrides=None):
                 s['facts'][i] = ['n', s['facts'][i][1]]
                 s['reasons'][str(i)] = o.get('reason', '')
         s['state'] = stage_state(s['facts'])
+        s['kinds'] = ['fixed' if f[0] == 'fixed' else ('y' if f[0] in DONE else f[0]) for f in s['facts']]
+        s['dn'], s['tot'] = sum(1 for f in s['facts'] if f[0] in DONE), len(s['facts'])
     nums = {s['n'] for s in d['stages']}
 
     # deploy: items are text (not done) or {"t": text, "s": kind}; counts derived
@@ -131,6 +137,9 @@ def prepare(d, overrides=None):
                 fail('blocker "%s": missing "%s"' % (b.get('t'), key))
         if b['sev'] not in SEV:
             fail('blocker "%s": sev must be one of %s' % (b['t'], SEV))
+        if b.get('who') is not None and b['who'] not in WHO:
+            fail('blocker "%s": who must be one of %s' % (b['t'], WHO))
+        b['bid'] = common.fact_id('b', b['t'])
         if b['stage'] not in nums:
             fail('blocker "%s": stage %s does not exist' % (b['t'], b['stage']))
         for p in b['proj']:
@@ -156,6 +165,7 @@ def panel_html(src, back=False, back_href='../index.html', live=False):
     data = load(src)
     data['live'] = live
     data['slug'] = os.path.basename(os.path.dirname(os.path.abspath(src)))
+    data['ver'] = common.feature_version(data['slug'])
     blob = json.dumps(data, ensure_ascii=False).replace('</', '<\\/')
     with open(os.path.join(HERE, 'template.html'), encoding='utf-8') as fh:
         html = fh.read()
@@ -190,6 +200,7 @@ def summary(slug, d, today):
         'id': slug, 'name': d['title'], 'projects': d['projects'], 'ladder': d['ladder'],
         'pct': round(100 * got / tot), 'h': h, 'm': m, 'days': days,
         'stale': days >= 3 and not done, 'done': done,
+        'waiting': sum(1 for b in d['blockers'] if b.get('who') == 'you'),
         'why': top['t'] if top else '', 'next': d['nextSteps'][0] if d['nextSteps'] else '',
         'href': '%s/panel.html' % slug,
         'notes': d.get('ladderNotes', {}),

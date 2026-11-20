@@ -45,8 +45,22 @@ def child_env(claude):
     return env
 
 
+_AGENTS = {'t': 0.0, 'v': None}
+AGENTS_TTL = 8.0                  # seconds: `claude agents` takes about 2 s, pages poll every 3 s
+
+
 def active_sessions():
-    """{sessionId: info} of sessions open right now, from `claude agents --json`; None if unavailable."""
+    """{sessionId: info} of sessions open right now, from `claude agents --json`; None if unavailable.
+    Cached for a few seconds so that open pages do not start a process on every poll."""
+    now = time.time()
+    if now - _AGENTS['t'] < AGENTS_TTL:
+        return _AGENTS['v']
+    _AGENTS['v'] = _active_sessions()
+    _AGENTS['t'] = now
+    return _AGENTS['v']
+
+
+def _active_sessions():
     claude = common.claude_bin()
     if not claude:
         return None
@@ -59,32 +73,159 @@ def active_sessions():
         return None
 
 
-def read_sessions(feats, now, include_closed=False):
+_TRANSCRIPTS = {}
+TAIL = 600 * 1024
+NOISE = re.compile(r'<(system-reminder|pasted_content|command-[a-z]+|local-command[a-z-]*|agent-message|task-notification)[^>]*>.*?</\1[^>]*>', re.S)
+
+
+def _clean(t):
+    t = NOISE.sub('', t)
+    t = t.replace('**', '').replace('`', '')
+    return re.sub(r'\s+', ' ', t).strip()
+
+
+def _text(m):
+    c = m.get('content')
+    if isinstance(c, str):
+        return c
+    return ' '.join(x.get('text', '') for x in c if isinstance(x, dict) and x.get('type') == 'text') if isinstance(c, list) else ''
+
+
+def _find_transcript(sid):
+    hit = _TRANSCRIPTS.get(sid)
+    if hit and os.path.exists(hit[0]):
+        return hit[0]
+    base = os.path.join(common.claude_home(), 'projects')
+    try:
+        for d in os.listdir(base):
+            p = os.path.join(base, d, '%s.jsonl' % sid)
+            if os.path.exists(p):
+                return p
+    except OSError:
+        pass
+    return None
+
+
+def _real_user(t):
+    return bool(t) and len(t) > 3 and not t.startswith('This session is being continued') \
+        and not t.startswith('Another Claude session')
+
+
+def transcript_info(sid):
+    """What a session is about, read from its transcript: how it started, what the user asked last,
+    what Claude said last, and when it last moved. Cached until the file changes; only the head
+    and the last 600 KB are read, so even a huge session is cheap."""
+    path = _find_transcript(sid)
+    if not path or not SID.match(sid):
+        return None
+    try:
+        st = os.stat(path)
+    except OSError:
+        return None
+    key = (st.st_mtime_ns, st.st_size)
+    hit = _TRANSCRIPTS.get(sid)
+    if hit and hit[0] == path and hit[1] == key:
+        return hit[2]
+    first = last_u = last_a = ''
+    try:
+        with open(path, 'rb') as fh:
+            for i, line in enumerate(fh):
+                if i > 400 or first:
+                    break
+                try:
+                    m = json.loads(line).get('message') or {}
+                except ValueError:
+                    continue
+                if m.get('role') == 'user':
+                    t = _clean(_text(m))
+                    if _real_user(t):
+                        first = t
+            fh.seek(max(0, st.st_size - TAIL))
+            lines = fh.read().splitlines()[1:] if st.st_size > TAIL else fh.read().splitlines()
+    except OSError:
+        return None
+    for line in reversed(lines):
+        if last_u and last_a:
+            break
+        try:
+            m = json.loads(line).get('message') or {}
+        except ValueError:
+            continue
+        t = _clean(_text(m))
+        if m.get('role') == 'assistant' and t and not last_a:
+            last_a = t
+        elif m.get('role') == 'user' and _real_user(t) and not last_u:
+            last_u = t
+    info = {'first': first[:140], 'lastU': last_u[:160], 'lastA': last_a[:200], 'mtime': int(st.st_mtime * 1000)}
+    _TRANSCRIPTS[sid] = (path, key, info)
+    return info
+
+
+def project_of(cwd, aliases):
+    """Repository name of a folder: the nearest parent that has .git, else the folder itself."""
+    d = cwd.rstrip('/')
+    probe = d
+    while probe and probe != '/':
+        if os.path.exists(os.path.join(probe, '.git')):
+            d = probe
+            break
+        probe = os.path.dirname(probe)
+    name = os.path.basename(d)
+    return aliases.get(name, name)
+
+
+def read_sessions(feats, now, include_closed=False, with_hidden=False, details=False):
+    """Every session we know: the hook files (details, closed history) plus, as the source of truth for
+    what is open right now, `claude agents`: a session that has not triggered a hook yet is still listed."""
     aliases = config().get('aliases', {})
     bound = common.bindings()
-    out = []
+    agents = active_sessions()
+    hid = common.hidden()
+    gone = set() if with_hidden else hid
+    out, seen = [], set()
     d = common.sessions_dir()
-    if not os.path.isdir(d):
-        return out
-    for name in os.listdir(d):
+    names = os.listdir(d) if os.path.isdir(d) else []
+    for name in names:
         if not name.endswith('.json'):
             continue
         s = common.read_json(os.path.join(d, name))
         if not s:
             continue
+        sid = s.get('session', name[:-5])
         age = now - int(s.get('t', 0))
         state = s.get('state', 'idle')
-        if state == 'closed':
+        is_open = agents is not None and sid in agents and state != 'closed'
+        if state == 'closed' and not is_open:
             if not include_closed or age > HISTORY:
                 continue
-        elif age > DROP_AFTER:
+        elif not is_open and age > DROP_AFTER:
             continue
         if state == 'work' and age > WORK_STALE:
             state = 'idle'
         project = aliases.get(s.get('project'), s.get('project'))
-        out.append({'id': s.get('session', name[:-5]), 'project': project, 'branch': s.get('branch', ''),
-                    'cwd': s.get('cwd', ''), 'state': state, 'what': s.get('what', ''), 't': s.get('t', now),
-                    'feature': bound.get(s.get('session', name[:-5]))})
+        seen.add(sid)
+        if sid in gone:
+            continue
+        out.append({'id': sid, 'project': project, 'branch': s.get('branch', ''), 'cwd': s.get('cwd', ''),
+                    'state': state, 'what': s.get('what', ''), 't': s.get('t', now), 'feature': bound.get(sid),
+                    'name': ((agents or {}).get(sid) or {}).get('name', '')})
+    for sid, a in (agents or {}).items():
+        if sid in seen or sid in gone:
+            continue
+        cwd = a.get('cwd') or ''
+        out.append({'id': sid, 'project': project_of(cwd, aliases) if cwd else '', 'branch': '', 'cwd': cwd,
+                    'state': 'work' if a.get('status') == 'busy' else 'idle', 'what': '',
+                    't': int(a.get('startedAt') or now), 'quiet': True, 'feature': bound.get(sid), 'name': a.get('name', '')})
+    home_dir = os.path.expanduser('~').rstrip('/')
+    for r in out:
+        r['hidden'] = r['id'] in hid
+        r['group'] = '~ home' if (r.get('cwd') or '').rstrip('/') == home_dir else (r.get('project') or os.path.basename((r.get('cwd') or '').rstrip('/')) or 'unknown')
+    if details:
+        for r in out:
+            info = transcript_info(r['id'])
+            if info:
+                r.update(first=info['first'], lastU=info['lastU'], lastA=info['lastA'], t=max(r['t'], info['mtime']))
+                r.pop('quiet', None)
     out.sort(key=lambda x: -x['t'])
     return out
 
@@ -122,14 +263,15 @@ def state():
         f['href'] = '/f/%s/' % f['id']
     payload['live'] = True
     payload['now'] = now
-    payload['sessions'] = read_sessions(payload['features'], now)
+    payload['sessions'] = read_sessions(payload['features'], now, include_closed=True, with_hidden=True, details=True)
+    payload['favorites'] = common.favorites()
     payload['events'] = read_events(payload['features'], now)
     return payload
 
 
 # ------------------------------------------------------------------ inbox and routing
 
-PUBLIC = ('id', 'feature', 'fid', 'action', 'text', 'item', 'stage', 'state', 'route', 'session',
+PUBLIC = ('id', 'kind', 'feature', 'fid', 'action', 'text', 'item', 'stage', 'state', 'route', 'session',
           'sessionName', 'ts', 'deliveredAt', 'note', 'error')
 
 
@@ -200,15 +342,80 @@ def attach(body):
     return 200, {'ok': True}
 
 
+def tell_session(body):
+    """A free message to one session, from the Sessions tab."""
+    sid, text = body.get('session'), (body.get('text') or '').strip()
+    if not (isinstance(sid, str) and SID.match(sid)):
+        return 400, {'error': 'bad session'}
+    if not text:
+        return 400, {'error': 'write the message first'}
+    if len(text) > 2000:
+        return 400, {'error': 'text is too long (2000 characters max)'}
+    agents = active_sessions()
+    row = next((r for r in read_sessions([], int(time.time() * 1000), include_closed=True, with_hidden=True) if r['id'] == sid), None)
+    entry = {'id': uuid.uuid4().hex[:12], 'ts': int(time.time() * 1000), 'state': 'new', 'kind': 'session',
+             'feature': '', 'fid': 'session', 'stage': 0, 'stageTitle': '', 'item': 'Message to a session',
+             'action': 'ask', 'text': text, 'session': sid}
+    live = agents is not None and sid in agents
+    if live or agents is None and row and row['state'] != 'closed':
+        entry.update(route='active', sessionName=(agents or {}).get(sid, {}).get('name', ''))
+    elif row and SID.match(sid) and os.path.isdir(row.get('cwd') or ''):
+        ok, out = resume_in_background({'id': sid, 'cwd': row['cwd']}, entry)
+        entry.update(route='bg')
+        entry.update(state='delivered', deliveredAt=int(time.time() * 1000), note=out) if ok else entry.update(state='failed', error=out)
+    else:
+        return 404, {'error': 'this session is closed and its folder is unknown, so it cannot be resumed'}
+    common.save_entry(entry)
+    return 200, {'ok': True, 'entry': public(entry)}
+
+
+def favorite(body):
+    kind, ident, on = body.get('kind'), body.get('id'), body.get('action') == 'fav'
+    if kind == 'session' and isinstance(ident, str) and SID.match(ident):
+        key = 's:' + ident
+    elif kind == 'feature' and isinstance(ident, str) and SLUG.match(ident):
+        key = 'f:' + ident
+    else:
+        return 400, {'error': 'bad favorite'}
+    common.set_favorite(key, on)
+    return 200, {'ok': True}
+
+
+TRACK_TEXT = (
+    'Please track the work of this session in the whatnow dashboard as a feature. Read ~/.claude/skills/whatnow/SKILL.md '
+    'and SCHEMA.md, then write a feature.json (short slug) from what we have discussed and decided: the phases of the plan '
+    'as stages (plan items; facts only for what was really done and verified, with evidence), the deployment steps, the '
+    'checks, the ladder per project, and the open items as blockers with "who" set. Write the content in the language '
+    'we work in. Then run python3 ~/.claude/skills/whatnow/render.py --index and tell me the slug.')
+
+
 def act(body):
+    if body.get('action') == 'track':
+        return tell_session({'session': body.get('session'), 'text': TRACK_TEXT})
+    if body.get('action') in ('fav', 'unfav'):
+        return favorite(body)
+    if body.get('action') in ('hide', 'unhide'):
+        sid = body.get('session')
+        if not (isinstance(sid, str) and SID.match(sid)):
+            return 400, {'error': 'bad session'}
+        common.set_hidden(sid, body['action'] == 'hide')
+        return 200, {'ok': True}
+    if body.get('action') == 'tell':
+        return tell_session(body)
     if body.get('action') == 'attach':
         return attach(body)
+    if body.get('action') == 'sync':
+        f = body.get('feature')
+        if not (isinstance(f, str) and SLUG.match(f)):
+            return 400, {'error': 'bad feature'}
+        return request_sync(f)
     slug, fid, action = body.get('feature'), body.get('fid'), body.get('action')
     text = (body.get('text') or '').strip()
     if not (isinstance(slug, str) and SLUG.match(slug)):
         return 400, {'error': 'bad feature'}
     if not (isinstance(fid, str) and FID.match(fid)):
         return 400, {'error': 'bad item id'}
+    is_blocker = body.get('kind') == 'blocker'
     if action not in ('do', 'ask', 'skip', 'unskip'):
         return 400, {'error': 'bad action'}
     if len(text) > 2000:
@@ -218,10 +425,18 @@ def act(body):
         return 404, {'error': 'unknown feature'}
     data = render.load(src)
     found = None
-    for s in data['stages']:
-        if fid in s['fids']:
-            i = s['fids'].index(fid)
-            found = (s, i, s['facts'][i])
+    if is_blocker:                       # an item of "what is left": only Do it / Ask, no "not needed"
+        if action not in ('do', 'ask'):
+            return 400, {'error': 'bad action'}
+        b = next((x for x in data['blockers'] if x['bid'] == fid), None)
+        if b:
+            st = next(s for s in data['stages'] if s['n'] == b['stage'])
+            found = (st, 0, ['q', b['t']])
+    else:
+        for s in data['stages']:
+            if fid in s['fids']:
+                i = s['fids'].index(fid)
+                found = (s, i, s['facts'][i])
     if not found:
         return 404, {'error': 'this item no longer exists, reload the page'}
     stage, i, fact = found
@@ -241,7 +456,12 @@ def act(body):
     entry = {'id': uuid.uuid4().hex[:12], 'ts': int(time.time() * 1000), 'state': 'new',
              'feature': slug, 'featureTitle': data['title'], 'fid': fid, 'stage': stage['n'],
              'stageTitle': stage['title'], 'item': fact[1], 'action': action, 'text': text}
-    route, session, name = plan_route(slug)
+    return 200, {'ok': True, 'entry': public(send_entry(entry))}
+
+
+def send_entry(entry):
+    """Route a new inbox entry (open session / background resume / wait) and store it."""
+    route, session, name = plan_route(entry['feature'])
     entry['route'] = route
     if route == 'active':
         entry.update(session=session['id'], sessionName=name)
@@ -253,7 +473,42 @@ def act(body):
         else:
             entry.update(state='failed', error=out)
     common.save_entry(entry)
-    return 200, {'ok': True, 'entry': public(entry)}
+    return entry
+
+
+def request_sync(slug):
+    src = os.path.join(features_dir(), slug, 'feature.json')
+    if not os.path.isfile(src):
+        return 404, {'error': 'unknown feature'}
+    for e in common.inbox_entries():
+        if e.get('feature') == slug and e.get('kind') == 'sync' and e.get('state') in ('new', 'delivered'):
+            return 200, {'ok': True, 'entry': public(e)}          # one request at a time
+    data = render.load(src)
+    entry = {'id': uuid.uuid4().hex[:12], 'ts': int(time.time() * 1000), 'state': 'new', 'kind': 'sync',
+             'feature': slug, 'featureTitle': data['title'], 'fid': 'sync', 'stage': 0, 'stageTitle': '',
+             'item': 'Sync the dashboard with your latest status', 'action': 'do', 'text': ''}
+    return 200, {'ok': True, 'entry': public(send_entry(entry))}
+
+
+def version_info(slug):
+    """What the open page needs: the files' version, and whether it may be behind the agent."""
+    now = int(time.time() * 1000)
+    src = os.path.join(features_dir(), slug, 'feature.json')
+    try:
+        mtime = int(os.stat(src).st_mtime * 1000)
+    except OSError:
+        return {'v': '', 'behind': None, 'pending': False}
+    agents = active_sessions() or {}
+    behind = None
+    for s in read_sessions(common.feature_index(), now, include_closed=True):
+        if s['feature'] != slug or s['state'] == 'closed' or (agents and s['id'] not in agents):
+            continue
+        if s['state'] == 'wait' and s['t'] > mtime + 30000:
+            behind = {'name': (agents.get(s['id']) or {}).get('name', '') or s['project'], 'min': round((s['t'] - mtime) / 60000)}
+            break
+    pending = any(e.get('feature') == slug and e.get('kind') == 'sync' and e.get('state') in ('new', 'delivered')
+                  for e in common.inbox_entries())
+    return {'v': common.feature_version(slug), 'behind': behind, 'pending': pending}
 
 
 def inbox_state():
@@ -311,6 +566,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, state())
             if path == '/api/inbox':
                 return self._json(200, {'entries': inbox_state()})
+            if path == '/api/version':
+                slug = (parse_qs(u.query).get('feature') or [''])[0]
+                if not SLUG.match(slug):
+                    return self._json(400, {'error': 'bad feature'})
+                return self._json(200, version_info(slug))
             if path == '/api/sessions':
                 slug = (parse_qs(u.query).get('feature') or [''])[0]
                 if not SLUG.match(slug):

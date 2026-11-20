@@ -52,7 +52,7 @@ Rules that keep the dashboard honest:
 ## Blockers and next steps
 Rewrite `blockers` and `nextSteps` at every update from the current state; do not append blindly.
 - Candidates: ladder cells that are not `ok` below the highest rung reached, `checks` that are `no`, `q` facts that say something was not verified, open `questions`.
-- Each blocker needs `why` (the concrete risk), `todo` (one action), `proj` and `stage` (a real stage number).
+- Each blocker needs `why` (the concrete risk), `todo` (one action), `proj`, `stage` (a real stage number) and `who`: `you` if only the user can do it, `look` if the user has to check or decide, `agent` if you can do it now, `later` for later phases. The page groups the open items by `who`, so a missing `who` shows up as "Not sorted yet".
 - Severity: **high** = wrong data, security or a failed production release is possible, or unreviewed code could reach production. **mid** = a process gap that stops the release (no merge request, tests not compared). **low** = polish (translations, wording).
 - `nextSteps` is a real sequence: each step depends on the previous one. Order by dependency, not importance.
 - Never force the answer to "Yes": `render.py` shows it only when there are no blockers and every ladder cell is `ok`.

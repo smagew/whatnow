@@ -142,15 +142,27 @@ def read_pid(path):
         return 0
 
 
-def auto_bind(sid, tool_input):
-    """A session that touches a feature's folder (edits feature.json, runs render.py on it) works on it."""
+WRITE_TOOLS = ('Edit', 'Write', 'MultiEdit', 'NotebookEdit')
+SKILL_CMD = re.compile(r'(?:render|inbox)\.py([^|;&\n]*)')
+
+
+def auto_bind(sid, tool_name, tool_input):
+    """A session that WORKS on a feature is linked to it: it edits the feature's files, or runs the
+    skill's render.py / inbox.py on it. Reading or listing the files does not count."""
     try:
         import common
         if not isinstance(tool_input, dict):
             return
         feats = common.feature_index()
-        for key in ('file_path', 'path', 'notebook_path', 'command'):
-            slug = common.slug_in(tool_input.get(key), feats)
+        if tool_name in WRITE_TOOLS:
+            texts = [tool_input.get('file_path'), tool_input.get('notebook_path')]
+        elif tool_name == 'Bash':
+            # only the arguments of render.py / inbox.py count, not a path elsewhere in the command line
+            texts = [m.group(1) for m in SKILL_CMD.finditer(tool_input.get('command') or '')]
+        else:
+            return
+        for text in texts:
+            slug = common.slug_in(text, feats)
             if slug:
                 common.bind(sid, slug)
                 return
@@ -172,9 +184,9 @@ def watch(payload):
     """Stop / SessionStart: wait while the session is idle; exit 2 when a message arrives (wakes Claude)."""
     import common
     sid = payload.get('session_id') or ''
-    slug = common.feature_of(sid)
-    if not slug or not sid:
-        return 0                      # a session that belongs to no feature never needs a watcher
+    slug = common.feature_of(sid)          # may be None: messages can also be addressed to the session itself
+    if not sid:
+        return 0
     wdir = os.path.join(HOME, 'watch')
     os.makedirs(wdir, exist_ok=True)
     pidf = os.path.join(wdir, '%s.pid' % re.sub(r'[^A-Za-z0-9_-]', '_', sid))
@@ -213,6 +225,44 @@ def watch(payload):
             pass
 
 
+def nudge(payload):
+    """Stop: a session linked to a feature that finished a turn without touching the feature's file is
+    reminded, once per user prompt, to bring the dashboard in line with what it just told the user.
+    The reminder (stderr, exit code 2) wakes the session. `\"nudge\": false` in config.json turns it off."""
+    import common
+    sid = payload.get('session_id') or ''
+    slug = common.feature_of(sid)
+    if not slug or common.config().get('nudge') is False:
+        return 0
+    key = re.sub(r'[^A-Za-z0-9_-]', '_', sid)
+    st = read_json(os.path.join(HOME, 'sessions', '%s.json' % key))
+    prompt_t = st.get('promptT') or 0
+    if not prompt_t:
+        return 0
+    try:
+        updated = os.stat(os.path.join(common.features_dir(), slug, 'feature.json')).st_mtime * 1000
+    except OSError:
+        return 0
+    if updated >= prompt_t:
+        return 0                                  # the feature file was updated during this turn
+    mark = os.path.join(HOME, 'nudged', key)
+    os.makedirs(os.path.dirname(mark), exist_ok=True)
+    try:
+        with open(mark) as fh:
+            if fh.read().strip() == str(prompt_t):
+                return 0                          # already reminded for this prompt: never loop
+    except OSError:
+        pass
+    with open(mark, 'w') as fh:
+        fh.write(str(prompt_t))
+    sys.stderr.write(
+        '[whatnow] You finished a turn on feature "%s" without updating its dashboard. If you told the user anything '
+        'about status, open items, results or what is left, make feature.json match it now (set "who" on every blocker, '
+        'keep evidence for anything marked done), then run python3 ~/.claude/skills/whatnow/render.py --index. '
+        'If nothing changed, reply with just "dashboard in sync".\n' % slug)
+    return 2
+
+
 def main():
     payload = json.load(sys.stdin)
     event = payload.get('hook_event_name') or ''
@@ -224,6 +274,8 @@ def main():
         return deliver(payload)
     if '--watch' in sys.argv:
         return watch(payload)
+    if '--nudge' in sys.argv:
+        return nudge(payload)
     spath = os.path.join(HOME, 'sessions', '%s.json' % re.sub(r'[^A-Za-z0-9_-]', '_', sid))
 
     if event == 'SessionEnd':
@@ -240,12 +292,13 @@ def main():
         'project': os.path.basename(top or cwd.rstrip('/')),
         'branch': git(cwd, 'branch', '--show-current') or git(cwd, 'rev-parse', '--short', 'HEAD'),
         'state': prev.get('state', 'idle'), 'what': prev.get('what', ''), 't': int(time.time() * 1000),
+        'promptT': prev.get('promptT', 0),
     }
 
     if event == 'SessionStart':
         state.update(state='idle', what='session started')
     elif event == 'UserPromptSubmit':
-        state.update(state='work', what='received a prompt')
+        state.update(state='work', what='received a prompt', promptT=state['t'])
     elif event in ('PostToolUse', 'PostToolUseFailure'):
         if payload.get('tool_name') == 'Bash':
             kind, ok, text = classify(payload, event == 'PostToolUseFailure')
@@ -255,7 +308,7 @@ def main():
                               'branch': state['branch'], 'kind': kind, 'ok': ok, 'text': text})
         else:
             state.update(state='work')
-        auto_bind(sid, payload.get('tool_input'))
+        auto_bind(sid, payload.get('tool_name'), payload.get('tool_input'))
     elif event == 'Stop':
         state.update(state='wait', what='answered, waiting for you')
     elif event == 'Notification':

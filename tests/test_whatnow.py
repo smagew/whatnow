@@ -172,6 +172,14 @@ class FixedFactTest(unittest.TestCase):
         self.assertEqual(render.stage_state([['fixed', 'b'], ['bad', 'open']]), 'bad')
         self.assertEqual(render.stage_state([['q', 'a'], ['q', 'b']]), 'no')
 
+    def test_stage_colour_says_how_worried_to_be(self):
+        import render
+        nine = [['y', str(i)] for i in range(9)]
+        self.assertEqual(render.stage_state(nine + [['q', 'x']]), 'almost')       # 90% done
+        self.assertEqual(render.stage_state(nine[:4] + [['q', 'x']]), 'almost')   # 80% done
+        self.assertEqual(render.stage_state(nine[:3] + [['q', 'x']]), 'part')     # 75% done
+        self.assertEqual(render.stage_state(nine + [['bad', 'x']]), 'bad')        # an open problem always shows
+
 
 if __name__ == '__main__':
     unittest.main()

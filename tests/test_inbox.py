@@ -171,6 +171,176 @@ class AttachTest(Env):
         self.assertEqual(self.server.plan_route('demo-feature')[0], 'bg')
 
 
+class BlockerItemTest(Env):
+    def setUp(self):
+        super().setUp()
+        import server, render, common
+        self.server = server
+        path = os.path.join(self.feats, 'demo-feature', 'feature.json')
+        with open(path) as fh:
+            d = json.load(fh)
+        d['blockers'] = [{'t': 'Need an account', 'why': 'w', 'todo': 't', 'proj': ['api'], 'stage': 1, 'sev': 'high', 'who': 'you'}]
+        with open(path, 'w') as fh:
+            json.dump(d, fh)
+        self.bid = render.load(path)['blockers'][0]['bid']
+        server.active_sessions = lambda: {}
+
+    def test_ask_and_do_go_to_the_inbox_with_the_item_text(self):
+        for action in ('ask', 'do'):
+            code, obj = self.server.act({'feature': 'demo-feature', 'fid': self.bid, 'kind': 'blocker', 'action': action, 'text': 'hi'})
+            self.assertEqual(code, 200)
+            self.assertEqual((obj['entry']['item'], obj['entry']['stage']), ('Need an account', 1))
+
+    def test_not_needed_is_refused_for_these_items(self):
+        code, _ = self.server.act({'feature': 'demo-feature', 'fid': self.bid, 'kind': 'blocker', 'action': 'skip'})
+        self.assertEqual(code, 400)
+
+    def test_unknown_item_is_404(self):
+        code, _ = self.server.act({'feature': 'demo-feature', 'fid': '0123456789', 'kind': 'blocker', 'action': 'ask'})
+        self.assertEqual(code, 404)
+
+    def test_who_is_validated(self):
+        import render
+        path = os.path.join(self.feats, 'demo-feature', 'feature.json')
+        with open(path) as fh:
+            d = json.load(fh)
+        d['blockers'][0]['who'] = 'nobody'
+        with self.assertRaises(render.DataError):
+            render.prepare(d)
+
+
+class SyncTest(Env):
+    def setUp(self):
+        super().setUp()
+        import server
+        self.server = server
+        server.active_sessions = lambda: {'66666666-ffff': {'name': 'api-work'}}
+        self.src = os.path.join(self.feats, 'demo-feature', 'feature.json')
+
+    def test_version_changes_with_the_file(self):
+        import common
+        v = common.feature_version('demo-feature')
+        os.utime(self.src, (time.time() + 5, time.time() + 5))
+        self.assertNotEqual(common.feature_version('demo-feature'), v)
+
+    def test_behind_when_the_session_finished_a_turn_after_the_last_update(self):
+        os.utime(self.src, (time.time() - 600, time.time() - 600))
+        self.session('66666666-ffff', 'wait')
+        info = self.server.version_info('demo-feature')
+        self.assertEqual(info['behind']['name'], 'api-work')
+        self.assertGreaterEqual(info['behind']['min'], 9)
+
+    def test_not_behind_when_the_file_was_updated_in_the_same_turn(self):
+        self.session('66666666-ffff', 'wait')
+        os.utime(self.src, (time.time() + 1, time.time() + 1))
+        self.assertIsNone(self.server.version_info('demo-feature')['behind'])
+
+    def test_not_behind_while_the_session_works(self):
+        os.utime(self.src, (time.time() - 600, time.time() - 600))
+        self.session('66666666-ffff', 'work')
+        self.assertIsNone(self.server.version_info('demo-feature')['behind'])
+
+    def test_sync_request_goes_to_the_session_once(self):
+        self.session('66666666-ffff', 'wait')
+        code, obj = self.server.act({'feature': 'demo-feature', 'action': 'sync'})
+        self.assertEqual((code, obj['entry']['route'], obj['entry']['kind']), (200, 'active', 'sync'))
+        code2, obj2 = self.server.act({'feature': 'demo-feature', 'action': 'sync'})
+        self.assertEqual(obj2['entry']['id'], obj['entry']['id'])           # no second request while one is open
+        self.assertTrue(self.server.version_info('demo-feature')['pending'])
+        import common
+        text = common.format_message(common.inbox_entries()[0])
+        self.assertIn('Sync request', text)
+        self.assertIn('inbox.py resolve', text)
+
+
+class SessionsTabTest(Env):
+    def setUp(self):
+        super().setUp()
+        import server
+        self.server = server
+        server.active_sessions = lambda: {'77777777-aaaa': {'name': 'api-xx', 'cwd': self.home, 'status': 'idle', 'startedAt': 5}}
+        self.claude = tempfile.mkdtemp()
+        self.saved_cfg = os.environ.get('CLAUDE_CONFIG_DIR')
+        os.environ['CLAUDE_CONFIG_DIR'] = self.claude
+        server._TRANSCRIPTS.clear()
+        proj = os.path.join(self.claude, 'projects', '-x')
+        os.makedirs(proj)
+        rows = [{'message': {'role': 'user', 'content': '<system-reminder>noise</system-reminder>'}},
+                {'message': {'role': 'user', 'content': 'why does the cron stop on this error'}},
+                {'message': {'role': 'assistant', 'content': [{'type': 'text', 'text': 'Because of **die** in `parseRow()`'}]}},
+                {'message': {'role': 'user', 'content': 'and how do we fix it'}},
+                {'message': {'role': 'assistant', 'content': [{'type': 'text', 'text': 'Replace it with an exception.'}]}}]
+        with open(os.path.join(proj, '77777777-aaaa.jsonl'), 'w') as fh:
+            fh.write('\n'.join(json.dumps(r) for r in rows) + '\n')
+
+    def tearDown(self):
+        if self.saved_cfg is None:
+            os.environ.pop('CLAUDE_CONFIG_DIR', None)
+        else:
+            os.environ['CLAUDE_CONFIG_DIR'] = self.saved_cfg
+        super().tearDown()
+
+    def test_session_without_any_hook_event_is_listed_with_what_it_is_about(self):
+        rows = self.server.read_sessions([], int(time.time() * 1000), details=True)
+        self.assertEqual(len(rows), 1)
+        r = rows[0]
+        self.assertEqual((r['id'], r['name']), ('77777777-aaaa', 'api-xx'))
+        self.assertEqual(r['first'], 'why does the cron stop on this error')
+        self.assertEqual(r['lastU'], 'and how do we fix it')
+        self.assertEqual(r['lastA'], 'Replace it with an exception.')
+        self.assertNotIn('quiet', r)
+
+    def test_hide_and_unhide(self):
+        self.assertEqual(self.server.act({'action': 'hide', 'session': '77777777-aaaa'})[0], 200)
+        self.assertEqual(self.server.read_sessions([], 1, details=True), [])
+        self.assertEqual(len(self.server.read_sessions([], 1, with_hidden=True)), 1)
+        self.server.act({'action': 'unhide', 'session': '77777777-aaaa'})
+        self.assertEqual(len(self.server.read_sessions([], 1)), 1)
+        self.assertEqual(self.server.act({'action': 'hide', 'session': '../x'})[0], 400)
+
+    def test_tell_an_open_session(self):
+        code, obj = self.server.act({'action': 'tell', 'session': '77777777-aaaa', 'text': 'status please'})
+        self.assertEqual((code, obj['entry']['route'], obj['entry']['session']), (200, 'active', '77777777-aaaa'))
+        import common
+        self.assertIn('status please', common.format_message(common.inbox_entries()[0]))
+        self.assertEqual(self.server.act({'action': 'tell', 'session': '77777777-aaaa', 'text': ' '})[0], 400)
+
+    def test_track_asks_the_session_to_create_a_feature(self):
+        code, obj = self.server.act({'action': 'track', 'session': '77777777-aaaa'})
+        self.assertEqual((code, obj['entry']['route']), (200, 'active'))
+        import common
+        text = common.format_message(common.inbox_entries()[0])
+        self.assertIn('feature.json', text)
+        self.assertIn('render.py --index', text)
+
+    def test_tell_a_closed_session_resumes_it_in_background(self):
+        self.server.active_sessions = lambda: {}
+        self.session('88888888-bbbb', 'closed', feature=None)
+        calls = []
+        self.server.resume_in_background = lambda s, e: (calls.append(s['id']) or True, 'ok')
+        code, obj = self.server.act({'action': 'tell', 'session': '88888888-bbbb', 'text': 'continue'})
+        self.assertEqual((code, obj['entry']['route'], calls), (200, 'bg', ['88888888-bbbb']))
+        self.assertEqual(self.server.act({'action': 'tell', 'session': '99999999-cccc', 'text': 'x'})[0], 404)
+
+
+class FavoriteTest(Env):
+    def test_star_and_unstar_sessions_and_features(self):
+        import server, common
+        self.assertEqual(server.act({'action': 'fav', 'kind': 'session', 'id': '77777777-aaaa'})[0], 200)
+        self.assertEqual(server.act({'action': 'fav', 'kind': 'feature', 'id': 'demo-feature'})[0], 200)
+        self.assertEqual(server.act({'action': 'fav', 'kind': 'feature', 'id': 'demo-feature'})[0], 200)   # twice: once
+        self.assertEqual(common.favorites(), ['s:77777777-aaaa', 'f:demo-feature'])
+        self.assertEqual(server.state()['favorites'], ['s:77777777-aaaa', 'f:demo-feature'])
+        server.act({'action': 'unfav', 'kind': 'session', 'id': '77777777-aaaa'})
+        self.assertEqual(common.favorites(), ['f:demo-feature'])
+
+    def test_favorite_input_is_validated(self):
+        import server
+        for body in ({'action': 'fav', 'kind': 'session', 'id': '../x'}, {'action': 'fav', 'kind': 'feature', 'id': 'a b'},
+                     {'action': 'fav', 'kind': 'other', 'id': 'x'}, {'action': 'fav', 'kind': 'session'}):
+            self.assertEqual(server.act(body)[0], 400)
+
+
 class ClaimTest(Env):
     def entry(self, **kw):
         import common
@@ -231,17 +401,56 @@ class HookDeliveryTest(Env):
         r = self.run_hook('--deliver', dict(self.payload, session_id='s2'))     # same repo and branch, but not linked
         self.assertEqual(r.stdout, '')
 
-    def test_touching_the_feature_files_links_the_session(self):
+    def test_working_on_the_feature_files_links_the_session_but_reading_does_not(self):
         import common
         path = os.path.join(self.feats, 'demo-feature', 'feature.json')
-        for sid, tool_input in (('e1', {'file_path': path}), ('e2', {'command': 'python3 render.py "%s" --open' % path}),
-                                ('e3', {'command': 'ls %s/demo-feature' % self.feats})):
+        cases = (('e1', 'Edit', {'file_path': path}, 'demo-feature'),
+                 ('e2', 'Write', {'file_path': path}, 'demo-feature'),
+                 ('e3', 'Bash', {'command': 'python3 ~/.claude/skills/whatnow/render.py "%s" --open' % path}, 'demo-feature'),
+                 ('r0', 'Bash', {'command': 'cp %s /tmp/x/ && python3 render.py /tmp/x/feature.json' % path}, None),
+                 ('r1', 'Read', {'file_path': path}, None),
+                 ('r2', 'Bash', {'command': 'cat %s' % path}, None),
+                 ('r3', 'Bash', {'command': 'ls %s/demo-feature' % self.feats}, None),
+                 ('r4', 'Edit', {'file_path': '/tmp/other/feature.json'}, None))
+        for sid, tool, tool_input, want in cases:
             self.run_hook('x', {'session_id': sid, 'cwd': self.repo, 'hook_event_name': 'PostToolUse',
-                                'tool_name': 'Edit', 'tool_input': tool_input})
-            self.assertEqual(common.feature_of(sid), 'demo-feature', sid)
-        self.run_hook('x', {'session_id': 'e4', 'cwd': self.repo, 'hook_event_name': 'PostToolUse',
-                            'tool_name': 'Edit', 'tool_input': {'file_path': '/tmp/other/feature.json'}})
-        self.assertIsNone(common.feature_of('e4'))
+                                'tool_name': tool, 'tool_input': tool_input})
+            self.assertEqual(common.feature_of(sid), want, sid)
+
+    def stop(self, sid='s1', mode='--nudge'):
+        return self.run_hook(mode, {'session_id': sid, 'cwd': self.repo, 'hook_event_name': 'Stop'})
+
+    def prompt(self, sid='s1'):
+        self.run_hook('x', {'session_id': sid, 'cwd': self.repo, 'hook_event_name': 'UserPromptSubmit'})
+
+    def test_nudge_reminds_once_when_the_turn_left_the_dashboard_untouched(self):
+        path = os.path.join(self.feats, 'demo-feature', 'feature.json')
+        os.utime(path, (time.time() - 600, time.time() - 600))
+        self.prompt()
+        r = self.stop()
+        self.assertEqual(r.returncode, 2)
+        self.assertIn('without updating its dashboard', r.stderr)
+        self.assertEqual(self.stop().returncode, 0)                 # same prompt: never twice, so no loop
+        self.prompt()
+        self.assertEqual(self.stop().returncode, 2)                 # a new prompt may be reminded again
+
+    def test_nudge_is_silent_when_the_file_was_updated_or_the_session_is_not_linked(self):
+        path = os.path.join(self.feats, 'demo-feature', 'feature.json')
+        os.utime(path, (time.time() - 600, time.time() - 600))
+        self.prompt()
+        os.utime(path, None)                                        # updated during the turn
+        self.assertEqual(self.stop().returncode, 0)
+        os.utime(path, (time.time() - 600, time.time() - 600))
+        self.prompt('s2')
+        self.assertEqual(self.stop('s2').returncode, 0)             # s2 is not linked to a feature
+
+    def test_nudge_can_be_turned_off(self):
+        path = os.path.join(self.feats, 'demo-feature', 'feature.json')
+        os.utime(path, (time.time() - 600, time.time() - 600))
+        with open(os.path.join(self.home, 'config.json'), 'w') as fh:
+            json.dump({'nudge': False}, fh)
+        self.prompt()
+        self.assertEqual(self.stop().returncode, 0)
 
     def test_taking_a_message_links_the_session(self):
         import common
@@ -258,8 +467,18 @@ class HookDeliveryTest(Env):
         self.assertIn('abc123def456', r.stderr)
 
     def test_watcher_exits_quietly_for_a_session_without_a_feature(self):
-        r = self.run_hook('--watch', dict(self.payload, session_id='unlinked', hook_event_name='Stop'))
-        self.assertEqual((r.returncode, r.stderr), (0, ''))
+        r = self.run_hook('--watch', dict(self.payload, session_id='unlinked', hook_event_name='Stop'),
+                          WHATNOW_WATCH_SECONDS='0.5', WHATNOW_WATCH_POLL='0.2')
+        self.assertEqual((r.returncode, r.stderr), (0, ''))               # nothing is addressed to it
+
+    def test_a_message_addressed_to_an_unlinked_session_wakes_it(self):
+        import common
+        common.save_entry({'id': 'aaa111bbb222', 'ts': 2, 'state': 'new', 'kind': 'session', 'feature': '', 'fid': 'session',
+                           'stage': 0, 'item': 'Message to a session', 'action': 'ask', 'text': 'hello there', 'session': 'unlinked'})
+        r = self.run_hook('--watch', dict(self.payload, session_id='unlinked', hook_event_name='Stop'), WHATNOW_WATCH_POLL='0.2')
+        self.assertEqual(r.returncode, 2)
+        self.assertIn('hello there', r.stderr)
+        self.assertNotIn('Stage', r.stderr)
 
     def test_watcher_waits_then_gives_up_at_its_deadline(self):
         import common
@@ -368,7 +587,7 @@ class HooksInstallTest(unittest.TestCase):
         self.assertEqual(once['theme'], 'x')
         stop = [g['hooks'][0]['command'] for g in once['hooks']['Stop']]
         self.assertIn('echo mine', stop)
-        self.assertEqual(sum('whatnow/hook.py' in c for c in stop), 2)       # state hook + watcher
+        self.assertEqual(sum('whatnow/hook.py' in c for c in stop), 3)       # state hook, watcher, nudge
 
     def test_wake_and_deliver_entries(self):
         d = self.h.install({})
@@ -380,7 +599,7 @@ class HooksInstallTest(unittest.TestCase):
     def test_upgrade_from_the_old_set_only_adds(self):
         old = {'hooks': {'Stop': [{'hooks': [{'type': 'command', 'command': 'python3 ~/.claude/skills/whatnow/hook.py', 'async': True}]}]}}
         new = self.h.install(json.loads(json.dumps(old)))
-        self.assertEqual(len(new['hooks']['Stop']), 2)
+        self.assertEqual(len(new['hooks']['Stop']), 3)
 
     def test_uninstall_removes_only_ours(self):
         d = self.h.install({'hooks': {'Stop': [{'hooks': [{'type': 'command', 'command': 'echo mine'}]}]}})
