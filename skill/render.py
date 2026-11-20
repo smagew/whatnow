@@ -7,6 +7,8 @@ Validates the data, derives statuses, and fails with a clear message if the
 file breaks the rules in SCHEMA.md. Python 3 standard library only.
 """
 import json, sys, os, subprocess, datetime
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import common
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FACT = ('y', 'bad', 'p', 'q')            # done, problem/rework, partial, not done
@@ -222,7 +224,7 @@ def main():
     args = [a for a in argv if not a.startswith('--')]
     try:
         if '--index' in argv:
-            root = os.path.abspath(args[0] if args else os.environ.get('FEATURES_DIR', os.path.expanduser('~/www/features')))
+            root = os.path.abspath(args[0]) if args else common.features_dir()
             if not os.path.isdir(root):
                 sys.exit('features folder not found: %s' % root)
             out, bad = build_index(root)

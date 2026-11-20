@@ -6,10 +6,7 @@
 Serves http://127.0.0.1:<port>/ . The page polls /api/state every few seconds. On each request
 the server re-reads every feature.json and the hook data, so nothing has to be rebuilt.
 
-Config: <home>/config.json  (home = $WHATNOW_HOME or ~/.whatnow)
-  {"featuresDir": "/path/to/features",           # default <home>/features
-   "aliases": {"my-web-app-repo": "web"},        # repo folder name -> project name used in feature.json
-   "port": 7777}
+Config: see common.py (<home>/config.json, home = $WHATNOW_HOME or ~/.whatnow).
 Only listens on 127.0.0.1 and rejects foreign Host headers.
 """
 import json, os, re, subprocess, sys, time
@@ -17,24 +14,17 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import common  # noqa: E402
 import render  # noqa: E402
 
-HOME = os.environ.get('WHATNOW_HOME') or os.path.expanduser('~/.whatnow')
+HOME = common.home()
 WORK_STALE = 10 * 60 * 1000       # "работает" without a single event for 10 min is not trusted
 DROP_AFTER = 6 * 3600 * 1000      # a session silent for 6 h is not shown
 SLUG = re.compile(r'^[A-Za-z0-9._-]+$')
 
 
-def config():
-    try:
-        with open(os.path.join(HOME, 'config.json'), encoding='utf-8') as fh:
-            return json.load(fh)
-    except Exception:
-        return {}
-
-
-def features_dir():
-    return os.path.expanduser(config().get('featuresDir') or os.path.join(HOME, 'features'))
+config = common.config
+features_dir = common.features_dir
 
 
 def match_feature(feats, project, branch):
@@ -158,7 +148,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     argv = sys.argv[1:]
-    port = int(argv[argv.index('--port') + 1]) if '--port' in argv else int(config().get('port', 7777))
+    port = int(argv[argv.index('--port') + 1]) if '--port' in argv else common.port()
     try:
         srv = ThreadingHTTPServer(('127.0.0.1', port), Handler)
     except OSError as e:

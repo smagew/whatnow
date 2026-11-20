@@ -102,5 +102,61 @@ class ServerMatchTest(unittest.TestCase):
         self.assertIsNone(m(feats, 'api', 'master'))
 
 
+
+class ConfigTest(unittest.TestCase):
+    def run_in(self, env, code):
+        e = {k: v for k, v in os.environ.items() if k not in ('WHATNOW_HOME', 'FEATURES_DIR')}
+        e.update(env)
+        r = subprocess.run([sys.executable, '-c', 'import sys; sys.path.insert(0, %r); import common; %s' % (SKILL, code)],
+                           capture_output=True, text=True, env=e)
+        return r.stdout.strip()
+
+    def test_defaults_do_not_depend_on_the_machine(self):
+        home = tempfile.mkdtemp()
+        self.assertEqual(self.run_in({'WHATNOW_HOME': home}, 'print(common.features_dir())'), os.path.realpath(home) + '/features'
+                         if os.path.realpath(home) == home else os.path.join(home, 'features'))
+        self.assertEqual(self.run_in({'WHATNOW_HOME': home}, 'print(common.port())'), '7777')
+
+    def test_config_file_and_env_override(self):
+        home = tempfile.mkdtemp()
+        with open(os.path.join(home, 'config.json'), 'w') as fh:
+            json.dump({'featuresDir': '/data/feats', 'port': 8123}, fh)
+        self.assertEqual(self.run_in({'WHATNOW_HOME': home}, 'print(common.features_dir())'), '/data/feats')
+        self.assertEqual(self.run_in({'WHATNOW_HOME': home}, 'print(common.port())'), '8123')
+        self.assertEqual(self.run_in({'WHATNOW_HOME': home, 'FEATURES_DIR': '/other'}, 'print(common.features_dir())'), '/other')
+
+    def test_broken_config_falls_back_to_defaults(self):
+        home = tempfile.mkdtemp()
+        with open(os.path.join(home, 'config.json'), 'w') as fh:
+            fh.write('{broken')
+        self.assertEqual(self.run_in({'WHATNOW_HOME': home}, 'print(common.port())'), '7777')
+
+
+class AutostartTest(unittest.TestCase):
+    def test_plist_is_valid_and_portable(self):
+        import plistlib, autostart
+        text = autostart.build_plist(['/py/python3', '/s/server.py', '--port', '7777'], '/h/server.log', {'WHATNOW_HOME': '/h'})
+        d = plistlib.loads(text.encode())
+        self.assertEqual(d['Label'], 'whatnow.server')
+        self.assertTrue(d['RunAtLoad'] and d['KeepAlive'])
+        self.assertEqual(d['ProgramArguments'], ['/py/python3', '/s/server.py', '--port', '7777'])
+        self.assertEqual(d['EnvironmentVariables'], {'WHATNOW_HOME': '/h'})
+
+    def test_systemd_unit(self):
+        import autostart
+        unit = autostart.build_unit(['/py/python3', '/path with space/server.py', '--port', '7777'], '/h/server.log', {})
+        self.assertIn('ExecStart="/py/python3" "/path with space/server.py" "--port" "7777"', unit)
+        self.assertIn('Restart=on-failure', unit)
+        self.assertIn('WantedBy=default.target', unit)
+        self.assertNotIn('Environment=', unit)
+
+    def test_no_machine_specific_path_in_the_source(self):
+        for name in ('autostart.py', 'common.py', 'render.py', 'server.py', 'hook.py', 'hooks_install.py'):
+            with open(os.path.join(SKILL, name), encoding='utf-8') as fh:
+                src = fh.read()
+            self.assertNotIn('/Users/', src, name)
+            self.assertNotIn('/www/', src, name)
+
+
 if __name__ == '__main__':
     unittest.main()
