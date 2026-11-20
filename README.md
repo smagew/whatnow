@@ -57,7 +57,7 @@ Claude Code hooks -> hook.py -> ~/.whatnow/sessions/*.json + events.jsonl -> ser
   The text of your prompts is never stored.
 - `server.py` serves `http://127.0.0.1:7777/` and re-reads `feature.json` and the hook data on every request.
   It listens on 127.0.0.1 only.
-- A session is linked to a feature by branch name (`feature/<feature-folder>`) or by `branches` in `feature.json`.
+- A session is linked to a feature, never a branch or folder. It links itself the moment it touches the feature's files (edits `feature.json`, runs `render.py` on it) or takes a message from the dashboard. You can also click **Attach a session** in the header of the feature page and pick one from the list, open or closed. Links live in `~/.whatnow/bindings.json`.
   A session without a feature is shown in its project's card area as a session without a feature.
 
 Install the hooks (backup, merge with your existing hooks, safe to repeat):

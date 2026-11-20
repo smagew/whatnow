@@ -90,17 +90,23 @@ class HookTest(unittest.TestCase):
             self.assertEqual((r.returncode, r.stdout, r.stderr), (0, '', ''))
 
 
-class ServerMatchTest(unittest.TestCase):
-    def test_branch_to_feature(self):
-        import server
-        feats = [{'id': 'csv-export', 'projects': ['api', 'web'], 'branches': []},
-                 {'id': 'reports', 'projects': ['api'], 'branches': ['hotfix/export']}]
-        m = server.match_feature
-        self.assertEqual(m(feats, 'api', 'feature/csv-export'), 'csv-export')
-        self.assertIsNone(m(feats, 'mobile', 'feature/csv-export'))      # project not part of the feature
-        self.assertEqual(m(feats, 'api', 'hotfix/export'), 'reports')          # explicit "branches"
-        self.assertIsNone(m(feats, 'api', 'master'))
-
+class BindingTest(unittest.TestCase):
+    def test_bind_and_find(self):
+        import common
+        old = os.environ.get('WHATNOW_HOME')
+        os.environ['WHATNOW_HOME'] = tempfile.mkdtemp()
+        try:
+            self.assertIsNone(common.feature_of('s1'))
+            self.assertTrue(common.bind('s1', 'csv-export'))
+            self.assertFalse(common.bind('s1', 'csv-export'))           # nothing changed
+            self.assertTrue(common.bind('s1', 'reports'))               # the last feature wins
+            self.assertEqual(common.feature_of('s1'), 'reports')
+            self.assertFalse(common.bind('', 'x'))
+        finally:
+            if old is None:
+                os.environ.pop('WHATNOW_HOME')
+            else:
+                os.environ['WHATNOW_HOME'] = old
 
 
 class ConfigTest(unittest.TestCase):
@@ -156,6 +162,15 @@ class AutostartTest(unittest.TestCase):
                 src = fh.read()
             self.assertNotIn('/Users/', src, name)
             self.assertNotIn('/www/', src, name)
+
+
+class FixedFactTest(unittest.TestCase):
+    def test_fixed_does_not_colour_the_stage(self):
+        import render
+        self.assertEqual(render.stage_state([['y', 'a'], ['fixed', 'b']]), 'ok')
+        self.assertEqual(render.stage_state([['fixed', 'b'], ['q', 'c']]), 'part')
+        self.assertEqual(render.stage_state([['fixed', 'b'], ['bad', 'open']]), 'bad')
+        self.assertEqual(render.stage_state([['q', 'a'], ['q', 'b']]), 'no')
 
 
 if __name__ == '__main__':

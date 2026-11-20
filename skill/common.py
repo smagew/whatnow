@@ -66,7 +66,7 @@ def claude_bin():
 # ---------------------------------------------------------------- features
 
 def feature_index():
-    """Light list of features for matching: [{id, title, projects, branches}]. Never raises."""
+    """Light list of features for matching: [{id, title, projects}]. Never raises."""
     out = []
     root = features_dir()
     try:
@@ -78,27 +78,56 @@ def feature_index():
         try:
             with open(src, encoding='utf-8') as fh:
                 d = json.load(fh)
-            out.append({'id': slug, 'title': d.get('title', slug), 'projects': list(d.get('projects', [])),
-                        'branches': [b for b in d.get('branches', []) if isinstance(b, str)]})
+            out.append({'id': slug, 'title': d.get('title', slug), 'projects': list(d.get('projects', []))})
         except (OSError, ValueError, AttributeError):
             continue
     return out
 
 
-def match_feature(feats, project, branch):
-    """A session belongs to a feature when its branch is listed in "branches", or when the feature
-    slug is part of the branch name (and the project is one of the feature's projects)."""
-    b = (branch or '').lower()
-    for f in feats:
-        if branch and branch in f.get('branches', []):
-            return f['id']
+def bindings_path():
+    return os.path.join(home(), 'bindings.json')
+
+
+def bindings():
+    """{sessionId: feature slug}: which session works on which feature."""
+    d = read_json(bindings_path())
+    return d if isinstance(d, dict) else {}
+
+
+def feature_of(session_id):
+    return bindings().get(session_id)
+
+
+def bind(session_id, slug):
+    """Link a session to a feature (a session works on one feature at a time; the last one wins).
+    Returns True when something changed."""
+    if not session_id or not slug:
+        return False
+    b = bindings()
+    if b.get(session_id) == slug:
+        return False
+    b[session_id] = slug
+    atomic_write_json(bindings_path(), b)
+    return True
+
+
+def slug_in(text, feats):
+    """The feature whose folder inside the features directory is mentioned in `text` (a path or a
+    shell command); the longest folder name wins. None when no feature is mentioned."""
+    if not isinstance(text, str) or not text:
+        return None
+    root = features_dir().rstrip('/')
+    variants = {root, os.path.realpath(root)}
+    home_dir = os.path.expanduser('~')
+    if root.startswith(home_dir):
+        variants.add('~' + root[len(home_dir):])
     best = None
     for f in feats:
-        slug = f['id'].lower()
-        if slug and slug in b and project in f['projects']:
-            if best is None or len(slug) > len(best):
-                best = slug
-    return next((f['id'] for f in feats if f['id'].lower() == best), None)
+        for r in variants:
+            if '%s/%s/' % (r, f['id']) in text or '%s/%s"' % (r, f['id']) in text or text.endswith('%s/%s' % (r, f['id'])):
+                if best is None or len(f['id']) > len(best):
+                    best = f['id']
+    return best
 
 
 # ---------------------------------------------------------------- small helpers
@@ -184,5 +213,6 @@ def claim(session_id, slug):
             continue
         e.update(state='delivered', session=session_id, deliveredAt=int(time.time() * 1000))
         save_entry(e)
+        bind(session_id, e.get('feature'))     # a session that took a message works on that feature
         got.append(e)
     return got

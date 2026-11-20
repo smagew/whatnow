@@ -34,12 +34,15 @@ class Env(unittest.TestCase):
         import render
         return render.load(os.path.join(self.feats, 'demo-feature', 'feature.json'))['stages'][0]['fids'][idx]
 
-    def session(self, sid='11111111-aaaa', state='idle', branch='feature/demo-feature', project='api', cwd=None):
+    def session(self, sid='11111111-aaaa', state='idle', branch='main', project='api', cwd=None, feature='demo-feature'):
         d = os.path.join(self.home, 'sessions')
         os.makedirs(d, exist_ok=True)
         with open(os.path.join(d, sid + '.json'), 'w') as fh:
             json.dump({'session': sid, 'cwd': cwd or self.home, 'project': project, 'branch': branch,
                        'state': state, 'what': '', 't': int(time.time() * 1000)}, fh)
+        if feature:
+            import common
+            common.bind(sid, feature)
 
 
 class OverridesTest(Env):
@@ -132,9 +135,40 @@ class RoutingTest(Env):
         self.assertEqual((e['route'], e['state']), ('none', 'new'))
 
     def test_session_of_another_feature_is_not_used(self):
-        self.session('33333333-cccc', 'idle', branch='feature/something-else')
+        self.session('33333333-cccc', 'idle', feature=None)
         self.server.active_sessions = lambda: {'33333333-cccc': {'name': 'x'}}
         self.assertEqual(self.send()['route'], 'none')
+
+
+class AttachTest(Env):
+    def setUp(self):
+        super().setUp()
+        import server
+        self.server = server
+        server.active_sessions = lambda: {'44444444-dddd': {'name': 'api-work'}}
+
+    def test_attach_links_a_session_and_the_picker_shows_it(self):
+        self.session('44444444-dddd', 'idle', feature=None)
+        self.session('55555555-eeee', 'closed', feature=None)
+        pick = self.server.pick_list('demo-feature')
+        self.assertEqual([s['id'] for s in pick['sessions']], ['44444444-dddd', '55555555-eeee'])   # open first
+        self.assertEqual((pick['sessions'][0]['name'], pick['sessions'][0]['open']), ('api-work', True))
+        self.assertEqual(pick['bound'], [])
+        code, _ = self.server.act({'feature': 'demo-feature', 'action': 'attach', 'session': '44444444-dddd'})
+        self.assertEqual(code, 200)
+        pick = self.server.pick_list('demo-feature')
+        self.assertEqual([s['id'] for s in pick['bound']], ['44444444-dddd'])
+        self.assertEqual([s['id'] for s in pick['sessions']], ['55555555-eeee'])
+        self.assertEqual(self.server.plan_route('demo-feature')[0], 'active')
+
+    def test_attach_validates_input(self):
+        self.assertEqual(self.server.act({'feature': 'nope', 'action': 'attach', 'session': '44444444-dddd'})[0], 404)
+        self.assertEqual(self.server.act({'feature': 'demo-feature', 'action': 'attach', 'session': '../x'})[0], 400)
+
+    def test_a_closed_attached_session_is_resumed_in_background(self):
+        self.session('55555555-eeee', 'closed', feature=None)
+        self.server.act({'feature': 'demo-feature', 'action': 'attach', 'session': '55555555-eeee'})
+        self.assertEqual(self.server.plan_route('demo-feature')[0], 'bg')
 
 
 class ClaimTest(Env):
@@ -183,6 +217,7 @@ class HookDeliveryTest(Env):
         import common
         common.save_entry({'id': 'abc123def456', 'ts': 1, 'state': 'new', 'feature': 'demo-feature', 'featureTitle': 'Demo',
                            'stage': 1, 'stageTitle': 'Design', 'item': 'Not done', 'action': 'do', 'text': 'go'})
+        common.bind('s1', 'demo-feature')
         self.payload = {'session_id': 's1', 'cwd': self.repo, 'hook_event_name': 'UserPromptSubmit'}
 
     def test_deliver_prints_the_message_once(self):
@@ -192,12 +227,30 @@ class HookDeliveryTest(Env):
         self.assertIn('inbox.py resolve abc123def456', r.stdout)
         self.assertEqual(self.run_hook('--deliver', self.payload).stdout, '')
 
-    def test_deliver_ignores_a_session_of_another_branch(self):
-        other = os.path.join(tempfile.mkdtemp(), 'api')
-        os.makedirs(other)
-        subprocess.run(['git', 'init', '-q', '-b', 'main', other], check=True)
-        r = self.run_hook('--deliver', dict(self.payload, cwd=other))
+    def test_deliver_ignores_a_session_not_linked_to_the_feature(self):
+        r = self.run_hook('--deliver', dict(self.payload, session_id='s2'))     # same repo and branch, but not linked
         self.assertEqual(r.stdout, '')
+
+    def test_touching_the_feature_files_links_the_session(self):
+        import common
+        path = os.path.join(self.feats, 'demo-feature', 'feature.json')
+        for sid, tool_input in (('e1', {'file_path': path}), ('e2', {'command': 'python3 render.py "%s" --open' % path}),
+                                ('e3', {'command': 'ls %s/demo-feature' % self.feats})):
+            self.run_hook('x', {'session_id': sid, 'cwd': self.repo, 'hook_event_name': 'PostToolUse',
+                                'tool_name': 'Edit', 'tool_input': tool_input})
+            self.assertEqual(common.feature_of(sid), 'demo-feature', sid)
+        self.run_hook('x', {'session_id': 'e4', 'cwd': self.repo, 'hook_event_name': 'PostToolUse',
+                            'tool_name': 'Edit', 'tool_input': {'file_path': '/tmp/other/feature.json'}})
+        self.assertIsNone(common.feature_of('e4'))
+
+    def test_taking_a_message_links_the_session(self):
+        import common
+        self.run_hook('--deliver', dict(self.payload, session_id='s9'))
+        self.assertIsNone(common.feature_of('s9'))              # not linked: nothing is delivered to it
+        self.assertEqual(common.inbox_entries()[0]['state'], 'new')
+        common.bind('s9', 'demo-feature')
+        self.run_hook('--deliver', dict(self.payload, session_id='s9'))
+        self.assertEqual(common.inbox_entries()[0]['state'], 'delivered')
 
     def test_watcher_wakes_the_session_with_exit_code_2(self):
         r = self.run_hook('--watch', dict(self.payload, hook_event_name='Stop'), WHATNOW_WATCH_POLL='0.2')
@@ -205,10 +258,7 @@ class HookDeliveryTest(Env):
         self.assertIn('abc123def456', r.stderr)
 
     def test_watcher_exits_quietly_for_a_session_without_a_feature(self):
-        other = os.path.join(tempfile.mkdtemp(), 'api')
-        os.makedirs(other)
-        subprocess.run(['git', 'init', '-q', '-b', 'main', other], check=True)
-        r = self.run_hook('--watch', dict(self.payload, cwd=other, hook_event_name='Stop'))
+        r = self.run_hook('--watch', dict(self.payload, session_id='unlinked', hook_event_name='Stop'))
         self.assertEqual((r.returncode, r.stderr), (0, ''))
 
     def test_watcher_waits_then_gives_up_at_its_deadline(self):

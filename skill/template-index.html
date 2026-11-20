@@ -77,7 +77,7 @@ function chip(s,withWhat){return '<span class="lv '+s.state+'"><i></i>'+LV[s.sta
 function paint(D){
  var F=D.features,evs=D.events||{};
  var tracked={};F.forEach(function(f){f.projects.forEach(function(p){tracked[p]=1})});
- var sess=(D.sessions||[]).filter(function(s){return tracked[s.project]});   // only projects that features belong to
+ var sess=(D.sessions||[]).filter(function(s){return tracked[s.project]||s.feature});   // projects that features belong to, or sessions linked to a feature
  var active=F.filter(function(f){return !f.done}),finished=F.filter(function(f){return f.done});
  $('sub').textContent='Updated '+D.today+'. Features in progress: '+active.length+(finished.length?', finished: '+finished.length:'')+'.';
  $('broken').innerHTML=D.broken.length?'<div class="broken"><b>Could not read:</b> '+D.broken.map(function(b){return esc(b.id)+' ('+esc(b.error)+')'}).join('; ')+'</div>':'';
@@ -98,7 +98,7 @@ function paint(D){
    (ev.length?'<button type="button" class="evb" data-k="'+esc(key)+'" aria-expanded="'+(!!isOpen)+'">'+(isOpen?'Hide events':'Events ('+ev.length+')')+'</button>'+(isOpen?'<ul class="evl">'+ev.slice(0,10).map(function(e){return '<li><time>'+hm(e.ts)+'</time><span class="p">'+esc(e.p||'')+'</span><span class="'+e.k+'">'+esc(e.t)+'</span></li>'}).join('')+'</ul>':''):'')+
    '</div></li>'}).join('');
  var fr=sess.filter(function(s){return !s.feature});
- $('free').innerHTML=fr.length?'<div class="free"><b>Sessions without a feature</b> (branch is not linked to a feature)<ul>'+fr.map(function(s){return '<li><b>'+esc(s.project)+'</b><span class="br">'+esc(s.branch)+'</span>'+chip(s,true)+'</li>'}).join('')+'</ul></div>':'';
+ $('free').innerHTML=fr.length?'<div class="free"><b>Sessions without a feature</b> (a session links itself when it works on a feature; or attach it on the feature page)<ul>'+fr.map(function(s){return '<li><b>'+esc(s.project)+'</b><span class="br">'+esc(s.branch)+'</span>'+chip(s,true)+'</li>'}).join('')+'</ul></div>':'';
  $('legend').hidden=false;
  $('done').innerHTML=finished.length?'Finished:'+finished.map(function(f){return '<a href="'+esc(f.href)+'">'+esc(f.name)+'</a>'}).join(''):'';
 }

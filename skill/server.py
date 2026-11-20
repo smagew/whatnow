@@ -29,7 +29,6 @@ import render  # noqa: E402
 HOME = common.home()
 config = common.config
 features_dir = common.features_dir
-match_feature = common.match_feature
 WORK_STALE = 10 * 60 * 1000       # "work" without a single event for 10 min is not trusted
 DROP_AFTER = 6 * 3600 * 1000      # an open session silent for 6 h is not shown
 HISTORY = 30 * 24 * 3600 * 1000   # closed sessions are remembered for resuming
@@ -62,6 +61,7 @@ def active_sessions():
 
 def read_sessions(feats, now, include_closed=False):
     aliases = config().get('aliases', {})
+    bound = common.bindings()
     out = []
     d = common.sessions_dir()
     if not os.path.isdir(d):
@@ -84,13 +84,14 @@ def read_sessions(feats, now, include_closed=False):
         project = aliases.get(s.get('project'), s.get('project'))
         out.append({'id': s.get('session', name[:-5]), 'project': project, 'branch': s.get('branch', ''),
                     'cwd': s.get('cwd', ''), 'state': state, 'what': s.get('what', ''), 't': s.get('t', now),
-                    'feature': match_feature(feats, project, s.get('branch'))})
+                    'feature': bound.get(s.get('session', name[:-5]))})
     out.sort(key=lambda x: -x['t'])
     return out
 
 
 def read_events(feats, now, limit=30):
     aliases = config().get('aliases', {})
+    bound = common.bindings()
     path = os.path.join(HOME, 'events.jsonl')
     by = {}
     try:
@@ -104,7 +105,7 @@ def read_events(feats, now, limit=30):
         except Exception:
             continue
         project = aliases.get(e.get('project'), e.get('project'))
-        slug = match_feature(feats, project, e.get('branch'))
+        slug = bound.get(e.get('session'))
         if not slug:
             continue
         lst = by.setdefault(slug, [])
@@ -170,7 +171,38 @@ def resume_in_background(session, entry):
     return r.returncode == 0, out[:400]
 
 
+def pick_list(slug):
+    """Sessions that can be attached to a feature: every session the hook has seen recently,
+    open ones first, with the name Claude Code gives it. Sessions already on this feature are left out."""
+    now = int(time.time() * 1000)
+    agents = active_sessions() or {}
+    feats = common.feature_index()
+    titles = {f['id']: f['title'] for f in feats}
+    out, mine = [], []
+    for s in read_sessions(feats, now, include_closed=True):
+        live = s['id'] in agents and s['state'] != 'closed'
+        row = {'id': s['id'], 'name': (agents.get(s['id']) or {}).get('name', ''), 'project': s['project'],
+               'what': s['what'], 't': s['t'], 'open': live, 'state': s['state'] if live else 'closed',
+               'other': titles.get(s['feature'], s['feature'] or '')}
+        (mine if s['feature'] == slug else out).append(row)
+    out.sort(key=lambda x: (not x['open'], -x['t']))
+    mine.sort(key=lambda x: (not x['open'], -x['t']))
+    return {'bound': mine, 'sessions': out[:40]}
+
+
+def attach(body):
+    slug, sid = body.get('feature'), body.get('session')
+    if not (isinstance(slug, str) and SLUG.match(slug) and os.path.isfile(os.path.join(features_dir(), slug, 'feature.json'))):
+        return 404, {'error': 'unknown feature'}
+    if not (isinstance(sid, str) and SID.match(sid)):
+        return 400, {'error': 'bad session'}
+    common.bind(sid, slug)
+    return 200, {'ok': True}
+
+
 def act(body):
+    if body.get('action') == 'attach':
+        return attach(body)
     slug, fid, action = body.get('feature'), body.get('fid'), body.get('action')
     text = (body.get('text') or '').strip()
     if not (isinstance(slug, str) and SLUG.match(slug)):
@@ -198,7 +230,7 @@ def act(body):
         path = os.path.join(features_dir(), slug, 'overrides.json')
         ov = common.read_json(path)
         if action == 'skip':
-            if fact[0] == 'y':
+            if fact[0] in ('y', 'fixed'):
                 return 400, {'error': 'a finished item cannot be marked as not needed'}
             ov[fid] = {'kind': 'skip', 'reason': text, 'ts': int(time.time() * 1000)}
         else:
@@ -279,13 +311,18 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, state())
             if path == '/api/inbox':
                 return self._json(200, {'entries': inbox_state()})
+            if path == '/api/sessions':
+                slug = (parse_qs(u.query).get('feature') or [''])[0]
+                if not SLUG.match(slug):
+                    return self._json(400, {'error': 'bad feature'})
+                return self._json(200, pick_list(slug))
             if path == '/api/route':
                 slug = (parse_qs(u.query).get('feature') or [''])[0]
                 if not SLUG.match(slug):
                     return self._json(400, {'error': 'bad feature'})
                 route, session, name = plan_route(slug)
                 return self._json(200, {'route': route, 'session': (session or {}).get('id'), 'name': name,
-                                        'branch': (session or {}).get('branch', '')})
+                                        'project': (session or {}).get('project', '')})
             m = re.match(r'^/f/([^/]+)/?$', path)
             if m and SLUG.match(m.group(1)):
                 src = os.path.join(features_dir(), m.group(1), 'feature.json')

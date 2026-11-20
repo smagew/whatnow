@@ -142,22 +142,27 @@ def read_pid(path):
         return 0
 
 
-def whoami(cwd):
-    top = git(cwd, 'rev-parse', '--show-toplevel')
-    project = os.path.basename(top or cwd.rstrip('/'))
-    import common
-    project = common.config().get('aliases', {}).get(project, project)
-    branch = git(cwd, 'branch', '--show-current') or git(cwd, 'rev-parse', '--short', 'HEAD')
-    return project, branch
+def auto_bind(sid, tool_input):
+    """A session that touches a feature's folder (edits feature.json, runs render.py on it) works on it."""
+    try:
+        import common
+        if not isinstance(tool_input, dict):
+            return
+        feats = common.feature_index()
+        for key in ('file_path', 'path', 'notebook_path', 'command'):
+            slug = common.slug_in(tool_input.get(key), feats)
+            if slug:
+                common.bind(sid, slug)
+                return
+    except Exception:
+        pass
 
 
 def deliver(payload):
     """UserPromptSubmit: print the messages waiting for this session. Printed text reaches Claude."""
     import common
-    cwd = payload.get('cwd') or os.getcwd()
-    project, branch = whoami(cwd)
-    slug = common.match_feature(common.feature_index(), project, branch)
-    got = common.claim(payload.get('session_id') or '', slug)
+    sid = payload.get('session_id') or ''
+    got = common.claim(sid, common.feature_of(sid))
     if got:
         sys.stdout.write('\n\n'.join(common.format_message(e) for e in got) + '\n')
     return 0
@@ -167,9 +172,7 @@ def watch(payload):
     """Stop / SessionStart: wait while the session is idle; exit 2 when a message arrives (wakes Claude)."""
     import common
     sid = payload.get('session_id') or ''
-    cwd = payload.get('cwd') or os.getcwd()
-    project, branch = whoami(cwd)
-    slug = common.match_feature(common.feature_index(), project, branch)
+    slug = common.feature_of(sid)
     if not slug or not sid:
         return 0                      # a session that belongs to no feature never needs a watcher
     wdir = os.path.join(HOME, 'watch')
@@ -252,6 +255,7 @@ def main():
                               'branch': state['branch'], 'kind': kind, 'ok': ok, 'text': text})
         else:
             state.update(state='work')
+        auto_bind(sid, payload.get('tool_input'))
     elif event == 'Stop':
         state.update(state='wait', what='answered, waiting for you')
     elif event == 'Notification':

@@ -9,7 +9,6 @@ The dashboard's own labels are English. Text fields may contain `<code>…</code
   "sub": "Projects: backend and web.",
   "summary": "One or two sentences: where the feature stands right now.",
   "projects": ["backend", "web"],
-  "branches": ["hotfix/export"],
   "updated": "2026-01-15",
   "ladder": { "backend": [ ... six entries ... ] },
   "stages": [ ... ],
@@ -32,16 +31,16 @@ Each entry is `"ok" | "part" | "no"` or `["ok", "note"]`. From "Code review" onw
 { "n": 4, "title": "…", "verdict": "short result", "proj": "backend",
   "unplanned": false,
   "plan":  ["what the stage was supposed to include"],
-  "facts": [ ["y","done"], ["bad","problem or rework"], ["p","partly done"], ["q","not done"] ] }
+  "facts": [ ["y","done"], ["fixed","problem found and already fixed"], ["bad","open problem"], ["p","partly done"], ["q","not done"] ] }
 ```
-`n` is an integer, strictly increasing. Stage colour is derived: all `q` = grey, any `bad` = red, any `p`/`q` = amber, else green. `unplanned: true` marks work that was not in the plan.
+`n` is an integer, strictly increasing. Stage colour is derived: all `q` = grey, any `bad` = red, any `p`/`q` = amber, else green. `fixed` counts as done: the mistake stays visible in the list but does not colour the stage. Use `bad` only for a problem that is still open; change it to `fixed` once it is solved. `unplanned: true` marks work that was not in the plan.
 
 ## deploy
 ```json
 { "n": 1, "title": "Staging: backend", "sub": "migration, check on the database",
   "items": ["not done yet", {"t": "done item", "s": "y"}] }
 ```
-Item = text (not done) or `{t, s}` with `s` in `y | bad | p | q`. Counts and step state are derived.
+Item = text (not done) or `{t, s}` with `s` in `y | bad | p | q` (`fixed` is for stage facts only). Counts and step state are derived.
 
 ## checks
 ```json
@@ -56,10 +55,6 @@ Cell = `[status, label, note]`, status in `ok | part | no | na`. Every project m
   "proj": ["backend"], "stage": 4, "sev": "high" }
 ```
 `sev` in `high | mid | low`. `stage` must exist.
-
-## branches (optional)
-Branches that belong to the feature. Only needed when the branch name does not contain the feature's folder name
-(a branch like `feature/<folder-name>` links a session to its feature automatically).
 
 ## overrides.json (written by the server, never by Claude)
 Lives next to `feature.json`. It holds the user's "not needed" decisions from the buttons on the feature page:

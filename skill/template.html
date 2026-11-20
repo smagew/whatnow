@@ -42,7 +42,7 @@ main{max-width:1180px;margin:0 auto;padding:22px 24px 70px}
 .plan li{padding:4px 0 4px 16px;position:relative;font-size:13.5px;color:var(--mut)}.plan li::before{content:'';position:absolute;left:2px;top:12px;width:5px;height:5px;border-radius:50%;background:#a9b8b0}
 .fact li{display:flex;gap:10px;padding:5px 0;font-size:13.5px}
 .ico{font-style:normal;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font-weight:700;font-size:11px;flex:none}
-.y{background:var(--okb);color:var(--ok)}.bad{background:var(--badb);color:var(--bad)}.p{background:var(--partb);color:var(--part)}.q{background:var(--nob);color:var(--no)}
+.y{background:var(--okb);color:var(--ok)}.fixed{background:var(--okb);color:var(--ok)}.bad{background:var(--badb);color:var(--bad)}.p{background:var(--partb);color:var(--part)}.q{background:var(--nob);color:var(--no)}
 .empty{color:var(--mut);font-style:italic}
 .nav{display:flex;justify-content:space-between;margin-top:14px}
 .nav button{all:unset;cursor:pointer;padding:7px 14px;border:1px solid var(--line);border-radius:9px;font-size:13px;font-weight:500;background:#fff}
@@ -111,17 +111,28 @@ main{max-width:1180px;margin:0 auto;padding:22px 24px 70px}
 .fm .cx{all:unset;cursor:pointer;font-size:13px;color:var(--mut);padding:6px 8px}
 .sent{flex-basis:100%;margin:2px 0 4px 30px;font-size:12.5px;border-radius:8px;padding:5px 10px;background:#e8f0fb;color:#1f4a99}
 .sent.done{background:#e6f4ec;color:#0f6b40}.sent.failed{background:#fbe5e3;color:#8c1d18}
+.ses{margin-top:8px;font-size:13px;color:#cfe3d8;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.ses b{color:#fff;font-weight:600}.ses .st{font-size:12px;padding:1px 8px;border-radius:99px;background:#ffffff1f}
+.ses .st.work{background:#2f9e6a;color:#fff}.ses .st.wait{background:#e0a21a;color:#2b2000}
+.ses button{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;color:#fff;border:1px solid #ffffff66;padding:2px 10px;border-radius:99px}
+.ses button:hover{background:#ffffff1f}.ses button:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}
+.pick{margin:8px 0 0;padding:8px;background:#ffffff14;border-radius:10px;max-width:640px;width:100%}
+.pick ul{list-style:none;margin:0;padding:0;max-height:260px;overflow:auto}
+.pick li button{display:flex;width:100%;box-sizing:border-box;gap:4px 10px;flex-wrap:wrap;align-items:baseline;border:0;border-radius:8px;padding:6px 8px;font-weight:400}
+.pick li button:hover{background:#ffffff26}.pick small{color:#a9c7b8}
+.lnk{all:unset;cursor:pointer;color:#1f4a99;font-weight:600;text-decoration:underline}.lnk:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
 .qb{display:block;font-size:12.5px;color:#ffd37a;font-weight:600;margin-top:4px}
 </style></head><body>
-<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><span class="qb" id="qb"></span></div><div class="mini" id="mini" aria-label="Readiness by project"></div></div>
+<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><span class="qb" id="qb"></span><div class="ses" id="ses"></div></div><div class="mini" id="mini" aria-label="Readiness by project"></div></div>
 <div class="tabs" role="tablist" id="tabs"></div></header>
 <main id="main"></main>
 <script>window.PANEL=/*__DATA__*/null;</script>
 <script>
 (function(){
 var P=window.PANEL,$=function(i){return document.getElementById(i)};
-var IC={y:'✓',bad:'!',p:'◐',q:'○',ok:'✓',part:'◐',no:'–'};
-$('t').textContent=P.title;$('sub').textContent=P.sub+(P.updated?' Updated '+P.updated+'.':'');
+var DONE_K={y:1,fixed:1};
+var IC={y:'✓',fixed:'↺',bad:'!',p:'◐',q:'○',ok:'✓',part:'◐',no:'–'};
+$('t').textContent=P.title;$('sub').innerHTML=P.sub+(P.updated?' Updated '+P.updated+'.':'');
 var m='<span></span>'+P.ladderSteps.map(function(s){return '<span class="h">'+s+'</span>'}).join('');
 P.projects.forEach(function(p){m+='<b>'+p+'</b>'+P.ladder[p].map(function(s,i){return '<i class="'+s+'" title="'+P.ladderSteps[i]+'"></i>'}).join('')});
 $('mini').innerHTML=m;
@@ -153,9 +164,9 @@ var FORM=null,INBOX={},ROUTE=null,BUSY=false;
 function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function hm(ts){var d=new Date(ts);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)}
 function routeText(r){if(!r)return ['b','Finding where to send this…'];
- if(r.route==='active')return ['a','Open session:'+(r.name?' <b>'+esc(r.name)+'</b>':'')+(r.branch?' (branch '+esc(r.branch)+')':'')+'. If it is waiting for input, the message wakes it; if it is busy, the message arrives as soon as it is free.'];
+ if(r.route==='active')return ['a','Open session:'+(r.name?' <b>'+esc(r.name)+'</b>':'')+(r.project?' ('+esc(r.project)+')':'')+'. If it is waiting for input, the message wakes it; if it is busy, the message arrives as soon as it is free.'];
  if(r.route==='bg')return ['b','No session is open. A closed session of this feature will be resumed in the background with its previous context and receive the message. To watch it: <code>claude attach</code>.'];
- return ['b','No suitable session. The message will wait for the first session that starts working on this feature (a branch named after it).']}
+ return ['b','No session is linked to this feature yet, so nobody will receive this. <button type="button" class="lnk" data-ses="open">Choose a session</button> and it goes there right away. Or send it anyway: it waits for the first session that starts working on this feature.']}
 function statusLine(e){if(!e)return '';var st=e.state,when=hm(e.ts),who=e.sessionName||'';
  if(st==='done')return '<div class="sent done">Done'+(e.note?': '+esc(e.note):'')+'</div>';
  if(st==='failed')return '<div class="sent failed">Not delivered: '+esc(e.error||'error')+'</div>';
@@ -164,13 +175,13 @@ function statusLine(e){if(!e)return '';var st=e.state,when=hm(e.ts),who=e.sessio
 function factLi(s,f,fi){var fid=(s.fids||[])[fi],kind=f[0],live=P.live&&fid,skipped=kind==='n',open=FORM&&FORM.fid===fid;
  var acts='';
  if(live){if(skipped)acts='<span class="acts"><button type="button" data-a="unskip">Restore</button></span>';
-  else acts='<span class="acts">'+(kind==='y'?'':'<button type="button" data-a="do">Do it</button>')+'<button type="button" data-a="ask">Ask</button>'+(kind==='y'?'':'<button type="button" data-a="skip">Not needed</button>')+'</span>'}
+  else acts='<span class="acts">'+(DONE_K[kind]?'':'<button type="button" data-a="do">Do it</button>')+'<button type="button" data-a="ask">Ask</button>'+(DONE_K[kind]?'':'<button type="button" data-a="skip">Not needed</button>')+'</span>'}
  var form='';
  if(open){var rt=FORM.a==='skip'?['a','Applies immediately: the item stops counting as unfinished, and your decision stays in the dashboard with your reason.']:routeText(ROUTE),
   ph={do:'What exactly to do, if you want to specify (optional)',ask:'Your question about this item',skip:'Why this is not needed (the reason is kept in the dashboard)'}[FORM.a],
   lab={do:'Send to the session',ask:'Send the question',skip:'Mark as "not needed"'}[FORM.a];
   form='<div class="fm"><textarea id="ftext" placeholder="'+ph+'" aria-label="'+ph+'">'+esc(FORM.text||'')+'</textarea><div class="rt '+(FORM.err?'err':rt[0])+'"><span class="dot"></span><span>'+(FORM.err?esc(FORM.err):rt[1])+'</span></div><div class="row"><button type="button" class="go" data-go="1"'+(BUSY?' disabled':'')+'>'+lab+'</button><button type="button" class="cx" data-cx="1">Cancel</button></div></div>'}
- return '<li class="fi'+(live&&kind!=='y'&&!skipped?' todo':'')+(skipped?' skipped':'')+(open?' open':'')+'" data-fid="'+esc(fid||'')+'"><i class="ico '+kind+'">'+(IC[kind]||'—')+'</i><span class="ft"><span class="t">'+f[1]+'</span>'+(skipped?'<em class="why">not needed: '+esc((s.reasons||{})[fi]||'no reason given')+'</em>':'')+'</span>'+acts+form+(live?statusLine(INBOX[fid]):'')+'</li>'}
+ return '<li class="fi'+(live&&!DONE_K[kind]&&!skipped?' todo':'')+(skipped?' skipped':'')+(open?' open':'')+'" data-fid="'+esc(fid||'')+'"><i class="ico '+kind+'">'+(IC[kind]||'—')+'</i><span class="ft"><span class="t">'+f[1]+'</span>'+(skipped?'<em class="why">not needed: '+esc((s.reasons||{})[fi]||'no reason given')+'</em>':'')+'</span>'+acts+form+(live?statusLine(INBOX[fid]):'')+'</li>'}
 function queue(){var n=0;Object.keys(INBOX).forEach(function(k){var e=INBOX[k];if(e.state==='new'||e.state==='delivered')n++});var q=$('qb');if(q)q.textContent=n?'Waiting for a reply: '+n:''}
 function renderStage(i){cur=i;var s=P.stages[i];
  document.querySelectorAll('#stl .item').forEach(function(b){b.setAttribute('aria-selected',+b.dataset.i===i)});
@@ -178,7 +189,7 @@ function renderStage(i){cur=i;var s=P.stages[i];
  $('det').innerHTML='<h2>'+s.n+'. '+s.title+'</h2><p class="vv"><span class="tag '+tg[0]+'">'+tg[1]+'</span>'+(s.unplanned?'<span class="tag bad">not in the plan</span>':'')+s.verdict+'</p><div class="pf"><div><h3>What the stage included</h3>'+(s.plan.length?ul(s.plan.map(function(p){return '<li>'+p+'</li>'}).join(''),'plan'):'<div class="empty">This stage was not in the plan</div>')+'</div><div><h3>What was done, what was not</h3>'+ul(s.facts.map(function(f,fi){return factLi(s,f,fi)}).join(''),'fact')+'</div></div><div class="nav"><button id="pv"'+(i===0?' disabled':'')+'>← '+(i?'Stage '+P.stages[i-1].n:'')+'</button><button id="nx"'+(i===P.stages.length-1?' disabled':'')+'>'+(i<P.stages.length-1?'Stage '+P.stages[i+1].n:'')+' →</button></div>';
  $('pv').onclick=function(){renderStage(cur-1)};$('nx').onclick=function(){renderStage(cur+1)};queue();}
 function post(body){return fetch('/api/act',{method:'POST',headers:{'Content-Type':'application/json','X-Whatnow':'1'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})}
-$('det').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var li=b.closest('.fi');
+$('det').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.ses==='open'){SES.pick=true;SES.err='';sesBar();window.scrollTo({top:0,behavior:'smooth'});return}var li=b.closest('.fi');
  if(b.dataset.a==='unskip'){post({feature:P.slug,fid:li.dataset.fid,action:'unskip'}).then(function(r){if(r.ok)location.hash='work/'+P.stages[cur].n,location.reload()});return}
  if(b.dataset.a){FORM={fid:li.dataset.fid,a:b.dataset.a,text:''};ROUTE=null;renderStage(cur);var t=$('ftext');if(t)t.focus();
   if(b.dataset.a!=='skip')fetch('/api/route?feature='+encodeURIComponent(P.slug)).then(function(r){return r.json()}).then(function(r){ROUTE=r;if(FORM){FORM.text=($('ftext')||{}).value||FORM.text;renderStage(cur);var t2=$('ftext');if(t2)t2.focus()}}).catch(function(){});return}
@@ -195,6 +206,21 @@ renderStage(0);
 (function(){var m=/^#work\/(\d+)(?:\/([0-9a-f]{10}):(do|ask|skip))?$/.exec(location.hash);if(!m)return;var idx=P.stages.map(function(s){return s.n}).indexOf(+m[1]);if(idx<0)return;
  show('work');if(m[2]&&P.live){FORM={fid:m[2],a:m[3],text:''};ROUTE=null}renderStage(idx)})();
 if(P.live){pollInbox();setInterval(pollInbox,3000)}
+var SES={bound:[],sessions:[],pick:false,err:''};
+function ago2(ts){var m=Math.round((Date.now()-ts)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago'}
+function sesName(s){return s.name||s.project||s.id.slice(0,8)}
+function sesBar(){var b=$('ses');if(!b||!P.live)return;
+ var STX={work:'working',wait:'waiting for you',idle:'open',closed:'closed'};
+ var h=SES.bound.length?'<span>Session:</span>'+SES.bound.slice(0,3).map(function(s){return '<b>'+esc(sesName(s))+'</b><span class="st '+s.state+'">'+STX[s.state]+'</span>'}).join(' ')+'<button type="button" data-ses="pick">'+(SES.pick?'Close':'Attach another')+'</button>'
+  :'<span>No session is linked to this feature yet.</span><button type="button" data-ses="pick">'+(SES.pick?'Close':'Attach a session')+'</button>';
+ if(SES.pick){h+='<div class="pick">'+(SES.err?'<div class="rt err"><span>'+esc(SES.err)+'</span></div>':'')+(SES.sessions.length?'<ul>'+SES.sessions.map(function(s){return '<li><button type="button" data-ses="'+esc(s.id)+'"><b>'+esc(sesName(s))+'</b><span class="st '+s.state+'">'+STX[s.state]+'</span><small>'+esc(s.project)+(s.what?' · '+esc(s.what):'')+' · '+ago2(s.t)+(s.other?' · now on: '+esc(s.other):'')+'</small></button></li>'}).join('')+'</ul>':'<small>No sessions seen yet. Install the hooks and work in Claude Code; sessions appear here.</small>')+'</div>'}
+ b.innerHTML=h}
+function loadSes(){fetch('/api/sessions?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){SES.bound=j.bound||[];SES.sessions=j.sessions||[];sesBar()}).catch(function(){})}
+if($('ses'))$('ses').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var v=b.dataset.ses;
+ if(v==='pick'){SES.pick=!SES.pick;SES.err='';sesBar();return}
+ post({feature:P.slug,action:'attach',session:v}).then(function(r){if(!r.ok){SES.err=(r.j&&r.j.error)||'could not attach';sesBar();return}SES.pick=false;SES.err='';loadSes()}).catch(function(){SES.err='no connection to the server';sesBar()})});
+if(P.live){loadSes();setInterval(loadSes,3000)}
+
 // deploy detail
 function renderDeploy(i){document.querySelectorAll('#dl .item').forEach(function(b){b.setAttribute('aria-selected',b.dataset.i==i)});
  if(i==='r'){$('ddet').innerHTML='<h2>Rollback</h2><p class="vv">If something goes wrong</p>'+ul(P.rollback.map(function(x){return '<li><i class="ico q">–</i><span>'+x+'</span></li>'}).join(''),'chk');return}

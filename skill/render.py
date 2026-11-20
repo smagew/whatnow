@@ -11,7 +11,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FACT = ('y', 'bad', 'p', 'q')            # done, problem/rework, partial, not done
+FACT = ('y', 'fixed', 'bad', 'p', 'q')   # done, problem found and fixed, open problem, partial, not done
+DONE = ('y', 'fixed', 'n')                # kinds that count as finished
 LAD = ('ok', 'part', 'no')
 CELL = ('ok', 'part', 'no', 'na')
 SEV = ('high', 'mid', 'low')
@@ -27,7 +28,7 @@ def fail(msg):
 
 
 def stage_state(facts):
-    kinds = ['y' if f[0] == 'n' else f[0] for f in facts]
+    kinds = ['y' if f[0] in DONE else f[0] for f in facts]
     if kinds and all(k == 'q' for k in kinds):
         return 'no'
     if 'bad' in kinds:
@@ -86,7 +87,7 @@ def prepare(d, overrides=None):
         s['reasons'] = {}
         for i, fid in enumerate(s['fids']):
             o = (overrides or {}).get(fid)
-            if isinstance(o, dict) and o.get('kind') == 'skip' and s['facts'][i][0] != 'y':
+            if isinstance(o, dict) and o.get('kind') == 'skip' and s['facts'][i][0] not in ('y', 'fixed'):
                 s['facts'][i] = ['n', s['facts'][i][1]]
                 s['reasons'][str(i)] = o.get('reason', '')
         s['state'] = stage_state(s['facts'])
@@ -98,8 +99,8 @@ def prepare(d, overrides=None):
         items = []
         for it in st['items']:
             it = {'t': it, 's': 'q'} if isinstance(it, str) else it
-            if it.get('s') not in FACT:
-                fail('deploy step %s: item status must be one of %s' % (st.get('n'), FACT))
+            if it.get('s') not in FACT[:1] + FACT[2:]:
+                fail('deploy step %s: item status must be one of %s' % (st.get('n'), FACT[:1] + FACT[2:]))
             items.append(it)
         st['items'] = items
         st['total'] = len(items)
@@ -191,7 +192,6 @@ def summary(slug, d, today):
         'stale': days >= 3 and not done, 'done': done,
         'why': top['t'] if top else '', 'next': d['nextSteps'][0] if d['nextSteps'] else '',
         'href': '%s/panel.html' % slug,
-        'branches': [b for b in d.get('branches', []) if isinstance(b, str)],
         'notes': d.get('ladderNotes', {}),
     }
 
