@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "SessionStart":       [{ "hooks": [{ "type": "command", "command": "python3 ~/.claude/skills/whatnow/hook.py", "async": true }] }],
+    "UserPromptSubmit":   [{ "hooks": [{ "type": "command", "command": "python3 ~/.claude/skills/whatnow/hook.py", "async": true }] }],
+    "PostToolUse":        [{ "matcher": "Bash", "hooks": [{ "type": "command", "command": "python3 ~/.claude/skills/whatnow/hook.py", "async": true }] }],
+    "PostToolUseFailure": [{ "matcher": "Bash", "hooks": [{ "type": "command", "command": "python3 ~/.claude/skills/whatnow/hook.py", "async": true }] }],
+    "Stop":               [{ "hooks": [{ "type": "command", "command": "python3 ~/.claude/skills/whatnow/hook.py", "async": true }] }],
+    "Notification":       [{ "hooks": [{ "type": "command", "command": "python3 ~/.claude/skills/whatnow/hook.py", "async": true }] }],
+    "SessionEnd":         [{ "hooks": [{ "type": "command", "command": "python3 ~/.claude/skills/whatnow/hook.py", "async": true }] }]
+  }
+}

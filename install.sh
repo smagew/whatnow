@@ -5,6 +5,6 @@ set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
 DEST="$HOME/.claude/skills/whatnow"
 mkdir -p "$DEST/examples"
-cp "$HERE"/skill/* "$DEST"/
-cp "$HERE"/examples/* "$DEST/examples/"
+find "$HERE/skill" -maxdepth 1 -type f -exec cp {} "$DEST"/ \;
+find "$HERE/examples" -maxdepth 1 -type f -exec cp {} "$DEST/examples/" \;
 echo "Installed to $DEST"

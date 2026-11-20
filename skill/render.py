@@ -132,14 +132,20 @@ def prepare(d):
     return d
 
 
-def write_panel(src, out, back=False):
+def panel_html(src, back=False, back_href='../index.html'):
+    """Validate one feature.json and return (html, data). Nothing is written."""
     with open(src, encoding='utf-8') as fh:
         data = prepare(json.load(fh))
     blob = json.dumps(data, ensure_ascii=False).replace('</', '<\\/')
     with open(os.path.join(HERE, 'template.html'), encoding='utf-8') as fh:
         html = fh.read()
     html = html.replace('/*__DATA__*/null', blob, 1).replace('/*__TITLE__*/', data['title'].replace('<', '&lt;'), 1)
-    html = html.replace('<!--__BACK__-->', '<a class="back" href="../index.html">← Все функции</a>' if back else '', 1)
+    link = '<a class="back" href="%s">\u2190 Все функции</a>' % back_href if back else ''
+    return html.replace('<!--__BACK__-->', link, 1), data
+
+
+def write_panel(src, out, back=False):
+    html, data = panel_html(src, back)
     with open(out, 'w', encoding='utf-8') as fh:
         fh.write(html)
     return data
@@ -166,10 +172,13 @@ def summary(slug, d, today):
         'stale': days >= 3 and not done, 'done': done,
         'why': top['t'] if top else '', 'next': d['nextSteps'][0] if d['nextSteps'] else '',
         'href': '%s/panel.html' % slug,
+        'branches': [b for b in d.get('branches', []) if isinstance(b, str)],
     }
 
 
-def build_index(root):
+def collect(root, write=False):
+    """Read every <root>/<slug>/feature.json. Returns the payload the portfolio page shows.
+    With write=True the per-feature panel.html files are rewritten too."""
     today = datetime.date.today()
     feats, broken = [], []
     for slug in sorted(os.listdir(root)):
@@ -177,7 +186,11 @@ def build_index(root):
         if not os.path.isfile(src):
             continue
         try:
-            data = write_panel(src, os.path.join(root, slug, 'panel.html'), back=True)
+            if write:
+                data = write_panel(src, os.path.join(root, slug, 'panel.html'), back=True)
+            else:
+                with open(src, encoding='utf-8') as fh:
+                    data = prepare(json.load(fh))
             feats.append(summary(slug, data, today))
         except (DataError, ValueError, KeyError, TypeError) as e:
             broken.append({'id': slug, 'error': str(e)})
@@ -187,14 +200,21 @@ def build_index(root):
         for p in f['projects']:
             if p not in projects:
                 projects.append(p)
-    payload = {'today': today.strftime('%d.%m.%Y'), 'projects': projects, 'features': feats, 'broken': broken}
+    return {'today': today.strftime('%d.%m.%Y'), 'projects': projects, 'features': feats, 'broken': broken}
+
+
+def index_html(payload):
     blob = json.dumps(payload, ensure_ascii=False).replace('</', '<\\/')
     with open(os.path.join(HERE, 'template-index.html'), encoding='utf-8') as fh:
-        html = fh.read()
+        return fh.read().replace('/*__DATA__*/null', blob, 1)
+
+
+def build_index(root):
+    payload = collect(root, write=True)
     out = os.path.join(root, 'index.html')
     with open(out, 'w', encoding='utf-8') as fh:
-        fh.write(html.replace('/*__DATA__*/null', blob, 1))
-    return out, bool(broken)
+        fh.write(index_html(payload))
+    return out, bool(payload['broken'])
 
 
 def main():

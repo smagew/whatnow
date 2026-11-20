@@ -15,6 +15,9 @@ The panel and all texts in it are in **Russian**. Reply to the user in Cyrillic 
 - `SCHEMA.md`: every field of `feature.json`. Read it before writing or editing one.
 - `examples/csv-export.json`: a complete example with made-up data. Copy its shape.
 
+## Live status (hooks and server)
+`hook.py` and `server.py` give a page that updates itself and shows which session works where. That part is automatic and does not depend on you: Claude Code runs the hook, the server reads its files. Everything else (stages, checks, blockers, ladder) is still written by you into `feature.json`. Start the server with `python3 ~/.claude/skills/whatnow/server.py --open`. Link a branch to a feature by putting the feature slug in the branch name (`feature/<slug>`) or by listing it in `branches` in `feature.json`. Never edit the user's `settings.json` to install the hooks without being asked: `docs/hooks-settings.example.json` in the project shows the entries.
+
 ## Where the files live
 Default: `~/www/features/<slug>/feature.json` (outside the project repos, so nothing leaks into them). `render.py --index` reads that folder; set `FEATURES_DIR` or pass a path to use another. Never write the panel into a project repo unless the user asks. If the user names another place, use it. Tell the user once where the file is and that it is not under git.
 

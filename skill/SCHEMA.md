@@ -8,6 +8,7 @@ All text is Russian. Text fields may contain `<code>…</code>` and `<b>…</b>`
   "sub": "Проекты backend и web.",
   "summary": "One or two sentences: where the feature stands right now.",
   "projects": ["backend", "web"],
+  "branches": ["hotfix/export"],
   "updated": "2026-01-15",
   "ladder": { "api": [ ... six entries ... ] },
   "stages": [ ... ],
@@ -54,3 +55,7 @@ Cell = `[status, label, note]`, status in `ok | part | no | na`. Every project m
   "proj": ["api"], "stage": 4, "sev": "high" }
 ```
 `sev` in `high | mid | low`. `stage` must exist.
+
+## branches (необязательно)
+Список веток, которые относятся к функции. Нужен только если ветка не содержит имени функции
+(имя папки функции в названии ветки, например `feature/<имя>`, привязывает сессию автоматически).
