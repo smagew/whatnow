@@ -25,6 +25,25 @@ MAX_LOG = 5 * 1024 * 1024
 COMMIT = re.compile(r'(?:^|[;&|(\s])git\s+(?:-C\s+\S+\s+)?commit\b')
 PUSH = re.compile(r'(?:^|[;&|(\s])git\s+(?:-C\s+\S+\s+)?push\b')
 TEST = re.compile(r'\b(phpunit|pytest|unittest|jest|vitest|go test|cargo test|npm (?:run )?test|yarn test|pnpm test|mvn test|gradle test)\b')
+NOT_A_RUN = {'pip', 'pip3', 'pipx', 'brew', 'apt', 'apt-get', 'git', 'grep', 'egrep', 'rg', 'ag', 'cat', 'bat', 'ls',
+             'find', 'fd', 'echo', 'printf', 'head', 'tail', 'less', 'sed', 'awk', 'wc', 'which', 'type', 'man',
+             'cd', 'mkdir', 'touch', 'rm', 'cp', 'mv', 'code', 'vim', 'nano', 'open'}
+INSTALL = {'install', 'add', 'remove', 'uninstall', 'i'}
+
+
+def is_test_run(cmd):
+    """True when the command really runs a test tool. A command that only mentions one
+    (pip install pytest, grep unittest, git commit -m "fix jest") is not a test run."""
+    for part in re.split(r'[;&|\n]+', cmd):
+        m = TEST.search(part)
+        if not m:
+            continue
+        before = [w for w in part[:m.start()].split() if not re.match(r'^\w+=', w)]
+        first = os.path.basename(before[0].lstrip('(')) if before else ''
+        if first in NOT_A_RUN or INSTALL.intersection(before):
+            continue
+        return True
+    return False
 
 
 def git(cwd, *args):
@@ -63,7 +82,12 @@ def test_summary(stdout):
     m = re.search(r'Tests:\s*(\d+)(?:,\s*Assertions:\s*\d+)?(?:,\s*Failures:\s*(\d+))?', stdout or '')
     if m and m.group(2):
         return 'tests failed: %s of %s' % (m.group(2), m.group(1))
+    # pytest / jest / vitest: "3 failed, 10 passed", "2 errors in 0.5s". Failures first: a pipe
+    # (pytest | tail) hides the exit code, so the text is all we have.
+    bad = sum(int(n) for n in re.findall(r'\b(\d+) (?:failed\b|errors? in \d)', stdout or ''))
     m = re.search(r'(\d+) passed', stdout or '')
+    if bad:
+        return 'tests failed: %d of %d' % (bad, bad + int(m.group(1))) if m else 'tests failed: %d' % bad
     if m:
         return 'tests passed: %s' % m.group(1)
     return ''
@@ -85,9 +109,9 @@ def classify(payload, failed):
         return 'commit', True, 'commit' + (' "%s"' % msg if msg else '')
     if PUSH.search(cmd):
         return 'push', not failed, 'push to origin' if not failed else 'push failed'
-    if TEST.search(cmd):
+    if is_test_run(cmd):
         txt = test_summary(stdout) or test_summary(err)
-        if failed:
+        if failed or txt.startswith('tests failed'):
             return 'tests', False, txt or ('tests failed' + (' (exit %s)' % code if code else ''))
         return 'tests', True, txt or 'tests passed'
     return None, None, ''
@@ -132,6 +156,16 @@ def write_json_atomic_raw(path, data):
     with os.fdopen(fd, 'wb') as fh:
         fh.write(data)
     os.replace(tmp, path)
+
+
+def is_watcher(pid):
+    """True when this pid is one of our --watch processes. A pid file outlives a reboot or a kill -9,
+    and the number may by then belong to some other program, which must not get our SIGTERM."""
+    try:
+        out = subprocess.run(['ps', '-p', str(pid), '-o', 'command='], capture_output=True, text=True, timeout=2).stdout
+        return 'hook.py' in out and '--watch' in out
+    except Exception:
+        return False
 
 
 def read_pid(path):
@@ -192,7 +226,7 @@ def watch(payload):
     pidf = os.path.join(wdir, '%s.pid' % re.sub(r'[^A-Za-z0-9_-]', '_', sid))
     try:
         old = read_pid(pidf)
-        if old and old != os.getpid():
+        if old and old != os.getpid() and is_watcher(old):
             os.kill(old, signal.SIGTERM)          # one watcher per session
     except OSError:
         pass
@@ -293,12 +327,13 @@ def main():
             write_json_atomic(spath, prev)
         return
 
-    prev = read_json(spath)
     top = git(cwd, 'rev-parse', '--show-toplevel')
+    branch = git(cwd, 'branch', '--show-current') or git(cwd, 'rev-parse', '--short', 'HEAD')
+    prev = read_json(spath)       # read after the slow git calls: a parallel hook may have written meanwhile
     state = {
         'session': sid, 'cwd': cwd,
         'project': os.path.basename(top or cwd.rstrip('/')),
-        'branch': git(cwd, 'branch', '--show-current') or git(cwd, 'rev-parse', '--short', 'HEAD'),
+        'branch': branch,
         'state': prev.get('state', 'idle'), 'what': prev.get('what', ''), 't': int(time.time() * 1000),
         'promptT': prev.get('promptT', 0),
     }

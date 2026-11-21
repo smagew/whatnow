@@ -6,7 +6,7 @@ Usage: python3 render.py path/to/feature.json [--out panel.html] [--open]
 Validates the data, derives statuses, and fails with a clear message if the
 file breaks the rules in SCHEMA.md. Python 3 standard library only.
 """
-import json, sys, os, subprocess, datetime
+import json, sys, os, datetime, webbrowser
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 
@@ -32,7 +32,7 @@ def stage_state(facts):
     """Colour of a stage says how worried to be, not whether anything is left:
     no = nothing done, bad = an open problem, ok = all done, almost = 80% or more done, part = the rest."""
     kinds = ['y' if f[0] in DONE else f[0] for f in facts]
-    if kinds and all(k == 'q' for k in kinds):
+    if all(k == 'q' for k in kinds):          # also a planned stage with no facts yet
         return 'no'
     if 'bad' in kinds:
         return 'bad'
@@ -154,10 +154,25 @@ def prepare(d, overrides=None):
 
 def load(src):
     """Read feature.json, apply overrides.json from the same folder, validate and derive."""
-    with open(src, encoding='utf-8') as fh:
-        raw = json.load(fh)
+    try:
+        with open(src, encoding='utf-8') as fh:
+            raw = json.load(fh)
+    except ValueError as e:
+        fail('not valid JSON: %s' % e)
+    if not isinstance(raw, dict):
+        fail('the top level must be an object')
     overrides = common.read_json(os.path.join(os.path.dirname(src), 'overrides.json'))
-    return prepare(raw, overrides)
+    try:
+        return prepare(raw, overrides if isinstance(overrides, dict) else {})
+    except (AttributeError, IndexError, KeyError, TypeError) as e:
+        # a value of the wrong shape (a list where an object is expected, an empty cell, ...)
+        fail('wrong shape, see SCHEMA.md (%s: %s)' % (type(e).__name__, e))
+
+
+def blob(obj):
+    """JSON that is safe inside a <script> element: no "<" survives, so neither "</script>" nor
+    "<!--" in the data can end or confuse the script."""
+    return json.dumps(obj, ensure_ascii=False).replace('<', '\\u003c')
 
 
 def panel_html(src, back=False, back_href='../index.html', live=False):
@@ -166,10 +181,9 @@ def panel_html(src, back=False, back_href='../index.html', live=False):
     data['live'] = live
     data['slug'] = os.path.basename(os.path.dirname(os.path.abspath(src)))
     data['ver'] = common.feature_version(data['slug'])
-    blob = json.dumps(data, ensure_ascii=False).replace('</', '<\\/')
     with open(os.path.join(HERE, 'template.html'), encoding='utf-8') as fh:
         html = fh.read()
-    html = html.replace('/*__DATA__*/null', blob, 1).replace('/*__TITLE__*/', data['title'].replace('<', '&lt;'), 1)
+    html = html.replace('/*__DATA__*/null', blob(data), 1).replace('/*__TITLE__*/', data['title'].replace('<', '&lt;'), 1)
     link = '<a class="back" href="%s">\u2190 All features</a>' % back_href if back else ''
     return html.replace('<!--__BACK__-->', link, 1), data
 
@@ -234,9 +248,8 @@ def collect(root, write=False):
 
 
 def index_html(payload):
-    blob = json.dumps(payload, ensure_ascii=False).replace('</', '<\\/')
     with open(os.path.join(HERE, 'template-index.html'), encoding='utf-8') as fh:
-        return fh.read().replace('/*__DATA__*/null', blob, 1)
+        return fh.read().replace('/*__DATA__*/null', blob(payload), 1)
 
 
 def build_index(root):
@@ -258,7 +271,7 @@ def main():
             out, bad = build_index(root)
             print(out)
             if '--open' in argv:
-                subprocess.call(['open', out])
+                webbrowser.open('file://' + out)
             sys.exit(1 if bad else 0)
         if not args:
             sys.exit(__doc__)
@@ -272,7 +285,7 @@ def main():
         sys.exit(1)
     print(out)
     if '--open' in argv:
-        subprocess.call(['open', out])
+        webbrowser.open('file://' + out)
 
 
 if __name__ == '__main__':

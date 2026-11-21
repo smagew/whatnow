@@ -11,17 +11,18 @@ code{font:12px ui-monospace,Menlo,monospace;background:#e8eeea;padding:1px 5px;b
 header{background:var(--side);color:var(--sideink);padding:14px 24px 0}
 .hd{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:8px 28px;align-items:end}
 h1{margin:0;font-size:22px;font-weight:600;color:#fff}.sub{margin:2px 0 0;color:#9fb3a8;font-size:13px}
-.mini{display:grid;grid-template-columns:auto repeat(6,22px);gap:3px 4px;align-items:center;font-size:11px;color:#9fb3a8;padding-bottom:6px}
-.mini .h{writing-mode:vertical-rl;transform:rotate(180deg);height:92px;text-align:left;font-size:10.5px;white-space:nowrap}
+.mini{display:grid;grid-template-columns:auto repeat(6,46px);gap:4px 3px;align-items:center;font-size:11px;color:#9fb3a8;padding-bottom:6px}
+.mini .h{text-align:center;font-size:10.5px;white-space:nowrap}
 .mini b{color:#fff;font-weight:600;padding-right:6px}
-.mini i{height:18px;border-radius:5px;display:block}
+.mini i{height:12px;border-radius:3px;display:block}
 .mini i.ok{background:#3fbf86}.mini i.part{background:#e8b13a}.mini i.no{background:#3a4a43}
 .tabs{max-width:1180px;margin:14px auto 0;display:flex;gap:2px;overflow-x:auto}
 .tabs button{all:unset;cursor:pointer;padding:11px 18px;border-radius:10px 10px 0 0;color:#a9bdb2;font-weight:500;white-space:nowrap}
 .tabs button:hover{color:#fff}.tabs button[aria-selected=true]{background:var(--bg);color:var(--ink);font-weight:600}
 .tabs button:focus-visible{outline:3px solid #2a8cff;outline-offset:-3px}
-.tabs .cnt{font-size:11px;background:#c8372d;color:#fff;border-radius:999px;padding:0 7px;margin-left:6px;font-weight:600}
-main{max-width:1180px;margin:0 auto;padding:22px 24px 70px}
+.tabs .cnt{font-size:11px;background:#ffffff26;border-radius:999px;padding:0 7px;margin-left:6px;font-weight:600}.tabs button[aria-selected=true] .cnt{background:#dfe5e1}
+.tabs .cnt.bad,.tabs button[aria-selected=true] .cnt.bad{background:#c8372d;color:#fff}
+main{max-width:1228px;margin:0 auto;padding:22px 24px 70px}
 [role=tabpanel][hidden]{display:none}
 .md{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}
 .list{display:flex;flex-direction:column;gap:6px;position:sticky;top:12px}
@@ -87,7 +88,7 @@ main{max-width:1180px;margin:0 auto;padding:22px 24px 70px}
 .sq li::before{content:counter(s);width:26px;height:26px;border-radius:50%;background:var(--side);color:#fff;display:grid;place-items:center;font-weight:600;font-size:13px;z-index:1}
 .sq li::after{content:'';position:absolute;left:12px;top:34px;bottom:-8px;width:2px;background:var(--line)}.sq li:last-child::after{display:none}
 .sq span{padding-top:2px}
-@media(max-width:860px){.ovg{grid-template-columns:1fr}}
+@media(max-width:860px){.ovg{grid-template-columns:1fr}.hd{grid-template-columns:1fr}.mini{overflow-x:auto}}
 .back{display:inline-block;color:#9fb3a8;font-size:13px;text-decoration:none;margin-bottom:6px}.back:hover{color:#fff;text-decoration:underline}
 
 .fi{flex-wrap:wrap;position:relative;align-items:flex-start}
@@ -140,30 +141,34 @@ main{max-width:1180px;margin:0 auto;padding:22px 24px 70px}
 (function(){
 var P=window.PANEL,$=function(i){return document.getElementById(i)};
 var DONE_K={y:1,fixed:1};
-var IC={y:'✓',fixed:'↺',bad:'!',p:'◐',q:'○',ok:'✓',part:'◐',no:'–'};
-$('t').textContent=P.title;$('sub').innerHTML=P.sub+(P.updated?' Updated '+P.updated+'.':'');
-var m='<span></span>'+P.ladderSteps.map(function(s){return '<span class="h">'+s+'</span>'}).join('');
-P.projects.forEach(function(p){m+='<b>'+p+'</b>'+P.ladder[p].map(function(s,i){return '<i class="'+s+'" title="'+P.ladderSteps[i]+'"></i>'}).join('')});
+var IC={y:'✓',fixed:'↺',bad:'!',p:'◐',q:'○',ok:'✓',part:'◐',no:'–',na:''};
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+// text from feature.json: everything is escaped, only <code> and <b> survive (entities already written stay as they are)
+function rich(t){return String(t==null?'':t).replace(/&(?!(?:[a-z]+|#\d+|#x[0-9a-f]+);)/gi,'&amp;').replace(/[<>"]/g,function(c){return{'<':'&lt;','>':'&gt;','"':'&quot;'}[c]}).replace(/&lt;(\/?)(code|b)&gt;/g,'<$1$2>')}
+$('t').textContent=P.title;$('sub').innerHTML=rich(P.sub)+(P.updated?' Updated '+esc(P.updated)+'.':'');
+var SHORT=['Code','Tests','Review','Manual','Staging','Prod'];
+var m='<span></span>'+P.ladderSteps.map(function(s,i){return '<span class="h" title="'+s+'">'+(SHORT[i]||s)+'</span>'}).join('');
+P.projects.forEach(function(p){m+='<b>'+esc(p)+'</b>'+P.ladder[p].map(function(s,i){return '<i class="'+s+'" title="'+P.ladderSteps[i]+'"></i>'}).join('')});
 $('mini').innerHTML=m;
 var problems=0;P.stages.forEach(function(s){s.facts.forEach(function(f){if(f[0]==='q'||f[0]==='bad')problems++})});
 var tabs=[['ov','Overview'],['work','Progress'],['deploy','Deployment'],['qa','Quality'],['dec','Decisions and questions']];
-$('tabs').innerHTML=tabs.map(function(t,i){return '<button role="tab" id="tab-'+t[0]+'" aria-controls="p-'+t[0]+'" aria-selected="'+(i===0)+'" tabindex="'+(i?-1:0)+'">'+t[1]+(t[0]==='deploy'?'<span class="cnt">'+P.dDone+' of '+P.dTotal+'</span>':'')+'</button>'}).join('');
+$('tabs').innerHTML=tabs.map(function(t,i){return '<button role="tab" id="tab-'+t[0]+'" aria-controls="p-'+t[0]+'" aria-selected="'+(i===0)+'" tabindex="'+(i?-1:0)+'">'+t[1]+(t[0]==='deploy'?'<span class="cnt'+(P.deploy.some(function(x){return x.cls==='bad'})?' bad':'')+'">'+P.dDone+' of '+P.dTotal+'</span>':'')+'</button>'}).join('');
 function ul(a,c){return '<ul class="'+c+'">'+a+'</ul>'}
 var hi=P.blockers.filter(function(b){return b.sev==='high'}).length,mid=P.blockers.filter(function(b){return b.sev==='mid'}).length,lo=P.blockers.filter(function(b){return b.sev==='low'}).length,SV={high:'critical',mid:'important',low:'minor'};
 var GROUPS=[['you','Waits for you','only you can do this','wait for you'],['look','Needs your look','check or decide','need your look'],['agent','Agent can do it','nothing else is needed first','for the agent'],['later','Later','next phases','later'],['none','Not sorted yet','the agent has not said who acts','not sorted']];
 function grpOf(b){return GROUPS.some(function(g){return g[0]===b.who})?b.who:'none'}
 function grpItems(k){return P.blockers.filter(function(b){return grpOf(b)===k}).sort(function(a,b){return a.stage-b.stage})}
-var ov='<p class="ans">Ready to release? '+(P.ready?'Yes':'No')+'<span'+(P.ready?' style="color:var(--ok)"':'')+'>.</span></p><p class="why">'+(P.summary||'')+'</p><div class="chips">'+GROUPS.filter(function(g){return grpItems(g[0]).length}).map(function(g){return '<span class="chip"><i class="dt '+g[0]+'"></i><b>'+grpItems(g[0]).length+'</b> '+g[3]+'</span>'}).join('')+'<span class="chip"><i class="dt k"></i>deployed <b>'+P.dDone+'</b> of '+P.dTotal+' steps</span></div>'+
-'<div class="ovg"><div><h2>What is left, by who acts</h2><div id="ovl"></div></div><div><h2>What to do, in order</h2><ol class="sq">'+P.nextSteps.map(function(x){return '<li><span>'+x+'</span></li>'}).join('')+'</ol></div></div>';
+var ov='<p class="ans">Ready to release? '+(P.ready?'Yes':'No')+'<span'+(P.ready?' style="color:var(--ok)"':'')+'>.</span></p><p class="why">'+rich(P.summary||'')+'</p><div class="chips">'+GROUPS.filter(function(g){return grpItems(g[0]).length}).map(function(g){return '<span class="chip"><i class="dt '+g[0]+'"></i><b>'+grpItems(g[0]).length+'</b> '+g[3]+'</span>'}).join('')+'<span class="chip"><i class="dt k"></i>deployed <b>'+P.dDone+'</b> of '+P.dTotal+' steps</span></div>'+
+'<div class="ovg"><div><h2>What is left, by who acts</h2><div id="ovl"></div></div><div><h2>What to do, in order</h2><ol class="sq">'+P.nextSteps.map(function(x){return '<li><span>'+rich(x)+'</span></li>'}).join('')+'</ol></div></div>';
 // work
-var w='<div class="md"><div class="list" role="tablist" aria-orientation="vertical" aria-label="Stages" id="stl">'+P.stages.map(function(s,i){return '<button class="item" role="tab" data-i="'+i+'" aria-selected="'+(i===0)+'"><span class="bd '+s.state+'">'+s.n+'</span><span class="tt">'+s.title+'</span><span class="vv">'+s.verdict+'</span><span class="sg" aria-label="'+s.dn+' of '+s.tot+' done">'+s.kinds.map(function(k){return '<i class="'+(k==='y'||k==='fixed'?'d':k==='p'?'p':k==='bad'?'b':'')+'"></i>'}).join('')+'</span></button>'}).join('')+'</div><div class="det" id="det" role="tabpanel" tabindex="0"></div></div>';
+var w='<div class="md"><div class="list" role="tablist" aria-orientation="vertical" aria-label="Stages" id="stl">'+P.stages.map(function(s,i){return '<button class="item" role="tab" data-i="'+i+'" aria-selected="'+(i===0)+'"><span class="bd '+s.state+'">'+s.n+'</span><span class="tt">'+rich(s.title)+'</span><span class="vv">'+rich(s.verdict)+'</span><span class="sg" aria-label="'+s.dn+' of '+s.tot+' done">'+s.kinds.map(function(k){return '<i class="'+(k==='y'||k==='fixed'?'d':k==='p'?'p':k==='bad'?'b':'')+'"></i>'}).join('')+'</span></button>'}).join('')+'</div><div class="det" id="det" role="tabpanel" tabindex="0"></div></div>';
 // deploy
-var d='<div class="md"><div class="list" id="dl">'+P.deploy.map(function(x,i){return '<button class="item" data-i="'+i+'" aria-selected="'+(i===0)+'"><span class="bd '+x.cls+'">'+x.n+'</span><span class="tt">'+x.title+'</span><span class="vv">'+x.done+' of '+x.total+' · '+x.stateText+'<span class="bar" style="display:block"><i style="width:'+Math.round(100*x.done/Math.max(x.total,1))+'%"></i></span></span></button>'}).join('')+'<button class="item" data-i="r" aria-selected="false"><span class="bd no">↺</span><span class="tt">Rollback</span><span class="vv">described</span></button></div><div class="det" id="ddet" tabindex="0"></div></div>';
+var d='<div class="md"><div class="list" id="dl">'+P.deploy.map(function(x,i){return '<button class="item" data-i="'+i+'" aria-selected="'+(i===0)+'"><span class="bd '+x.cls+'">'+esc(x.n)+'</span><span class="tt">'+rich(x.title)+'</span><span class="vv">'+x.done+' of '+x.total+' · '+x.stateText+'<span class="bar" style="display:block"><i style="width:'+Math.round(100*x.done/Math.max(x.total,1))+'%"></i></span></span></button>'}).join('')+'<button class="item" data-i="r" aria-selected="false"><span class="bd no">↺</span><span class="tt">Rollback</span><span class="vv">described</span></button></div><div class="det" id="ddet" tabindex="0"></div></div>';
 // qa
 var pr=P.projects;
-var q='<table class="mx"><thead><tr><th></th>'+pr.map(function(p){return '<th>'+p+'</th>'}).join('')+'</tr></thead><tbody>'+P.checks.map(function(c,ci){return '<tr><td class="k">'+c.name+(c.hint?'<small>'+c.hint+'</small>':'')+'</td>'+pr.map(function(p){var x=c.cells[p];return '<td><button data-c="'+ci+'" data-p="'+p+'" class="'+x[0]+'" aria-pressed="false">'+IC[x[0]]+' '+x[1]+'</button></td>'}).join('')+'</tr>'}).join('')+'</tbody></table><div class="note" id="note" aria-live="polite">Click a cell to see the explanation.</div>';
+var q='<table class="mx"><thead><tr><th></th>'+pr.map(function(p){return '<th>'+esc(p)+'</th>'}).join('')+'</tr></thead><tbody>'+P.checks.map(function(c,ci){return '<tr><td class="k">'+rich(c.name)+(c.hint?'<small>'+rich(c.hint)+'</small>':'')+'</td>'+pr.map(function(p){var x=c.cells[p];return '<td><button data-c="'+ci+'" data-p="'+esc(p)+'" class="'+x[0]+'" aria-pressed="false">'+IC[x[0]]+' '+rich(x[1])+'</button></td>'}).join('')+'</tr>'}).join('')+'</tbody></table><div class="note" id="note" aria-live="polite">Click a cell to see the explanation.</div>';
 // dec
-var dc='<div class="two"><div class="det"><h2>Decided</h2><ul>'+P.decisions.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div><div class="det"><h2>Open</h2><ul>'+P.questions.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div></div>';
+var dc='<div class="two"><div class="det"><h2>Decided</h2><ul>'+P.decisions.map(function(x){return '<li>'+rich(x)+'</li>'}).join('')+'</ul></div><div class="det"><h2>Open</h2><ul>'+P.questions.map(function(x){return '<li>'+rich(x)+'</li>'}).join('')+'</ul></div></div>';
 $('main').innerHTML=[['ov',ov],['work',w],['deploy',d],['qa',q],['dec',dc]].map(function(x,i){return '<section role="tabpanel" id="p-'+x[0]+'" aria-labelledby="tab-'+x[0]+'"'+(i?' hidden':'')+'>'+x[1]+'</section>'}).join('');
 // tabs behaviour
 var tb=[].slice.call(document.querySelectorAll('#tabs button'));
@@ -174,7 +179,6 @@ tb.forEach(function(b,i){b.addEventListener('click',function(){show(b.id.slice(4
 var cur=0;
 
 var FORM=null,INBOX={},ROUTE=null,BUSY=false;
-function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function hm(ts){var d=new Date(ts);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)}
 function routeText(r){if(!r)return ['b','Finding where to send this…'];
  if(r.route==='active')return ['a','Open session:'+(r.name?' <b>'+esc(r.name)+'</b>':'')+(r.project?' ('+esc(r.project)+')':'')+'. If it is waiting for input, the message wakes it; if it is busy, the message arrives as soon as it is free.'];
@@ -191,7 +195,7 @@ function formHtml(){var rt=FORM.a==='skip'?['a','Applies immediately: the item s
   return '<div class="fm"><textarea id="ftext" placeholder="'+ph+'" aria-label="'+ph+'">'+esc(FORM.text||'')+'</textarea><div class="rt '+(FORM.err?'err':rt[0])+'"><span class="dot"></span><span>'+(FORM.err?esc(FORM.err):rt[1])+'</span></div><div class="row"><button type="button" class="go" data-go="1"'+(BUSY?' disabled':'')+'>'+lab+'</button><button type="button" class="cx" data-cx="1">Cancel</button></div></div>'}
 function blCard(b){var fid=b.bid,g=grpOf(b),open=FORM&&FORM.fid===fid,live=P.live;
  var acts=live&&g!=='later'?'<div class="acts">'+(g==='you'?'':'<button type="button" data-a="do">Do it</button>')+'<button type="button" data-a="ask">Ask</button></div>':'';
- return '<li class="bk '+g+'" data-fid="'+fid+'" data-kind="blocker"><h3>'+b.t+b.proj.map(function(p){return '<span class="pj">'+p+'</span>'}).join('')+'</h3><p>'+b.why+'</p><div class="td"><b>To do</b>'+b.todo+'<button type="button" data-stage="'+b.stage+'">stage '+b.stage+'</button></div>'+acts+(open?formHtml():'')+(live?statusLine(INBOX[fid]):'')+'</li>'}
+ return '<li class="bk '+g+'" data-fid="'+fid+'" data-kind="blocker"><h3>'+rich(b.t)+b.proj.map(function(p){return '<span class="pj">'+esc(p)+'</span>'}).join('')+'</h3><p>'+rich(b.why)+'</p><div class="td"><b>To do</b>'+rich(b.todo)+'<button type="button" data-stage="'+b.stage+'">stage '+b.stage+'</button></div>'+acts+(open?formHtml():'')+(live?statusLine(INBOX[fid]):'')+'</li>'}
 function renderOv(){var el=$('ovl');if(!el)return;var keep=document.activeElement&&document.activeElement.id==='ftext'&&el.contains(document.activeElement);
  el.innerHTML=GROUPS.map(function(g){var it=grpItems(g[0]);return it.length?'<h3 class="gh">'+g[1]+' <small>'+g[2]+'</small><span class="c">'+it.length+'</span></h3><ol class="bl">'+it.map(blCard).join('')+'</ol>':''}).join('')||'<p class="why">Nothing is left.</p>';
  if(keep){var x=$('ftext');if(x){x.focus();x.setSelectionRange(x.value.length,x.value.length)}}}
@@ -200,12 +204,13 @@ function factLi(s,f,fi){var fid=(s.fids||[])[fi],kind=f[0],live=P.live&&fid,skip
  if(live){if(skipped)acts='<span class="acts"><button type="button" data-a="unskip">Restore</button></span>';
   else acts='<span class="acts">'+(DONE_K[kind]?'':'<button type="button" data-a="do">Do it</button>')+'<button type="button" data-a="ask">Ask</button>'+(DONE_K[kind]?'':'<button type="button" data-a="skip">Not needed</button>')+'</span>'}
  var form=open?formHtml():'';
- return '<li class="fi'+(live&&!DONE_K[kind]&&!skipped?' todo':'')+(skipped?' skipped':'')+(open?' open':'')+'" data-fid="'+esc(fid||'')+'"><i class="ico '+kind+'">'+(IC[kind]||'—')+'</i><span class="ft"><span class="t">'+f[1]+'</span>'+(skipped?'<em class="why">not needed: '+esc((s.reasons||{})[fi]||'no reason given')+'</em>':'')+'</span>'+acts+form+(live?statusLine(INBOX[fid]):'')+'</li>'}
+ return '<li class="fi'+(live&&!DONE_K[kind]&&!skipped?' todo':'')+(skipped?' skipped':'')+(open?' open':'')+'" data-fid="'+esc(fid||'')+'"><i class="ico '+kind+'">'+(IC[kind]||'—')+'</i><span class="ft"><span class="t">'+rich(f[1])+'</span>'+(skipped?'<em class="why">not needed: '+esc((s.reasons||{})[fi]||'no reason given')+'</em>':'')+'</span>'+acts+form+(live?statusLine(INBOX[fid]):'')+'</li>'}
 function queue(){var n=0;Object.keys(INBOX).forEach(function(k){var e=INBOX[k];if(e.state==='new'||e.state==='delivered')n++});var q=$('qb');if(q)q.textContent=n?'Waiting for a reply: '+n:''}
 function renderStage(i){cur=i;if(typeof keep==='function')keep();var s=P.stages[i];
+ if(!s){$('det').innerHTML='<p class="why">No stages yet.</p>';queue();renderOv();return}
  document.querySelectorAll('#stl .item').forEach(function(b){b.setAttribute('aria-selected',+b.dataset.i===i)});
  var tg={ok:['ok','Done'],almost:['ok','Almost done'],part:['part','Partly done'],bad:['bad','Has an open problem'],no:['no','Not started']}[s.state];
- $('det').innerHTML='<h2>'+s.n+'. '+s.title+'</h2><p class="vv"><span class="tag '+tg[0]+'">'+tg[1]+'</span>'+(s.unplanned?'<span class="tag bad">not in the plan</span>':'')+s.verdict+'</p><div class="pf"><div><h3>What the stage included</h3>'+(s.plan.length?ul(s.plan.map(function(p){return '<li>'+p+'</li>'}).join(''),'plan'):'<div class="empty">This stage was not in the plan</div>')+'</div><div><h3>What was done, what was not</h3>'+ul(s.facts.map(function(f,fi){return factLi(s,f,fi)}).join(''),'fact')+'</div></div><div class="nav"><button id="pv"'+(i===0?' disabled':'')+'>← '+(i?'Stage '+P.stages[i-1].n:'')+'</button><button id="nx"'+(i===P.stages.length-1?' disabled':'')+'>'+(i<P.stages.length-1?'Stage '+P.stages[i+1].n:'')+' →</button></div>';
+ $('det').innerHTML='<h2>'+s.n+'. '+rich(s.title)+'</h2><p class="vv"><span class="tag '+tg[0]+'">'+tg[1]+'</span>'+(s.unplanned?'<span class="tag bad">not in the plan</span>':'')+rich(s.verdict)+'</p><div class="pf"><div><h3>What the stage included</h3>'+(s.plan.length?ul(s.plan.map(function(p){return '<li>'+rich(p)+'</li>'}).join(''),'plan'):'<div class="empty">This stage was not in the plan</div>')+'</div><div><h3>What was done, what was not</h3>'+ul(s.facts.map(function(f,fi){return factLi(s,f,fi)}).join(''),'fact')+'</div></div><div class="nav"><button id="pv"'+(i===0?' disabled':'')+'>← '+(i?'Stage '+P.stages[i-1].n:'')+'</button><button id="nx"'+(i===P.stages.length-1?' disabled':'')+'>'+(i<P.stages.length-1?'Stage '+P.stages[i+1].n:'')+' →</button></div>';
  $('pv').onclick=function(){renderStage(cur-1)};$('nx').onclick=function(){renderStage(cur+1)};queue();renderOv();}
 function post(body){return fetch('/api/act',{method:'POST',headers:{'Content-Type':'application/json','X-Whatnow':'1'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})}
 function onAct(e){var b=e.target.closest('button');if(!b||b.dataset.stage)return;if(b.dataset.ses==='open'){SES.pick=true;SES.err='';sesBar();window.scrollTo({top:0,behavior:'smooth'});return}var li=b.closest('[data-fid]');
@@ -259,14 +264,14 @@ function keep(){try{sessionStorage.setItem('wn-'+P.slug,JSON.stringify({tab:curT
 
 // deploy detail
 function renderDeploy(i){document.querySelectorAll('#dl .item').forEach(function(b){b.setAttribute('aria-selected',b.dataset.i==i)});
- if(i==='r'){$('ddet').innerHTML='<h2>Rollback</h2><p class="vv">If something goes wrong</p>'+ul(P.rollback.map(function(x){return '<li><i class="ico q">–</i><span>'+x+'</span></li>'}).join(''),'chk');return}
- var x=P.deploy[i];$('ddet').innerHTML='<h2>'+x.n+'. '+x.title+'</h2><p class="vv"><span class="tag '+x.tag+'">'+x.stateText+'</span>'+x.sub+'. Done '+x.done+' of '+x.total+'</p>'+ul(x.items.map(function(t){return '<li><i class="ico '+t.s+'">'+IC[t.s]+'</i><span>'+t.t+'</span></li>'}).join(''),'chk');}
+ if(i==='r'){$('ddet').innerHTML='<h2>Rollback</h2><p class="vv">If something goes wrong</p>'+ul(P.rollback.map(function(x){return '<li><i class="ico q">–</i><span>'+rich(x)+'</span></li>'}).join(''),'chk');return}
+ var x=P.deploy[i];$('ddet').innerHTML='<h2>'+esc(x.n)+'. '+rich(x.title)+'</h2><p class="vv"><span class="tag '+x.tag+'">'+x.stateText+'</span>'+rich(x.sub)+'. Done '+x.done+' of '+x.total+'</p>'+ul(x.items.map(function(t){return '<li><i class="ico '+t.s+'">'+IC[t.s]+'</i><span>'+rich(t.t)+'</span></li>'}).join(''),'chk');}
 $('dl').addEventListener('click',function(e){var b=e.target.closest('.item');if(b)renderDeploy(b.dataset.i==='r'?'r':+b.dataset.i)});
-renderDeploy(0);
-$('p-ov').addEventListener('click',function(e){var b=e.target.closest('button[data-stage]');if(!b)return;show('work');renderStage(+b.dataset.stage-1);document.getElementById('tab-work').focus()});
+renderDeploy(P.deploy.length?0:'r');
+$('p-ov').addEventListener('click',function(e){var b=e.target.closest('button[data-stage]');if(!b)return;var si=P.stages.map(function(s){return s.n}).indexOf(+b.dataset.stage);if(si<0)return;show('work');renderStage(si);document.getElementById('tab-work').focus()});
 // qa note
 $('p-qa').addEventListener('click',function(e){var b=e.target.closest('button[data-c]');if(!b)return;var c=P.checks[+b.dataset.c],x=c.cells[b.dataset.p];
  document.querySelectorAll('.mx button').forEach(function(y){y.setAttribute('aria-pressed',y===b)});
- $('note').innerHTML='<b>'+c.name+', '+b.dataset.p+':</b> '+x[1]+(x[2]?'. '+x[2]:'. No explanation.')});
+ $('note').innerHTML='<b>'+rich(c.name)+', '+esc(b.dataset.p)+':</b> '+rich(x[1])+(x[2]?'. '+rich(x[2]):'. No explanation.')});
 })();
 </script></body></html>

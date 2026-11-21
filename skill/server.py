@@ -17,7 +17,7 @@ Buttons on a feature page (Do / Ask / Not needed) post to /api/act:
                                                          that works on that feature
 Config: see common.py. Only listens on 127.0.0.1, rejects foreign Host/Origin headers.
 """
-import json, os, re, subprocess, sys, time, uuid
+import json, os, re, subprocess, sys, threading, time, uuid, webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -46,17 +46,25 @@ def child_env(claude):
 
 
 _AGENTS = {'t': 0.0, 'v': None}
+_AGENTS_LOCK = threading.Lock()
 AGENTS_TTL = 8.0                  # seconds: `claude agents` takes about 2 s, pages poll every 3 s
 
 
 def active_sessions():
     """{sessionId: info} of sessions open right now, from `claude agents --json`; None if unavailable.
     Cached for a few seconds so that open pages do not start a process on every poll."""
-    now = time.time()
-    if now - _AGENTS['t'] < AGENTS_TTL:
+    if time.time() - _AGENTS['t'] < AGENTS_TTL:
         return _AGENTS['v']
-    _AGENTS['v'] = _active_sessions()
-    _AGENTS['t'] = now
+    # One refresh at a time. While it runs the other requests get the previous answer instead of
+    # each starting their own `claude agents`; only the very first call has nothing to give and waits.
+    if not _AGENTS_LOCK.acquire(blocking=_AGENTS['t'] == 0.0):
+        return _AGENTS['v']
+    try:
+        if time.time() - _AGENTS['t'] >= AGENTS_TTL:
+            _AGENTS['v'] = _active_sessions()
+            _AGENTS['t'] = time.time()
+    finally:
+        _AGENTS_LOCK.release()
     return _AGENTS['v']
 
 
@@ -81,6 +89,7 @@ NOISE = re.compile(r'<(system-reminder|pasted_content|command-[a-z]+|local-comma
 def _clean(t):
     t = NOISE.sub('', t)
     t = t.replace('**', '').replace('`', '')
+    t = re.sub(r'(?m)^\s{0,3}(?:#{1,6}|[-*])\s+', '', t)          # markdown headings and list marks
     return re.sub(r'\s+', ' ', t).strip()
 
 
@@ -107,16 +116,18 @@ def _find_transcript(sid):
 
 
 def _real_user(t):
-    return bool(t) and len(t) > 3 and not t.startswith('This session is being continued') \
-        and not t.startswith('Another Claude session')
+    return bool(t) and len(t) > 3 and not t.startswith(('This session is being continued', 'Another Claude session',
+                                                               'Base directory for this skill'))
 
 
 def transcript_info(sid):
     """What a session is about, read from its transcript: how it started, what the user asked last,
     what Claude said last, and when it last moved. Cached until the file changes; only the head
     and the last 600 KB are read, so even a huge session is cheap."""
+    if not SID.match(sid):
+        return None
     path = _find_transcript(sid)
-    if not path or not SID.match(sid):
+    if not path:
         return None
     try:
         st = os.stat(path)
@@ -636,7 +647,7 @@ def main():
     url = 'http://127.0.0.1:%d/' % port
     print('whatnow: %s  (features: %s)' % (url, features_dir()))
     if '--open' in argv:
-        subprocess.call(['open', url])
+        webbrowser.open(url)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

@@ -14,13 +14,16 @@ import difflib, json, os, shutil, sys, tempfile, time
 STATE = 'python3 ~/.claude/skills/whatnow/hook.py'
 MARK = 'whatnow/hook.py'
 
+# Bash for the events, the file tools so that a session that edits a feature.json is linked to that feature
+TOOLS = 'Bash|Edit|Write|MultiEdit|NotebookEdit'
+
 # (event, matcher, command, extra handler fields)
 ENTRIES = [
     ('SessionStart',       None,   STATE,                 {'async': True}),
     ('SessionStart',       None,   STATE + ' --watch',    {'asyncRewake': True, 'timeout': 3600}),
     ('UserPromptSubmit',   None,   STATE,                 {'async': True}),
     ('UserPromptSubmit',   None,   STATE + ' --deliver',  {'timeout': 10}),
-    ('PostToolUse',        'Bash', STATE,                 {'async': True}),
+    ('PostToolUse',        TOOLS,  STATE,                 {'async': True}),
     ('PostToolUseFailure', 'Bash', STATE,                 {'async': True}),
     ('Stop',               None,   STATE,                 {'async': True}),
     ('Stop',               None,   STATE + ' --watch',    {'asyncRewake': True, 'timeout': 3600}),

@@ -1,7 +1,7 @@
 # feature.json
 
 The content of this file (titles, plan items, facts, notes) is written in the language the work is done in.
-The dashboard's own labels are English. Text fields may contain `<code>…</code>` and `<b>…</b>`.
+The dashboard's own labels are English. Text fields may contain `<code>…</code>` and `<b>…</b>`; any other markup is shown as plain text, so `Map<K, V>` can be written as is.
 
 ```json
 {
