@@ -181,5 +181,68 @@ class FixedFactTest(unittest.TestCase):
         self.assertEqual(render.stage_state(nine + [['bad', 'x']]), 'bad')        # an open problem always shows
 
 
+class ProgressTest(unittest.TestCase):
+    """The Progress tab: the item in work, the current stage and the change log."""
+
+    def feature(self, stages):
+        return {'title': 't', 'projects': ['a'], 'ladder': {'a': ['no'] * 6}, 'stages': stages}
+
+    def stage(self, n, facts):
+        return {'n': n, 'title': 's%d' % n, 'verdict': '', 'plan': [], 'facts': facts}
+
+    def render(self, d, stamp):
+        import render
+        with open(self.src, 'w', encoding='utf-8') as fh:
+            json.dump(d, fh)
+        os.utime(self.src, (stamp, stamp))
+        _, data = render.panel_html(self.src)
+        return data
+
+    def setUp(self):
+        self.src = os.path.join(tempfile.mkdtemp(), 'feature.json')
+
+    def test_item_in_work_is_not_done_and_marks_the_current_stage(self):
+        import render
+        self.assertEqual(render.stage_state([['w', 'a'], ['q', 'b']]), 'part')
+        d = render.prepare(self.feature([self.stage(1, [['y', 'a']]), self.stage(2, [['w', 'b'], ['q', 'c']]),
+                                         self.stage(3, [['y', 'd']]), self.stage(4, [])]))
+        self.assertEqual(d['cur'], 2)                    # the item in work wins over a later started stage
+        self.assertEqual((d['stages'][1]['dn'], d['stages'][1]['tot']), (0, 2))
+
+    def test_current_stage_without_an_item_in_work(self):
+        import render
+        d = render.prepare(self.feature([self.stage(1, [['y', 'a']]), self.stage(2, [['p', 'b']]), self.stage(3, [])]))
+        self.assertEqual(d['cur'], 2)                    # the furthest stage that was started
+        self.assertEqual(render.prepare(self.feature([self.stage(1, []), self.stage(2, [])]))['cur'], 1)
+
+    def test_deploy_item_cannot_be_in_work(self):
+        import render
+        d = self.feature([self.stage(1, [])])
+        d['deploy'] = [{'n': 1, 'title': 'x', 'sub': '', 'items': [{'t': 'a', 's': 'w'}]}]
+        self.assertRaises(render.DataError, render.prepare, d)
+
+    def test_change_log(self):
+        first = self.render(self.feature([self.stage(1, [['q', 'a'], ['q', 'b'], ['y', 'c']])]), 1000)
+        self.assertEqual(first['changes'], [])           # the first render only takes a snapshot
+        self.assertEqual(first['updatedTs'], 1000000)
+        # a -> in work; b rewritten in place and finished; c untouched; d is new
+        data = self.render(self.feature([self.stage(1, [['w', 'a'], ['y', 'b, done'], ['y', 'c'], ['bad', 'd']])]), 2000)
+        got = [(c['was'], c['now'], c['t'], c['ts']) for c in data['changes']]
+        self.assertEqual(got, [('q', 'w', 'a', 2000000), ('q', 'y', 'b, done', 2000000), (None, 'bad', 'd', 2000000)])
+        ids = dict(zip(['a', 'b', 'c', 'd'], data['stages'][0]['fids']))
+        self.assertEqual([c['fid'] for c in data['changes']], [ids['a'], ids['b'], ids['d']])
+        # rendering again without a change adds nothing; a rewrite with the same status keeps the entry on the item
+        self.assertEqual(len(self.render(self.feature([self.stage(1, [['w', 'a'], ['y', 'b, done'], ['y', 'c'], ['bad', 'd']])]), 2000)['changes']), 3)
+        data = self.render(self.feature([self.stage(1, [['w', 'a'], ['y', 'b, done and checked'], ['y', 'c'], ['bad', 'd']])]), 3000)
+        self.assertEqual(len(data['changes']), 3)
+        self.assertEqual(data['changes'][1]['fid'], data['stages'][0]['fids'][1])
+
+    def test_a_file_that_is_not_a_feature_keeps_no_history(self):
+        import render
+        self.src = os.path.join(os.path.dirname(self.src), 'example.json')
+        self.render(self.feature([self.stage(1, [['q', 'a']])]), 1000)
+        self.assertFalse(os.path.exists(os.path.join(os.path.dirname(self.src), 'history.json')))
+
+
 if __name__ == '__main__':
     unittest.main()

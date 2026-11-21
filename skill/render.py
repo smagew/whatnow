@@ -11,7 +11,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FACT = ('y', 'fixed', 'bad', 'p', 'q')   # done, problem found and fixed, open problem, partial, not done
+FACT = ('y', 'fixed', 'bad', 'p', 'q', 'w')   # done, problem found and fixed, open problem, partial, not done, in work now
+ITEM = ('y', 'bad', 'p', 'q')                  # kinds a deployment item may have
 DONE = ('y', 'fixed', 'n')                # kinds that count as finished
 LAD = ('ok', 'part', 'no')
 CELL = ('ok', 'part', 'no', 'na')
@@ -40,6 +41,64 @@ def stage_state(facts):
     if done == len(kinds):
         return 'ok'
     return 'almost' if done / len(kinds) >= 0.8 else 'part'
+
+
+def current_stage(stages):
+    """Number of the stage the work is at: the last stage with an item marked "in work" (w),
+    else the furthest stage that was started, else the first one."""
+    for want in (lambda s: any(f[0] == 'w' for f in s['facts']), lambda s: s['state'] != 'no'):
+        hit = [s['n'] for s in stages if want(s)]
+        if hit:
+            return hit[-1]
+    return stages[0]['n'] if stages else None
+
+
+HISTORY_KEEP = 300
+
+
+def track(src, data):
+    """Keep history.json next to feature.json: what changed between two versions of the file, and when.
+    Written here, never by Claude. Items are matched by id (stage number + text); an item whose text was
+    rewritten in place (same stage, same position) is treated as the same item. The first run only takes
+    a snapshot, so an existing feature does not show up as "everything is new".
+    Returns (changes, time of the last update in ms)."""
+    path = os.path.join(os.path.dirname(src), 'history.json')
+    try:
+        mtime = int(os.stat(src).st_mtime * 1000)
+    except OSError:
+        return [], 0
+    h = common.read_json(path)
+    if not isinstance(h, dict):
+        h = {}
+    changes = [c for c in h.get('changes', []) if isinstance(c, dict)]
+    snap = {str(s['n']): [[fid, f[0]] for fid, f in zip(s['fids'], s['facts'])] for s in data['stages']}
+    old = h.get('snap')
+    if old == snap:
+        return changes, mtime
+    try:                                              # a "not needed" decision changes overrides.json only
+        when = max(mtime, int(os.stat(os.path.join(os.path.dirname(src), 'overrides.json')).st_mtime * 1000))
+    except OSError:
+        when = mtime
+    if isinstance(old, dict):
+        for s in data['stages']:
+            before = [x for x in old.get(str(s['n']), []) if isinstance(x, list) and len(x) == 2]
+            was = dict(before)
+            now_ids = set(s['fids'])
+            for i, (fid, f) in enumerate(zip(s['fids'], s['facts'])):
+                prev = was.get(fid)
+                if prev is None and i < len(before) and before[i][0] not in now_ids:
+                    gone, prev = before[i]            # same place, new text: the same item, rewritten
+                    for c in changes:
+                        if c.get('fid') == gone:
+                            c['fid'] = fid
+                if prev != f[0]:
+                    changes.append({'ts': when, 'fid': fid, 'stage': s['n'], 'was': prev, 'now': f[0], 't': f[1]})
+    changes = changes[-HISTORY_KEEP:]
+    try:
+        common.atomic_write_json(path, {'snap': snap, 'changes': changes})
+    except OSError:
+        pass                                          # a read-only folder: the page still renders
+    return changes, mtime
 
 
 def prepare(d, overrides=None):
@@ -98,6 +157,7 @@ def prepare(d, overrides=None):
         s['kinds'] = ['fixed' if f[0] == 'fixed' else ('y' if f[0] in DONE else f[0]) for f in s['facts']]
         s['dn'], s['tot'] = sum(1 for f in s['facts'] if f[0] in DONE), len(s['facts'])
     nums = {s['n'] for s in d['stages']}
+    d['cur'] = current_stage(d['stages'])
 
     # deploy: items are text (not done) or {"t": text, "s": kind}; counts derived
     dTotal = dDone = 0
@@ -105,8 +165,8 @@ def prepare(d, overrides=None):
         items = []
         for it in st['items']:
             it = {'t': it, 's': 'q'} if isinstance(it, str) else it
-            if it.get('s') not in FACT[:1] + FACT[2:]:
-                fail('deploy step %s: item status must be one of %s' % (st.get('n'), FACT[:1] + FACT[2:]))
+            if it.get('s') not in ITEM:
+                fail('deploy step %s: item status must be one of %s' % (st.get('n'), ITEM))
             items.append(it)
         st['items'] = items
         st['total'] = len(items)
@@ -181,6 +241,9 @@ def panel_html(src, back=False, back_href='../index.html', live=False):
     data['live'] = live
     data['slug'] = os.path.basename(os.path.dirname(os.path.abspath(src)))
     data['ver'] = common.feature_version(data['slug'])
+    # the change log is kept only for real features, not for a file rendered from somewhere else
+    data['changes'], data['updatedTs'] = track(src, data) if os.path.basename(src) == 'feature.json' else ([], 0)
+    data['changes'] = data['changes'][-80:]
     with open(os.path.join(HERE, 'template.html'), encoding='utf-8') as fh:
         html = fh.read()
     html = html.replace('/*__DATA__*/null', blob(data), 1).replace('/*__TITLE__*/', data['title'].replace('<', '&lt;'), 1)
