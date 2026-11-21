@@ -67,6 +67,7 @@ python3 ~/.claude/skills/whatnow/hooks_install.py --print       # just print the
 ```
 The hooks are: state tracking (async) on session start, prompt, Bash tool use, stop, notification and session end;
 a synchronous `--deliver` hook on prompt submit; and `--watch` hooks (`asyncRewake`) on stop and session start.
+A `--nudge` hook on stop reminds a session that finished a turn without updating its feature file. It never chains (it skips turns caused by a stop hook), waits 30 minutes between reminders to one session, and can be turned off with `"nudge": false` in `~/.whatnow/config.json`.
 `docs/hooks-settings.example.json` has a copy.
 
 ## The Sessions tab

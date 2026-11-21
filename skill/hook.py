@@ -225,12 +225,17 @@ def watch(payload):
             pass
 
 
+NUDGE_COOLDOWN = 1800                             # seconds between reminders to one session
+
+
 def nudge(payload):
     """Stop: a session linked to a feature that finished a turn without touching the feature's file is
     reminded, once per user prompt, to bring the dashboard in line with what it just told the user.
     The reminder (stderr, exit code 2) wakes the session. `\"nudge\": false` in config.json turns it off."""
     import common
     sid = payload.get('session_id') or ''
+    if payload.get('stop_hook_active'):
+        return 0                                  # this turn was itself caused by a stop hook: never chain
     slug = common.feature_of(sid)
     if not slug or common.config().get('nudge') is False:
         return 0
@@ -249,12 +254,15 @@ def nudge(payload):
     os.makedirs(os.path.dirname(mark), exist_ok=True)
     try:
         with open(mark) as fh:
-            if fh.read().strip() == str(prompt_t):
-                return 0                          # already reminded for this prompt: never loop
-    except OSError:
+            seen, _, at = fh.read().strip().partition(' ')
+        if seen == str(prompt_t):
+            return 0                              # already reminded for this prompt: never loop
+        if at and time.time() - float(at) < NUDGE_COOLDOWN:
+            return 0                              # the reminder itself counts as a prompt: wait before the next
+    except (OSError, ValueError):
         pass
     with open(mark, 'w') as fh:
-        fh.write(str(prompt_t))
+        fh.write('%s %s' % (prompt_t, time.time()))
     sys.stderr.write(
         '[whatnow] You finished a turn on feature "%s" without updating its dashboard. If you told the user anything '
         'about status, open items, results or what is left, make feature.json match it now (set "who" on every blocker, '

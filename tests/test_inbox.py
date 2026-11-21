@@ -432,7 +432,20 @@ class HookDeliveryTest(Env):
         self.assertIn('without updating its dashboard', r.stderr)
         self.assertEqual(self.stop().returncode, 0)                 # same prompt: never twice, so no loop
         self.prompt()
-        self.assertEqual(self.stop().returncode, 2)                 # a new prompt may be reminded again
+        self.assertEqual(self.stop().returncode, 0)                 # the reminder's own wake-up is a "prompt": cooldown
+        mark = os.path.join(self.home, 'nudged', 's1')
+        with open(mark, 'w') as fh:
+            fh.write('1 %s' % (time.time() - 3600))
+        self.prompt()
+        self.assertEqual(self.stop().returncode, 2)                 # after the cooldown a new prompt may be reminded
+
+    def test_nudge_never_chains_from_a_stop_hook_turn(self):
+        path = os.path.join(self.feats, 'demo-feature', 'feature.json')
+        os.utime(path, (time.time() - 600, time.time() - 600))
+        self.prompt()
+        r = self.run_hook('--nudge', {'session_id': 's1', 'cwd': self.repo, 'hook_event_name': 'Stop',
+                                      'stop_hook_active': True})
+        self.assertEqual(r.returncode, 0)
 
     def test_nudge_is_silent_when_the_file_was_updated_or_the_session_is_not_linked(self):
         path = os.path.join(self.feats, 'demo-feature', 'feature.json')
