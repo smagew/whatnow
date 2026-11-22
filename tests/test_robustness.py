@@ -24,11 +24,11 @@ class RenderTest(unittest.TestCase):
         self.assertEqual(render.stage_state([]), 'no')
 
     def test_a_malformed_feature_is_reported_not_raised(self):
-        def cell(d): d['ladder'][d['projects'][0]][0] = []
-        def ladder(d): d['ladder'] = []
+        def kind(d): d['stages'][0]['kind'] = 'party'
+        def projects(d): d['projects'] = []
         def stage(d): d['stages'][0] = 'oops'
-        def item(d): d['deploy'][0]['items'][0] = 5
-        for change in (cell, ladder, stage, item):
+        def fact(d): d['stages'][0]['facts'] = [5]
+        for change in (kind, projects, stage, fact):
             d = example()
             change(d)
             payload = render.collect(self.root_with(d))
@@ -39,7 +39,7 @@ class RenderTest(unittest.TestCase):
 
     def test_one_broken_feature_does_not_hide_the_others(self):
         bad = example()
-        bad['ladder'] = []
+        bad['projects'] = []
         root = self.root_with(bad)
         os.mkdir(os.path.join(root, 'b'))
         with open(os.path.join(root, 'b', 'feature.json'), 'w', encoding='utf-8') as fh:

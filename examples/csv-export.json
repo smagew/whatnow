@@ -7,30 +7,6 @@
   "web"
  ],
  "updated": "2026-01-15",
- "ladder": {
-  "backend": [
-   "ok",
-   [
-    "ok",
-    "Unit tests: 48 passed"
-   ],
-   "no",
-   "no",
-   "no",
-   "no"
-  ],
-  "web": [
-   "ok",
-   "part",
-   "no",
-   [
-    "part",
-    "The page was only opened in Chrome"
-   ],
-   "no",
-   "no"
-  ]
- },
  "stages": [
   {
    "n": 1,
@@ -136,99 +112,6 @@
      "Deployment plan written"
     ]
    ]
-  }
- ],
- "deploy": [
-  {
-   "n": 1,
-   "title": "Staging",
-   "sub": "deploy and check",
-   "items": [
-    "Deploy backend",
-    "Deploy web",
-    "Download a report of 10,000 rows",
-    {
-     "t": "Check Cyrillic in Excel",
-     "s": "y"
-    }
-   ]
-  },
-  {
-   "n": 2,
-   "title": "Production",
-   "sub": "after staging",
-   "items": [
-    "Deploy backend",
-    "Deploy web",
-    "Watch the logs for the first day"
-   ]
-  }
- ],
- "rollback": [
-  "Roll back web first, then backend",
-  "Rollback is safe: no data is changed"
- ],
- "checks": [
-  {
-   "name": "Unit tests",
-   "cells": {
-    "backend": [
-     "ok",
-     "passed",
-     "48 tests"
-    ],
-    "web": [
-     "part",
-     "partly",
-     "button logic only"
-    ]
-   }
-  },
-  {
-   "name": "Independent code review",
-   "hint": "by another agent or a person",
-   "cells": {
-    "backend": [
-     "no",
-     "no",
-     ""
-    ],
-    "web": [
-     "no",
-     "no",
-     ""
-    ]
-   }
-  },
-  {
-   "name": "Load test",
-   "cells": {
-    "backend": [
-     "no",
-     "no",
-     "a million-row report was not tested"
-    ],
-    "web": [
-     "na",
-     "not needed",
-     ""
-    ]
-   }
-  },
-  {
-   "name": "Browser check",
-   "cells": {
-    "backend": [
-     "na",
-     "not needed",
-     ""
-    ],
-    "web": [
-     "part",
-     "partly",
-     "Chrome only"
-    ]
-   }
   }
  ],
  "decisions": [

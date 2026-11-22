@@ -84,6 +84,16 @@ header{padding-bottom:0}
 .f{position:relative}.f>.star{position:absolute;right:12px;top:10px}.s .t1 .star{margin-left:-4px}
 .fvh{margin:22px 0 8px;font-size:15px;font-weight:600}.fvh:first-child{margin-top:0}
 .fv .list{margin-bottom:6px}
+.stg{display:flex;gap:3px;margin:10px 18px 0 84px;align-items:flex-end}
+.sgc{flex:1;min-width:0;max-width:74px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:help}
+.sgc b{font-weight:400;font-size:13px;line-height:1;height:14px}
+.sgc i{display:block;width:100%;height:9px;border-radius:3px;background:#dfe5e1}
+.sgc.ok i{background:var(--ok)}.sgc.almost i{background:#6fc59b}.sgc.part i{background:#e8b13a}.sgc.bad i{background:#c3453d}
+.sgc.cur i{box-shadow:0 0 0 2px #fff,0 0 0 4px #1f5fd0}
+.stn{margin:9px 18px 0 84px;font-size:12.5px;color:var(--mut)}.stn b{color:var(--ink);font-weight:600}
+.pjs{display:flex;gap:6px 14px;flex-wrap:wrap;margin:8px 18px 12px 84px;font-size:12.5px}.pj1{display:inline-flex;gap:8px;align-items:center}.pj1 .pn{font-weight:600}
+.k.bad{background:#c3453d}
+@media(max-width:820px){.stg,.stn,.pjs{margin-left:18px}}
 </style></head><body>
 <header><div class="hd"><span class="conn" id="connbox" hidden><span class="cdot pulse" id="cdot"></span><span id="conn"></span></span><h1>Work with Claude</h1><p class="sub" id="sub"></p><div class="tabs" role="tablist" id="tabs" hidden><button role="tab" id="tS" aria-selected="false">Sessions<span class="n" id="nS"></span></button><button role="tab" id="tF" aria-selected="true">Features<span class="n" id="nF"></span></button><button role="tab" id="tV" aria-selected="false">Favorites<span class="n" id="nV"></span></button></div></div></header>
 <main>
@@ -91,7 +101,7 @@ header{padding-bottom:0}
 <div id="pS" hidden><div class="fl" id="fl"></div><div id="sess"></div></div>
 <div id="pV" hidden><div id="fav"></div></div>
 <div id="pF">
-<p class="legend" id="legend" hidden><b>Check steps for each project, left to right:</b><span><i class="k ok"></i>passed</span><span><i class="k part"></i>partly</span><span><i class="k no"></i>not passed</span><span>hover a segment for details</span></p>
+<p class="legend" id="legend" hidden><b>The stages of each plan, left to right:</b><span><i class="k ok"></i>done</span><span><i class="k part"></i>in progress</span><span><i class="k bad"></i>open problem</span><span><i class="k no"></i>not started</span><span>the percent is the share of the plan that is done; hover a stage for details</span></p>
 <ol class="list" id="list"></ol>
 <div id="free"></div>
 <div class="done" id="done"></div>
@@ -100,8 +110,7 @@ header{padding-bottom:0}
 <script>
 (function(){
 var D=window.IDX_DATA,$=function(i){return document.getElementById(i)};
-var SHORT=['Code','Tests','Review','Manual','Staging','Prod'];
-var STEPS=['Written','Tests','Code review','Verified by hand','Staging','Production'],ST={ok:'passed',part:'partly',no:'not passed'};
+var KI=D.kinds||{},SST={ok:'done',almost:'almost done',part:'in progress',bad:'has an open problem',no:'not started'};
 var open={},lastJson='',lastOk=Date.now();
 function ago(d){return d<=0?'today':d===1?'yesterday':d+' d ago'}
 function agoMs(ms){var s=Math.max(0,Math.round((Date.now()-ms)/1000));if(s<5)return 'just now';if(s<60)return s+' s ago';var m=Math.round(s/60);return m<60?m+' min ago':Math.round(m/60)+' h ago'}
@@ -110,7 +119,6 @@ function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return
 // text from feature.json: everything is escaped, only <code> and <b> survive (entities already written stay as they are)
 function rich(t){return String(t==null?'':t).replace(/&(?!(?:[a-z]+|#\d+|#x[0-9a-f]+);)/gi,'&amp;').replace(/[<>"]/g,function(c){return{'<':'&lt;','>':'&gt;','"':'&quot;'}[c]}).replace(/&lt;(\/?)(code|b)&gt;/g,'<$1$2>')}
 var LV={work:'working',bg:'background task running',wait:'waiting for you',idle:'session open'},rank={work:0,bg:1,wait:2,idle:3};
-function lastPassed(l){var d=-1;for(var i=0;i<6;i++){if(l[i]==='ok')d=i;else break}return d<0?'nothing passed':'passed up to: '+SHORT[d]}
 function chip(s,withWhat){return '<span class="lv '+s.state+'"><i></i>'+LV[s.state]+(withWhat&&s.what&&s.state==='work'?': '+esc(s.what):'')+(s.quiet?'':' <small class="ago" data-t="'+s.t+'">'+agoMs(s.t)+'</small>')+'</span>'}
 function paint(D){
  paintS(D);
@@ -132,8 +140,10 @@ function paint(D){
   return '<li><div class="f '+risk+live+'">'+starBtn('f:'+f.id)+
    '<a class="fh" href="'+esc(f.href)+'"><div class="ring" style="--p:'+f.pct+';--c:'+c+'"><span>'+f.pct+'%</span></div><div><span class="nm">'+esc(f.name)+'</span><div class="tags">'+tags+'<span style="font-size:12px;color:var(--mut)">updated '+ago(f.days)+'</span></div></div></a>'+
    (f.next?'<div class="nx"><b style="font-weight:600;color:var(--ink)">Next:</b> '+rich(f.next)+'</div>':'')+
-   '<div class="pr"><div class="row lab" aria-hidden="true"><span></span><span class="lbls">'+SHORT.map(function(n){return '<span>'+n+'</span>'}).join('')+'</span><span></span><span></span></div>'+f.projects.map(function(p){var l=f.ladder[p],ps=mine.filter(function(s){return s.project===p});
-     return '<div class="row"><span class="pn">'+esc(p)+'</span><span class="steps" role="img" aria-label="'+esc(p+': '+l.map(function(x,i){return STEPS[i]+' '+ST[x]}).join(', '))+'">'+l.map(function(x,i){var n=(f.notes||{})[p+':'+i];return '<i class="'+x+'" title="'+esc(p+' · '+STEPS[i]+': '+ST[x]+(n?'. '+n:''))+'"></i>'}).join('')+'</span><span class="pass">'+lastPassed(l)+'</span><span class="lvw">'+(ps[0]?chip(ps[0],true):'')+'</span></div>'}).join('')+'</div>'+
+   '<div class="stg" role="img" aria-label="'+esc(f.stages.map(function(x){return x.n+'. '+x.title+': '+SST[x.state]}).join('; '))+'">'+f.stages.map(function(x){var k=KI[x.kind];
+     return '<span class="sgc '+x.state+(x.n===f.cur?' cur':'')+'" title="'+esc(x.n+'. '+x.title+'\n'+(k?k[1]+'. ':'')+SST[x.state]+(x.tot?', '+x.dn+' of '+x.tot+' done':'')+(x.n===f.cur?'\nThe work is here now.':''))+'"><b>'+(k?k[0]:'')+'</b><i></i></span>'}).join('')+'</div>'+
+   '<div class="stn">'+(function(){var c=f.stages.filter(function(x){return x.n===f.cur})[0],dn=f.stages.filter(function(x){return x.state==='ok'}).length;return dn+' of '+f.stages.length+' stages done'+(c?'. Now: <b>'+c.n+'. '+esc(c.title)+'</b>':'')})()+'</div>'+
+   '<div class="pjs">'+f.projects.map(function(p){var ps=mine.filter(function(s){return s.project===p});return '<span class="pj1"><span class="pn">'+esc(p)+'</span>'+(ps[0]?chip(ps[0],true):'')+'</span>'}).join('')+'</div>'+
    (ev.length?'<button type="button" class="evb" data-k="'+esc(key)+'" aria-expanded="'+(!!isOpen)+'">'+(isOpen?'Hide events':'Events ('+ev.length+')')+'</button>'+(isOpen?'<ul class="evl">'+ev.slice(0,10).map(function(e){return '<li><time>'+hm(e.ts)+'</time><span class="p">'+esc(e.p||'')+'</span><span class="'+e.k+'">'+esc(e.t)+'</span></li>'}).join('')+'</ul>':''):'')+
    '</div></li>'};
  $('list').innerHTML=active.map(fcard).join('');
@@ -226,14 +236,14 @@ document.addEventListener('pointerup',released,true);document.addEventListener('
 // tabs
 window.wnShowTab=function(k){showTab(k);try{history.replaceState(null,'',k==='S'?'#sessions':k==='F'?'#features':'#favorites')}catch(e){}};
 window.addEventListener('hashchange',function(){var k={'#sessions':'S','#features':'F','#favorites':'V'}[location.hash];if(k)showTab(k)});
-function showTab(k){window.WN_TAB=k;if(window.wnSide)window.wnSide.refresh();$('pS').hidden=k!=='S';$('pF').hidden=k!=='F';$('pV').hidden=k!=='V';$('tS').setAttribute('aria-selected',k==='S');$('tF').setAttribute('aria-selected',k==='F');$('tV').setAttribute('aria-selected',k==='V');try{localStorage.setItem('whatnow-tab',k)}catch(e){}}
+function showTab(k){window.WN_TAB=k;document.querySelector('h1').textContent={S:'Sessions',F:'Features',V:'Favorites'}[k]||'Work with Claude';if(window.wnSide)window.wnSide.refresh();$('pS').hidden=k!=='S';$('pF').hidden=k!=='F';$('pV').hidden=k!=='V';$('tS').setAttribute('aria-selected',k==='S');$('tF').setAttribute('aria-selected',k==='F');$('tV').setAttribute('aria-selected',k==='V');try{localStorage.setItem('whatnow-tab',k)}catch(e){}}
 $('tS').onclick=function(){showTab('S')};$('tF').onclick=function(){showTab('F')};$('tV').onclick=function(){showTab('V')};
 var pollNow=function(){};
 
-if(D.live&&/^https?:$/.test(location.protocol)){$('tabs').hidden=false;var tab='S';try{tab=localStorage.getItem('whatnow-tab')||'S'}catch(e){}if(location.hash==='#features')tab='F';if(location.hash==='#sessions')tab='S';if(location.hash==='#favorites')tab='V';showTab(tab)}
+if(D.live&&location.protocol!=='file:'){var tab='S';try{tab=localStorage.getItem('whatnow-tab')||'S'}catch(e){}if(location.hash==='#features')tab='F';if(location.hash==='#sessions')tab='S';if(location.hash==='#favorites')tab='V';showTab(tab)}
 paint(D);
 if(D.mock)$('mock').innerHTML='<div class="mockbanner">'+D.mock+'</div>';
-if(D.live&&/^https?:$/.test(location.protocol)){
+if(D.live&&location.protocol!=='file:'){
  var sd=document.createElement('script');sd.src='/side.js';document.body.appendChild(sd);
  $('connbox').hidden=false;
  function conn(ok){$('cdot').className='cdot'+(ok?' pulse':' off');var s=Math.round((Date.now()-lastOk)/1000);$('conn').textContent=ok?'connected, updated '+(s<3?'just now':s+' s ago'):'no connection to the server, showing the last data'}

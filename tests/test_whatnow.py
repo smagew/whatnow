@@ -181,6 +181,43 @@ class FixedFactTest(unittest.TestCase):
         self.assertEqual(render.stage_state(nine + [['bad', 'x']]), 'bad')        # an open problem always shows
 
 
+class PlanPercentTest(unittest.TestCase):
+    """The percent and "ready" come from the stages of the feature's own plan, nothing else."""
+
+    def prep(self, stages, **more):
+        import render
+        d = {'title': 't', 'projects': ['a'], 'stages': stages}
+        d.update(more)
+        return render.prepare(d)
+
+    def stage(self, n, facts, title='s', **more):
+        s = {'n': n, 'title': title, 'verdict': '', 'plan': [], 'facts': facts}
+        s.update(more)
+        return s
+
+    def test_every_stage_weighs_the_same(self):
+        d = self.prep([self.stage(1, [['y', 'a'], ['y', 'b']]), self.stage(2, [['y', 'a'], ['q', 'b'], ['p', 'c'], ['q', 'd']]),
+                       self.stage(3, [])])
+        self.assertEqual(d['pct'], round(100 * (1 + 1.5 / 4 + 0) / 3))
+        self.assertFalse(d['ready'])
+
+    def test_ready_when_every_stage_is_done_and_nothing_blocks(self):
+        d = self.prep([self.stage(1, [['y', 'a']]), self.stage(2, [['fixed', 'a']])])
+        self.assertEqual((d['pct'], d['ready']), (100, True))
+
+    def test_an_old_file_with_a_ladder_still_loads(self):
+        d = self.prep([self.stage(1, [['y', 'a']])], ladder={'a': 'whatever'}, checks=[], deploy=[])
+        self.assertEqual(d['pct'], 100)
+
+    def test_kind_is_taken_from_the_file_or_read_from_the_title(self):
+        d = self.prep([self.stage(1, [], 'Deploy to production'), self.stage(2, [], 'Код-ревью'), self.stage(3, [], 'Something', kind='test'),
+                       self.stage(4, [], 'api: migration, logic, tests'), self.stage(5, [], 'Фаза 4. Документация и аккаунт')])
+        self.assertEqual([s['kind'] for s in d['stages']], ['deploy', 'review', 'test', '', 'docs'])
+        import render
+        with self.assertRaises(render.DataError):
+            self.prep([self.stage(1, [], kind='party')])
+
+
 class ProgressTest(unittest.TestCase):
     """The Progress tab: the item in work, the current stage and the change log."""
 
@@ -215,11 +252,6 @@ class ProgressTest(unittest.TestCase):
         self.assertEqual(d['cur'], 2)                    # the furthest stage that was started
         self.assertEqual(render.prepare(self.feature([self.stage(1, []), self.stage(2, [])]))['cur'], 1)
 
-    def test_deploy_item_cannot_be_in_work(self):
-        import render
-        d = self.feature([self.stage(1, [])])
-        d['deploy'] = [{'n': 1, 'title': 'x', 'sub': '', 'items': [{'t': 'a', 's': 'w'}]}]
-        self.assertRaises(render.DataError, render.prepare, d)
 
     def test_change_log(self):
         first = self.render(self.feature([self.stage(1, [['q', 'a'], ['q', 'b'], ['y', 'c']])]), 1000)

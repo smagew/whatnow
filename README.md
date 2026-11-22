@@ -1,18 +1,18 @@
 # whatnow
 
-A dashboard that shows where large, multi-project features stand: which stage they are at, how ready they are,
-what has been checked, what blocks the release, and which Claude Code sessions are working on them right now.
+A dashboard for running several Claude Code sessions at once: see what each one does and which of them waits for
+you, follow the progress of large, multi-project features stage by stage, and correct or ask a session from the
+page, switching between features in one click.
 
 It is made for engineers who run several features in parallel with AI coding agents in the terminal and want
 one place to look, instead of reading long CLI transcripts. It shows progress, not tokens or costs.
 
 ## What you see
-- **Home page**: one card per feature. Readiness in percent, a ladder of six check steps per project
-  (Code, Tests, Review, Manual, Staging, Prod), problems, when it was last updated, the next step, and whether
+- **Home page**: one card per feature. The percent of its plan that is done, the stages of the plan as a strip
+  (with an icon for planning, research, code, tests, review, deployment, docs), problems, when it was last updated, the next step, and whether
   a session is working on it right now.
-- **Feature page** (tabs: Progress, What is left, Deployment, Quality, Decisions and questions): what was planned
-  and what really happened, stage by stage; the deployment plan and how much of it is done; which checks were
-  run in which project; the blockers and what to do next.
+- **Feature page** (tabs: Progress, What is left, Decisions and questions): what was planned
+  and what really happened, stage by stage; what is left and who has to act on it.
 - **Buttons on every item**: *Do it*, *Ask*, *Not needed*. They send your instruction or question into the
   Claude Code session that works on the feature (see below).
 
@@ -36,13 +36,14 @@ python3 ~/.claude/skills/whatnow/render.py --index --open   # static files, rebu
 ```
 feature.json  ->  render.py  ->  panel.html (feature page) + index.html (home page)
 ```
-- The source of truth is one `feature.json` per feature. Claude writes it while it works (stages, checks,
+- The source of truth is one `feature.json` per feature. Claude writes it while it works (stages,
   blockers, evidence) following the rules in `skill/SKILL.md`. The format is described in `skill/SCHEMA.md`.
 - `render.py` validates the data and **derives** everything that must not be typed by hand: stage colours,
   counts, percentages, "ready to release?", staleness. It refuses a "passed" without a note saying what
   was checked, and a blocker that points to a stage that does not exist.
-- Readiness percent comes from the ladder: passed = 1, partly = 0.5, not passed = 0, over every step of every
-  project. It is readiness to release, not the share of code written.
+- The percent comes from the stages of the feature's own plan: every stage weighs the same and counts by the
+  share of its items that are done (partly = 0.5). Nothing is imposed on a feature: tests, review or deployment
+  are stages or items only where its plan has them.
 - A feature with no update for 3 days is marked as not updated recently.
 
 ## Live page, hooks and server
@@ -93,8 +94,8 @@ On a feature page opened through the server every item of a stage has actions:
 feature's session (same routing as above) to compare `feature.json` with what it really did and bring the page up to
 date. Only one such request is open at a time; the page reloads itself when the file changes.
 
-**The bar on the left.** Every live page has a bar on the left: **Sessions** and **Features** (the two views of the
-home page), then all features in groups: favorites, the ones a session works on right now, the rest, finished ones.
+**The bar on the left.** Every live page has a bar on the left: **Sessions**, **Features** and **Favorites** (the
+views of the home page, which has no tabs of its own), then all features in groups: favorites, the ones a session works on right now, the rest, finished ones.
 One click opens another feature. The dot and the line under a name show what its session does. A feature whose
 session wrote something and now waits for your answer is marked with 💬 (✋ when Claude asks for a permission).
 While you have not opened that feature since the reply, the row is highlighted, the mark has a red dot, and the

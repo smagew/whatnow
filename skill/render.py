@@ -6,19 +6,15 @@ Usage: python3 render.py path/to/feature.json [--out panel.html] [--open]
 Validates the data, derives statuses, and fails with a clear message if the
 file breaks the rules in SCHEMA.md. Python 3 standard library only.
 """
-import json, sys, os, datetime, webbrowser
+import re, json, sys, os, datetime, webbrowser
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FACT = ('y', 'fixed', 'bad', 'p', 'q', 'w')   # done, problem found and fixed, open problem, partial, not done, in work now
-ITEM = ('y', 'bad', 'p', 'q')                  # kinds a deployment item may have
 DONE = ('y', 'fixed', 'n')                # kinds that count as finished
-LAD = ('ok', 'part', 'no')
-CELL = ('ok', 'part', 'no', 'na')
 SEV = ('high', 'mid', 'low')
 WHO = ('you', 'look', 'agent', 'later')   # who has to act: you / needs your look / the agent / a later phase
-STEPS = ['Written', 'Tests', 'Code review', 'Verified by hand', 'Staging', 'Production']
 
 
 class DataError(Exception):
@@ -41,6 +37,48 @@ def stage_state(facts):
     if done == len(kinds):
         return 'ok'
     return 'almost' if done / len(kinds) >= 0.8 else 'part'
+
+
+# What a stage is about. A feature decides for itself which of these it has: they are marks on the stages
+# of its plan, not steps every feature must pass. "kind" in feature.json wins; without it the title is read.
+KINDS = {'plan': ['📝', 'Planning'], 'research': ['🔍', 'Research'], 'code': ['🛠', 'Writing code'], 'test': ['🧪', 'Testing'],
+         'review': ['👀', 'Review'], 'deploy': ['🚀', 'Deployment'], 'docs': ['📄', 'Documentation']}
+HEAD = re.compile(r'^(?:фаза|этап|phase|stage|step)\s*\d+[^.:]*[.:]\s*')
+GUESS = (('deploy', r'deploy|release|rollout|выкат|выклад|релиз|деплой|подготовка к выкладке'),
+         ('review', r'(?:code[ -]?)?review|(?:код[ -]?)?ревью|аудит|audit'),
+         ('test', r'tests?\b|testing|тест|проверк|автопроверк|ручная проверка|сетка безопасности'),
+         ('docs', r'docs?\b|documentation|документ'),
+         ('research', r'research|analysis|investigat|анализ|исследован|разведка|разобраться|подготовка и инвентар'),
+         ('plan', r'plan|план|согласовать|спроектировать|проектирование'))
+
+
+def stage_kind(s):
+    k = s.get('kind')
+    if k is not None:
+        if k not in KINDS:
+            fail('stage %s: kind must be one of %s' % (s['n'], ', '.join(KINDS)))
+        return k
+    # only what the title starts with counts: a word somewhere inside it ("..., tests") says too little
+    title = HEAD.sub('', str(s.get('title', '')).lower().strip())
+    for kind, pattern in GUESS:
+        if re.match(pattern, title):
+            return kind
+    return ''
+
+
+def progress(stages):
+    """Percent of the plan that is done. Every stage weighs the same: a stage counts by the share of its
+    items that are done (partly done = half, "not needed" is left out), a stage without items counts as 0."""
+    if not stages:
+        return 0
+    total = 0.0
+    for s in stages:
+        kinds = [f[0] for f in s['facts'] if f[0] != 'n']
+        if kinds:
+            total += sum(1 if k in DONE else .5 if k == 'p' else 0 for k in kinds) / len(kinds)
+        elif s['facts']:
+            total += 1                                # everything in it was marked as not needed
+    return round(100 * total / len(stages))
 
 
 def current_stage(stages):
@@ -102,7 +140,7 @@ def track(src, data):
 
 
 def prepare(d, overrides=None):
-    for key in ('title', 'projects', 'ladder', 'stages'):
+    for key in ('title', 'projects', 'stages'):
         if key not in d:
             fail('missing "%s"' % key)
     projects = d['projects']
@@ -110,29 +148,8 @@ def prepare(d, overrides=None):
         fail('"projects" must be a non-empty list of names')
     d.setdefault('sub', '')
     d.setdefault('summary', '')
-    for k in ('rollback', 'checks', 'decisions', 'questions', 'blockers', 'nextSteps', 'deploy'):
+    for k in ('decisions', 'questions', 'blockers', 'nextSteps'):
         d.setdefault(k, [])
-    d['ladderSteps'] = STEPS
-
-    # ladder: "ok" | ["ok", "note"] per step, six steps per project
-    notes = {}
-    for p in projects:
-        row = d['ladder'].get(p)
-        if not isinstance(row, list) or len(row) != len(STEPS):
-            fail('ladder["%s"] needs %d entries (%s)' % (p, len(STEPS), ', '.join(STEPS)))
-        clean = []
-        for i, c in enumerate(row):
-            s, note = (c, None) if isinstance(c, str) else (c[0], c[1] if len(c) > 1 else None)
-            if s not in LAD:
-                fail('ladder["%s"][%d]: status must be one of %s' % (p, i, LAD))
-            if s == 'ok' and i >= 2 and not note:
-                fail('ladder["%s"][%d] ("%s") is "ok" without evidence: add a note saying what was checked' % (p, i, STEPS[i]))
-            clean.append(s)
-            if note:
-                notes['%s:%d' % (p, i)] = note
-        d['ladder'][p] = clean
-    d['ladderNotes'] = notes
-
     # stages: ordered, facts validated, state derived (never typed by hand)
     last = 0
     for s in d['stages']:
@@ -154,41 +171,11 @@ def prepare(d, overrides=None):
                 s['facts'][i] = ['n', s['facts'][i][1]]
                 s['reasons'][str(i)] = o.get('reason', '')
         s['state'] = stage_state(s['facts'])
+        s['kind'] = stage_kind(s)
         s['kinds'] = ['fixed' if f[0] == 'fixed' else ('y' if f[0] in DONE else f[0]) for f in s['facts']]
         s['dn'], s['tot'] = sum(1 for f in s['facts'] if f[0] in DONE), len(s['facts'])
     nums = {s['n'] for s in d['stages']}
     d['cur'] = current_stage(d['stages'])
-
-    # deploy: items are text (not done) or {"t": text, "s": kind}; counts derived
-    dTotal = dDone = 0
-    for st in d['deploy']:
-        items = []
-        for it in st['items']:
-            it = {'t': it, 's': 'q'} if isinstance(it, str) else it
-            if it.get('s') not in ITEM:
-                fail('deploy step %s: item status must be one of %s' % (st.get('n'), ITEM))
-            items.append(it)
-        st['items'] = items
-        st['total'] = len(items)
-        st['done'] = sum(1 for i in items if i['s'] == 'y')
-        if any(i['s'] == 'bad' for i in items):
-            st['cls'], st['tag'], st['stateText'] = 'bad', 'bad', 'has a problem'
-        elif st['done'] == st['total'] and st['total']:
-            st['cls'], st['tag'], st['stateText'] = 'ok', 'ok', 'done'
-        elif st['done'] == 0:
-            st['cls'], st['tag'], st['stateText'] = 'no', 'no', 'not started'
-        else:
-            st['cls'], st['tag'], st['stateText'] = 'part', 'part', 'in progress'
-        dTotal += st['total']
-        dDone += st['done']
-    d['dTotal'], d['dDone'] = dTotal, dDone
-
-    # checks: a cell is [status, label, note]
-    for c in d['checks']:
-        for p in projects:
-            cell = c.get('cells', {}).get(p)
-            if not (isinstance(cell, list) and len(cell) == 3 and cell[0] in CELL):
-                fail('check "%s": cells["%s"] must be [status, label, note], status in %s' % (c.get('name'), p, CELL))
 
     # blockers must point at real stages and have a reason and an action
     for b in d['blockers']:
@@ -206,8 +193,10 @@ def prepare(d, overrides=None):
             if p not in projects:
                 fail('blocker "%s": unknown project "%s"' % (b['t'], p))
 
-    # ready only when nothing blocks and every rung is passed in every project
-    d['ready'] = (not d['blockers']) and all(c == 'ok' for p in projects for c in d['ladder'][p])
+    # ready only when nothing blocks and every stage of the plan is done
+    d['ready'] = (not d['blockers']) and bool(d['stages']) and all(s['state'] == 'ok' for s in d['stages'])
+    d['pct'] = progress(d['stages'])
+    d['kindInfo'] = KINDS
     d.setdefault('updated', datetime.date.today().isoformat())
     return d
 
@@ -260,11 +249,6 @@ def write_panel(src, out, back=False):
 
 def summary(slug, d, today):
     """One row of the portfolio page, derived from a validated feature."""
-    got = tot = 0
-    for p in d['projects']:
-        for c in d['ladder'][p]:
-            tot += 1
-            got += {'ok': 1, 'part': .5, 'no': 0}[c]
     try:
         days = (today - datetime.date.fromisoformat(d['updated'])).days
     except ValueError:
@@ -274,13 +258,14 @@ def summary(slug, d, today):
     top = next((b for sev in ('high', 'mid', 'low') for b in d['blockers'] if b['sev'] == sev), None)
     done = d['ready']
     return {
-        'id': slug, 'name': d['title'], 'projects': d['projects'], 'ladder': d['ladder'],
-        'pct': round(100 * got / tot), 'h': h, 'm': m, 'days': days,
+        'id': slug, 'name': d['title'], 'projects': d['projects'], 'cur': d['cur'],
+        'stages': [{'n': x['n'], 'title': x['title'], 'state': x['state'], 'kind': x['kind'], 'dn': x['dn'], 'tot': x['tot']}
+                   for x in d['stages']],
+        'pct': d['pct'], 'h': h, 'm': m, 'days': days,
         'stale': days >= 3 and not done, 'done': done,
         'waiting': sum(1 for b in d['blockers'] if b.get('who') == 'you'),
         'why': top['t'] if top else '', 'next': d['nextSteps'][0] if d['nextSteps'] else '',
         'href': '%s/panel.html' % slug,
-        'notes': d.get('ladderNotes', {}),
     }
 
 
@@ -307,7 +292,7 @@ def collect(root, write=False):
         for p in f['projects']:
             if p not in projects:
                 projects.append(p)
-    return {'today': today.strftime('%Y-%m-%d'), 'projects': projects, 'features': feats, 'broken': broken}
+    return {'today': today.strftime('%Y-%m-%d'), 'projects': projects, 'features': feats, 'broken': broken, 'kinds': KINDS}
 
 
 def index_html(payload):

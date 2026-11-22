@@ -378,7 +378,7 @@ def features_list():
             'ask': ask.get(f['id'], ('', 0))[0], 'saidT': ask.get(f['id'], ('', 0))[1]} for f in feats]
     rank = lambda f: order.index(f['state']) if f['state'] else len(order)
     out.sort(key=lambda f: (0 if f['fav'] else 1 if f['state'] else 3 if f['done'] else 2, rank(f), f['name'].lower()))
-    return {'features': out, 'waiting': waiting}
+    return {'features': out, 'waiting': waiting, 'favorites': len(common.favorites())}
 
 
 # ------------------------------------------------------------------ inbox and routing
@@ -586,8 +586,8 @@ def favorite(body):
 TRACK_TEXT = (
     'Please track the work of this session in the whatnow dashboard as a feature. Read ~/.claude/skills/whatnow/SKILL.md '
     'and SCHEMA.md, then write a feature.json (short slug) from what we have discussed and decided: the phases of the plan '
-    'as stages (plan items; facts only for what was really done and verified, with evidence), the deployment steps, the '
-    'checks, the ladder per project, and the open items as blockers with "who" set. Write the content in the language '
+    'as stages (plan items; facts only for what was really done and verified, with evidence; deployment, tests and review as stages or items of the plan, only if the '
+    'work really has them), and the open items as blockers with "who" set. Write the content in the language '
     'we work in. Then run python3 ~/.claude/skills/whatnow/render.py --index and tell me the slug.')
 
 

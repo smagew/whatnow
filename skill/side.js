@@ -1,4 +1,4 @@
-/* whatnow: the bar on the left of every live page. Sessions and Features at the top, then every feature,
+/* whatnow: the bar on the left of every live page. Sessions, Features and Favorites at the top, then every feature,
    one click away. Served by server.py as /side.js and loaded by both pages; a page opened as a file has no bar. */
 (function(){
 if(window.wnSide)return;
@@ -8,7 +8,7 @@ var CSS="body{--sw:0px}body.sb{--sw:256px;padding-left:var(--sw)}body.sb.sm{--sw
 ".wns .wtop{display:flex;align-items:center;margin:0 4px 6px 8px;min-height:26px;font-weight:600;color:#fff;font-size:14px}"+
 ".wns .wtop button{all:unset;cursor:pointer;margin-left:auto;color:#9fb3a8;padding:1px 8px;border-radius:6px;font-size:15px}.wns .wtop button:hover{background:#ffffff1f;color:#fff}"+
 ".wns a.wm{display:flex;align-items:center;gap:8px;padding:7px 8px;font-weight:500}.wns a.wm:hover,.wns a.wf:hover{background:#ffffff14}"+
-".wns a.wm em{margin-left:auto}"+
+".wns a.wm em,.wns a.wm small{margin-left:auto}.wns a.wm small{color:#8ea398;font-size:12px}.wns a.wm[aria-current] small{color:#586860}"+
 ".wns a[aria-current]{background:#fff;color:#16241e;font-weight:600}.wns a[aria-current]:hover{background:#fff}"+
 ".wns h4{margin:14px 8px 4px;font-size:11.5px;font-weight:600;color:#7f968a}"+
 ".wns a.wf{display:grid;grid-template-columns:10px 1fr auto;gap:2px 9px;align-items:baseline;padding:7px 8px;border-left:3px solid transparent}"+
@@ -49,7 +49,8 @@ function draw(){if(!data)return;visit();var cur=here(),tab=cur?'':(window.WN_TAB
  document.body.classList.add('sb');document.body.classList.toggle('sm',small);
  var h='<div class="wtop"><b>whatnow</b><button type="button" aria-expanded="'+!small+'" aria-label="'+(small?'Show the names':'Collapse the bar')+'" title="'+(small?'Show the names':'Collapse the bar')+'">'+(small?'›':'‹')+'</button></div>'+
   '<a class="wm" href="/#sessions" data-tab="S" data-ab="S"'+(tab==='S'?' aria-current="page"':'')+' title="Every Claude Code session"><span>Sessions</span>'+(data.waiting?'<em title="Sessions that wait for you">'+data.waiting+' wait</em>':'')+'</a>'+
-  '<a class="wm" href="/#features" data-tab="F" data-ab="F"'+(tab==='F'?' aria-current="page"':'')+' title="Every feature with its readiness"><span>Features</span></a><hr>';
+  '<a class="wm" href="/#features" data-tab="F" data-ab="F"'+(tab==='F'?' aria-current="page"':'')+' title="Every feature with its readiness"><span>Features</span></a>'+
+  '<a class="wm" href="/#favorites" data-tab="V" data-ab="★"'+(tab==='V'?' aria-current="page"':'')+' title="The sessions and features you starred"><span>Favorites</span>'+(data.favorites?'<small>'+data.favorites+'</small>':'')+'</a><hr>';
  h+=GRP.map(function(g){var it=f.filter(function(x){return grp(x)===g});
   return it.length?'<h4>'+g+'</h4>'+it.map(function(x){var mine=x.id===cur,ask=x.ask||'',fresh=!!ask&&!mine&&x.saidT>seen(x.id);if(fresh)asks++;
    var sub=ask==='permission'?'asks for your permission':ask?(fresh?'new reply, waits for your answer':'waits for your answer'):x.state?STX[x.state]:'no open session';

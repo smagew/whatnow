@@ -10,11 +10,7 @@ The dashboard's own labels are English. Text fields may contain `<code>…</code
   "summary": "One or two sentences: where the feature stands right now.",
   "projects": ["backend", "web"],
   "updated": "2026-01-15",
-  "ladder": { "backend": [ ... six entries ... ] },
   "stages": [ ... ],
-  "deploy": [ ... ],
-  "rollback": ["text"],
-  "checks": [ ... ],
   "decisions": ["text"],
   "questions": ["text"],
   "blockers": [ ... ],
@@ -22,34 +18,16 @@ The dashboard's own labels are English. Text fields may contain `<code>…</code
 }
 ```
 
-## ladder
-Per project, six entries in this order: Written, Tests, Code review, Verified by hand, Staging, Production.
-Each entry is `"ok" | "part" | "no"` or `["ok", "note"]`. From "Code review" onwards, `ok` needs a note saying what was checked and where.
-
 ## stages (in the order they really happened)
 ```json
-{ "n": 4, "title": "…", "verdict": "short result", "proj": "backend",
+{ "n": 4, "title": "…", "verdict": "short result", "proj": "backend", "kind": "test",
   "unplanned": false,
   "plan":  ["what the stage was supposed to include"],
   "facts": [ ["y","done"], ["fixed","problem found and already fixed"], ["bad","open problem"], ["p","partly done"], ["q","not done"], ["w","being worked on right now"] ] }
 ```
-`n` is an integer, strictly increasing. Stage colour is derived and says how worried to be: all `q` = grey, any `bad` = red, everything done = green, 80% or more done = light green ("almost"), otherwise amber. `fixed` counts as done: the mistake stays visible in the list but does not colour the stage. Use `bad` only for a problem that is still open; change it to `fixed` once it is solved. `unplanned: true` marks work that was not in the plan.
+`n` is an integer, strictly increasing. `kind` is optional: `plan | research | code | test | review | deploy | docs`; the page marks the stage with an icon (without it the title is read for a hint). The percent of a feature is the share of its plan that is done: every stage weighs the same and counts by the share of its items done (`p` = half, "not needed" is left out). Stage colour is derived and says how worried to be: all `q` = grey, any `bad` = red, everything done = green, 80% or more done = light green ("almost"), otherwise amber. `fixed` counts as done: the mistake stays visible in the list but does not colour the stage. Use `bad` only for a problem that is still open; change it to `fixed` once it is solved. `unplanned: true` marks work that was not in the plan.
 
 `w` marks the one item being worked on right now. The Progress tab shows that stage as the current one, with the item named on it. It counts as not done. Without a `w` item the current stage is the furthest stage that was started.
-
-## deploy
-```json
-{ "n": 1, "title": "Staging: backend", "sub": "migration, check on the database",
-  "items": ["not done yet", {"t": "done item", "s": "y"}] }
-```
-Item = text (not done) or `{t, s}` with `s` in `y | bad | p | q` (`fixed` and `w` are for stage facts only). Counts and step state are derived.
-
-## checks
-```json
-{ "name": "Unit tests", "hint": "optional",
-  "cells": { "backend": ["ok", "passed", "note"], "web": ["na", "not needed", ""] } }
-```
-Cell = `[status, label, note]`, status in `ok | part | no | na`. Every project must have a cell.
 
 ## blockers
 ```json

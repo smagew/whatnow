@@ -45,22 +45,13 @@ main{max-width:1228px;margin:0 auto;padding:22px 24px 70px}
 .nav button{all:unset;cursor:pointer;padding:7px 14px;border:1px solid var(--line);border-radius:9px;font-size:13px;font-weight:500;background:#fff}
 .nav button:hover{border-color:var(--acc)}.nav button[disabled]{opacity:.35;cursor:default}
 .nav button:focus-visible{outline:3px solid #2a8cff}
-/* deploy */
 .bar{height:8px;background:var(--nob);border-radius:4px;margin-top:6px}.bar i{display:block;height:100%;background:var(--ok);border-radius:4px}
 .chk li{display:flex;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:13.5px}.chk li:first-child{border-top:0}
 .chk{list-style:none;margin:10px 0 0;padding:0}
 .rb{margin-top:16px;padding:12px 16px;background:var(--nob);border-radius:12px;font-size:13.5px}.rb b{display:block;margin-bottom:4px}
 /* matrix */
-.mx{width:100%;border-collapse:separate;border-spacing:6px}
-.mx th{font-size:13px;color:var(--mut);font-weight:600;text-align:left;padding:4px 8px}
-.mx td.k{font-weight:600;padding:8px;font-size:13.5px;width:30%}.mx td.k small{display:block;color:var(--mut);font-weight:400;font-size:12px}
-.mx button{all:unset;cursor:pointer;display:block;width:100%;border-radius:10px;padding:12px 10px;text-align:center;font-weight:600;font-size:13px}
-.mx button:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
-.mx button[aria-pressed=true]{outline:3px solid var(--ink)}
-.mx .ok{background:var(--okb);color:var(--ok)}.mx .part{background:var(--partb);color:var(--part)}.mx .no{background:var(--badb);color:var(--bad)}.mx .na{background:var(--nob);color:var(--no);font-weight:500}
-.note{margin-top:12px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 16px;min-height:48px;font-size:14px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}.two .det ul{padding-left:18px;margin:8px 0 0}.two li{margin:6px 0}
-@media(max-width:860px){.md{grid-template-columns:1fr}.list{position:static;flex-direction:row;overflow-x:auto;padding-bottom:4px}.item{min-width:230px;width:230px}.pf{grid-template-columns:1fr}.pf>div+div{border-left:0;border-top:1px solid var(--line)}.two{grid-template-columns:1fr}.mx td.k{width:auto}}
+@media(max-width:860px){.md{grid-template-columns:1fr}.list{position:static;flex-direction:row;overflow-x:auto;padding-bottom:4px}.item{min-width:230px;width:230px}.pf{grid-template-columns:1fr}.pf>div+div{border-left:0;border-top:1px solid var(--line)}.two{grid-template-columns:1fr}}
 
 .why{margin:0 0 14px;font-size:16px;max-width:40em}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
@@ -152,6 +143,7 @@ body{--sw:0px}
 .rd.no{background:var(--bg);color:#7d8c84;box-shadow:inset 0 0 0 2px #b9c6bf}
 .rd.cu{background:var(--live);color:#fff;align-self:start;margin-top:12px}
 .rr .nm{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rr[aria-selected=true] .nm{font-weight:600}
+.km{cursor:help;font-style:normal}
 .rr.fut .nm{color:#6c7b73;font-weight:400}
 .rr small{color:var(--mut);font-size:12px;white-space:nowrap}
 .cc{grid-column:2/4;background:var(--paper);border:1.5px solid var(--livel);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -260,29 +252,24 @@ function chText(c){return c.was?'Was '+(LBL[c.was]||c.was)+', now '+(LBL[c.now]|
 function rich(t){return String(t==null?'':t).replace(/&(?!(?:[a-z]+|#\d+|#x[0-9a-f]+);)/gi,'&amp;').replace(/[<>"]/g,function(c){return{'<':'&lt;','>':'&gt;','"':'&quot;'}[c]}).replace(/&lt;(\/?)(code|b)&gt;/g,'<$1$2>')}
 $('t').textContent=P.title;$('sub').innerHTML=rich(P.sub)+(P.updated&&!P.updatedTs?' Updated '+esc(P.updated)+'.':'');
 var problems=0;P.stages.forEach(function(s){s.facts.forEach(function(f){if(f[0]==='q'||f[0]==='bad')problems++})});
-var tabs=[['work','Progress'],['ov','What is left'],['deploy','Deployment'],['qa','Quality'],['dec','Decisions and questions']];
-$('tabs').innerHTML=tabs.map(function(t,i){return '<button role="tab" id="tab-'+t[0]+'" aria-controls="p-'+t[0]+'" aria-selected="'+(i===0)+'" tabindex="'+(i?-1:0)+'">'+t[1]+(t[0]==='ov'&&P.blockers.length?'<span class="cnt'+(P.blockers.some(function(b){return b.who==='you'})?' bad':'')+'">'+P.blockers.length+'</span>':'')+(t[0]==='deploy'?'<span class="cnt'+(P.deploy.some(function(x){return x.cls==='bad'})?' bad':'')+'">'+P.dDone+' of '+P.dTotal+'</span>':'')+'</button>'}).join('');
+var tabs=[['work','Progress'],['ov','What is left'],['dec','Decisions and questions']];
+$('tabs').innerHTML=tabs.map(function(t,i){return '<button role="tab" id="tab-'+t[0]+'" aria-controls="p-'+t[0]+'" aria-selected="'+(i===0)+'" tabindex="'+(i?-1:0)+'">'+t[1]+(t[0]==='ov'&&P.blockers.length?'<span class="cnt'+(P.blockers.some(function(b){return b.who==='you'})?' bad':'')+'">'+P.blockers.length+'</span>':'')+'</button>'}).join('');
 function ul(a,c){return '<ul class="'+c+'">'+a+'</ul>'}
 var hi=P.blockers.filter(function(b){return b.sev==='high'}).length,mid=P.blockers.filter(function(b){return b.sev==='mid'}).length,lo=P.blockers.filter(function(b){return b.sev==='low'}).length,SV={high:'critical',mid:'important',low:'minor'};
 var GROUPS=[['you','Waits for you','only you can do this','wait for you'],['look','Needs your look','check or decide','need your look'],['agent','Agent can do it','nothing else is needed first','for the agent'],['later','Later','next phases','later'],['none','Not sorted yet','the agent has not said who acts','not sorted']];
 function grpOf(b){return GROUPS.some(function(g){return g[0]===b.who})?b.who:'none'}
 function grpItems(k){return P.blockers.filter(function(b){return grpOf(b)===k}).sort(function(a,b){return a.stage-b.stage})}
-var ov='<p class="why sum">'+rich(P.summary||'')+'</p><div class="chips">'+GROUPS.filter(function(g){return grpItems(g[0]).length}).map(function(g){return '<span class="chip"><i class="dt '+g[0]+'"></i><b>'+grpItems(g[0]).length+'</b> '+g[3]+'</span>'}).join('')+'<span class="chip"><i class="dt k"></i>deployed <b>'+P.dDone+'</b> of '+P.dTotal+' steps</span></div>'+
+var ov='<p class="why sum">'+rich(P.summary||'')+'</p><div class="chips">'+GROUPS.filter(function(g){return grpItems(g[0]).length}).map(function(g){return '<span class="chip"><i class="dt '+g[0]+'"></i><b>'+grpItems(g[0]).length+'</b> '+g[3]+'</span>'}).join('')+'</div>'+
 '<div id="ovl"></div>';
 // work
 var w='<div class="md"><div class="rail" role="tablist" aria-orientation="vertical" aria-label="Stages" id="stl"></div><div class="det" id="det" role="tabpanel" tabindex="0"></div></div>';
-// deploy
-var d='<div class="md"><div class="list" id="dl">'+P.deploy.map(function(x,i){return '<button class="item" data-i="'+i+'" aria-selected="'+(i===0)+'"><span class="bd '+x.cls+'">'+esc(x.n)+'</span><span class="tt">'+rich(x.title)+'</span><span class="vv">'+x.done+' of '+x.total+' · '+x.stateText+'<span class="bar" style="display:block"><i style="width:'+Math.round(100*x.done/Math.max(x.total,1))+'%"></i></span></span></button>'}).join('')+'<button class="item" data-i="r" aria-selected="false"><span class="bd no">↺</span><span class="tt">Rollback</span><span class="vv">described</span></button></div><div class="det" id="ddet" tabindex="0"></div></div>';
-// qa
-var pr=P.projects;
-var q='<table class="mx"><thead><tr><th></th>'+pr.map(function(p){return '<th>'+esc(p)+'</th>'}).join('')+'</tr></thead><tbody>'+P.checks.map(function(c,ci){return '<tr><td class="k">'+rich(c.name)+(c.hint?'<small>'+rich(c.hint)+'</small>':'')+'</td>'+pr.map(function(p){var x=c.cells[p];return '<td><button data-c="'+ci+'" data-p="'+esc(p)+'" class="'+x[0]+'" aria-pressed="false">'+IC[x[0]]+' '+rich(x[1])+'</button></td>'}).join('')+'</tr>'}).join('')+'</tbody></table><div class="note" id="note" aria-live="polite">Click a cell to see the explanation.</div>';
 // dec
 var dc='<div class="two"><div class="det"><h2>Decided</h2><ul>'+P.decisions.map(function(x){return '<li>'+rich(x)+'</li>'}).join('')+'</ul></div><div class="det"><h2>Open</h2><ul>'+P.questions.map(function(x){return '<li>'+rich(x)+'</li>'}).join('')+'</ul></div></div>';
-$('main').innerHTML=[['work',w],['ov',ov],['deploy',d],['qa',q],['dec',dc]].map(function(x,i){return '<section role="tabpanel" id="p-'+x[0]+'" aria-labelledby="tab-'+x[0]+'"'+(i?' hidden':'')+'>'+x[1]+'</section>'}).join('');
+$('main').innerHTML=[['work',w],['ov',ov],['dec',dc]].map(function(x,i){return '<section role="tabpanel" id="p-'+x[0]+'" aria-labelledby="tab-'+x[0]+'"'+(i?' hidden':'')+'>'+x[1]+'</section>'}).join('');
 // tabs behaviour
 var tb=[].slice.call(document.querySelectorAll('#tabs button'));
 var curTab='work';
-function show(k){curTab=k;tb.forEach(function(b){var on=b.id==='tab-'+k;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1});['ov','work','deploy','qa','dec'].forEach(function(x){$('p-'+x).hidden=x!==k});if(typeof keep==='function')keep()}
+function show(k){curTab=k;tb.forEach(function(b){var on=b.id==='tab-'+k;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1});['ov','work','dec'].forEach(function(x){$('p-'+x).hidden=x!==k});if(typeof keep==='function')keep()}
 tb.forEach(function(b,i){b.addEventListener('click',function(){show(b.id.slice(4))});b.addEventListener('keydown',function(e){var n=e.key==='ArrowRight'?i+1:e.key==='ArrowLeft'?i-1:null;if(n===null)return;n=(n+tb.length)%tb.length;tb[n].focus();show(tb[n].id.slice(4))})});
 // stage detail
 var cur=0,CUR=Math.max(0,P.stages.map(function(s){return s.n}).indexOf(P.cur)),MORE=false;
@@ -295,6 +282,8 @@ function stageTip(s){var k={bad:0,p:0,q:0,w:0};s.facts.forEach(function(f){if(k[
  return [STT[s.state],s.dn+' of '+s.tot+' done'+(k.w?', '+k.w+' in work':'')+(k.bad?', '+k.bad+' open problem'+(k.bad>1?'s':''):'')+(k.p?', '+k.p+' partly':'')+(k.q?', '+k.q+' not done':'')+'.']}
 function segs(s){return '<span class="sg">'+s.facts.map(function(f,fi){var c=CHF[(s.fids||[])[fi]],k=f[0];
  return '<i class="'+(DONE_K[k]||k==='n'?'d':k==='p'?'p':k==='bad'?'b':k==='w'?'w':'')+'"'+tipA(KT[k]+(c&&Date.now()-c.ts<D1?', '+age(c.ts):''),f[1])+'></i>'}).join('')+'</span>'}
+var KI=P.kindInfo||{};
+function kmark(s){var k=KI[s.kind];return k?'<span class="km"'+tipA(k[1])+'>'+k[0]+'</span> ':''}
 function renderRail(){var el=$('stl');if(!el)return;var S=P.stages,a=P.live?agent():null,st=a?a.state:'',tail=S.length;
  while(tail>CUR+1&&S[tail-1].state==='no')tail--;
  var fold=S.length-tail>4&&!MORE&&!(cur>=tail+3),h='';
@@ -303,10 +292,10 @@ function renderRail(){var el=$('stl');if(!el)return;var S=P.stages,a=P.live?agen
   if(i===CUR){var wf=null;s.facts.forEach(function(f){if(f[0]==='w')wf=f});
    h+='<button class="rr cur'+end+'"'+sel+'><i class="rd cu'+(st==='work'?' pl':'')+'"'+tipA('Stage '+s.n+': '+t[0],t[1])+'>'+s.n+'</i><span class="cc">'+
     '<span class="here'+(st==='work'||st==='bg'?'':st==='wait'?' wait':' idle')+'"'+(a?tipA('Session '+sesName(a),'It is '+STX[a.state]+'. Last activity '+age(a.t)+'.'):tipA('The work is at this stage','No session of this feature is open right now.'))+'>'+(st==='work'?'agent is here':st==='bg'?'background task running':st==='wait'?'agent waits for you':'current stage')+'</span>'+
-    '<span class="tt">'+rich(s.title)+'</span>'+(wf?'<span class="nw"><i class="ico w'+(st==='work'?' on':'')+'"></i><span>'+rich(wf[1])+'</span></span>':'')+segs(s)+
+    '<span class="tt">'+kmark(s)+rich(s.title)+'</span>'+(wf?'<span class="nw"><i class="ico w'+(st==='work'?' on':'')+'"></i><span>'+rich(wf[1])+'</span></span>':'')+segs(s)+
     '<span class="ft2"><span>'+s.dn+' of '+s.tot+' done</span>'+(l?'<span'+tipA('Last change '+exact(l.ts),l.t)+'>changed '+ts(l.ts)+'</span>':'')+'</span></span></button>';return}
   var chip=l&&Date.now()-l.ts<D1?'<span class="agechip"'+tipA('Changed '+exact(l.ts),chText(l)+': '+l.t+(recent(s.n,D1)>1?' (and '+(recent(s.n,D1)-1)+' more in the last day)':''))+'>'+ts(l.ts,1)+'</span>':(s.tot?'<small>'+s.dn+' of '+s.tot+'</small>':'');
-  h+='<button class="rr'+(i>CUR?' next':'')+(s.state==='no'?' fut':'')+end+'"'+sel+'><i class="rd '+s.state+'"'+tipA(t[0],t[1])+'>'+(s.state==='ok'?'✓':s.n)+'</i><span class="nm">'+rich(s.title)+'</span>'+chip+'</button>'});
+  h+='<button class="rr'+(i>CUR?' next':'')+(s.state==='no'?' fut':'')+end+'"'+sel+'><i class="rd '+s.state+'"'+tipA(t[0],t[1])+'>'+(s.state==='ok'?'✓':s.n)+'</i><span class="nm">'+kmark(s)+rich(s.title)+'</span>'+chip+'</button>'});
  if(S.length-tail>4)h+='<button class="rr more next end" data-more="1" aria-expanded="'+!fold+'"><i class="rd no">'+(fold?'…':'–')+'</i><span>'+(fold?'Show '+(S.length-tail-3)+' more stages':'Hide later stages')+'</span></button>';
  el.innerHTML=h;tipGone()}
 
@@ -347,7 +336,7 @@ function renderStage(i){cur=i;if(typeof keep==='function')keep();var s=P.stages[
  if(!s){$('det').innerHTML='<p class="why">No stages yet.</p>';queue();renderOv();return}
  renderRail();
  var tg={ok:['ok','Done'],almost:['ok','Almost done'],part:['part','Partly done'],bad:['bad','Has an open problem'],no:['no','Not started']}[s.state];
- $('det').innerHTML='<h2>'+s.n+'. '+rich(s.title)+'</h2><p class="vv"><span class="tag '+tg[0]+'">'+tg[1]+'</span>'+(s.unplanned?'<span class="tag bad">not in the plan</span>':'')+rich(s.verdict)+'</p>'+fline(s)+'<div class="pf"><div><h3>What the stage included</h3>'+(s.plan.length?ul(s.plan.map(function(p){return '<li>'+rich(p)+'</li>'}).join(''),'plan'):'<div class="empty">This stage was not in the plan</div>')+'</div><div><h3>What was done, what was not</h3>'+ul(s.facts.map(function(f,fi){return factLi(s,f,fi)}).join(''),'fact')+'</div></div><div class="nav"><button id="pv"'+(i===0?' disabled':'')+'>← '+(i?'Stage '+P.stages[i-1].n:'')+'</button><button id="nx"'+(i===P.stages.length-1?' disabled':'')+'>'+(i<P.stages.length-1?'Stage '+P.stages[i+1].n:'')+' →</button></div>';
+ $('det').innerHTML='<h2>'+s.n+'. '+rich(s.title)+'</h2><p class="vv"><span class="tag '+tg[0]+'">'+tg[1]+'</span>'+(KI[s.kind]?'<span class="tag no">'+KI[s.kind][0]+' '+KI[s.kind][1]+'</span>':'')+(s.unplanned?'<span class="tag bad">not in the plan</span>':'')+rich(s.verdict)+'</p>'+fline(s)+'<div class="pf"><div><h3>What the stage included</h3>'+(s.plan.length?ul(s.plan.map(function(p){return '<li>'+rich(p)+'</li>'}).join(''),'plan'):'<div class="empty">This stage was not in the plan</div>')+'</div><div><h3>What was done, what was not</h3>'+ul(s.facts.map(function(f,fi){return factLi(s,f,fi)}).join(''),'fact')+'</div></div><div class="nav"><button id="pv"'+(i===0?' disabled':'')+'>← '+(i?'Stage '+P.stages[i-1].n:'')+'</button><button id="nx"'+(i===P.stages.length-1?' disabled':'')+'>'+(i<P.stages.length-1?'Stage '+P.stages[i+1].n:'')+' →</button></div>';
  $('pv').onclick=function(){renderStage(cur-1)};$('nx').onclick=function(){renderStage(cur+1)};tick();queue();renderOv();}
 // freshness in the header: when the feature was last updated and what its session does
 function freshBar(){var el=$('fr');if(!el||!P.updatedTs)return;var a=P.live?agent():null,st=a?a.state:'',old=Date.now()-P.updatedTs>H1,n=CH.filter(function(c){return c.ts>=Date.now()-H1}).length;
@@ -465,7 +454,7 @@ if($('ses'))$('ses').addEventListener('click',function(e){var b=e.target.closest
  post({feature:P.slug,action:'attach',session:v}).then(function(r){if(!r.ok){SES.err=(r.j&&r.j.error)||'could not attach';sesBar();return}SES.pick=false;SES.err='';loadSes()}).catch(function(){SES.err='no connection to the server';sesBar()})});
 if(P.live){loadSes();setInterval(loadSes,3000)}
 // the bar on the left (sessions, features, one click to another feature) is shared with the home page
-if(P.live&&/^https?:$/.test(location.protocol)){var sd=document.createElement('script');sd.src='/side.js';document.body.appendChild(sd)}
+if(P.live&&location.protocol!=='file:'){var sd=document.createElement('script');sd.src='/side.js';document.body.appendChild(sd)}
 var VER=P.ver,SYNC={behind:null,pending:false,busy:false,err:''};
 function syBar(){var b=$('sy');if(!b||!P.live)return;
  var rq=$('rq');if(rq){rq.hidden=false;rq.disabled=!!(SYNC.pending||SYNC.busy);rq.textContent=SYNC.pending?'Status requested…':'↻ Request status';rq.title=SYNC.pending?'Waiting for the session to answer':'Ask the session of this feature to bring this page up to date now'}
@@ -489,16 +478,6 @@ function keep(){try{sessionStorage.setItem('wn-'+P.slug,JSON.stringify({tab:curT
 (function(){try{var o=JSON.parse(sessionStorage.getItem('wn-'+P.slug)||'null');if(o&&!location.hash){if(o.stage>=0&&o.stage<P.stages.length)renderStage(o.stage);if(o.tab&&o.tab!=='work')show(o.tab)}}catch(e){}})();
 
 
-// deploy detail
-function renderDeploy(i){document.querySelectorAll('#dl .item').forEach(function(b){b.setAttribute('aria-selected',b.dataset.i==i)});
- if(i==='r'){$('ddet').innerHTML='<h2>Rollback</h2><p class="vv">If something goes wrong</p>'+ul(P.rollback.map(function(x){return '<li><i class="ico q">–</i><span>'+rich(x)+'</span></li>'}).join(''),'chk');return}
- var x=P.deploy[i];$('ddet').innerHTML='<h2>'+esc(x.n)+'. '+rich(x.title)+'</h2><p class="vv"><span class="tag '+x.tag+'">'+x.stateText+'</span>'+rich(x.sub)+'. Done '+x.done+' of '+x.total+'</p>'+ul(x.items.map(function(t){return '<li><i class="ico '+t.s+'">'+IC[t.s]+'</i><span>'+rich(t.t)+'</span></li>'}).join(''),'chk');}
-$('dl').addEventListener('click',function(e){var b=e.target.closest('.item');if(b)renderDeploy(b.dataset.i==='r'?'r':+b.dataset.i)});
-renderDeploy(P.deploy.length?0:'r');
 $('p-ov').addEventListener('click',function(e){var b=e.target.closest('button[data-stage]');if(!b)return;var si=P.stages.map(function(s){return s.n}).indexOf(+b.dataset.stage);if(si<0)return;show('work');renderStage(si);document.getElementById('tab-work').focus()});
-// qa note
-$('p-qa').addEventListener('click',function(e){var b=e.target.closest('button[data-c]');if(!b)return;var c=P.checks[+b.dataset.c],x=c.cells[b.dataset.p];
- document.querySelectorAll('.mx button').forEach(function(y){y.setAttribute('aria-pressed',y===b)});
- $('note').innerHTML='<b>'+rich(c.name)+', '+esc(b.dataset.p)+':</b> '+rich(x[1])+(x[2]?'. '+rich(x[2]):'. No explanation.')});
 })();
 </script></body></html>
