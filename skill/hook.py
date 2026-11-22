@@ -237,6 +237,7 @@ def watch(payload):
     deadline = start + float(os.environ.get('WHATNOW_WATCH_SECONDS', 3300))   # below the hook timeout (3600)
     try:
         while time.time() < deadline:
+            slug = common.feature_of(sid)      # read again: the session may be attached to a feature while it waits
             got = common.claim(sid, slug)
             if got:
                 sys.stderr.write('\n\n'.join(common.format_message(e) for e in got) + '\n')

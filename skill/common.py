@@ -7,7 +7,7 @@ Everything is resolved from the environment and ~/.whatnow/config.json, never fr
   port          "port" in <home>/config.json, else 7777
   aliases       "aliases" in <home>/config.json: {repo folder name: project name used in feature.json}
 """
-import hashlib, json, os, shutil, tempfile, time
+import hashlib, json, os, re, shutil, subprocess, tempfile, time
 
 DEFAULT_PORT = 7777
 
@@ -196,6 +196,19 @@ def feature_version(slug):
         except OSError:
             out.append('0')
     return ':'.join(out)
+
+
+def watcher_alive(session_id):
+    """True while the session's --watch hook is running, which is the only thing that can wake an idle
+    session. The hook lives at most as long as its timeout (an hour), so a session that has been idle
+    longer is open but cannot be woken: it gets its messages only when the user next types in it."""
+    try:
+        with open(os.path.join(home(), 'watch', '%s.pid' % re.sub(r'[^A-Za-z0-9_-]', '_', session_id))) as fh:
+            pid = int(fh.read().strip())
+        out = subprocess.run(['ps', '-p', str(pid), '-o', 'command='], capture_output=True, text=True, timeout=2).stdout
+        return 'hook.py' in out and '--watch' in out
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return False
 
 
 def fact_id(stage_n, text):

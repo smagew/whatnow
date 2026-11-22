@@ -139,7 +139,9 @@ main{max-width:1228px;margin:0 auto;padding:22px 24px 70px}
 .pl{animation:pl 1.8s ease-out infinite}
 @keyframes pl{0%{box-shadow:0 0 0 0 rgba(31,95,208,.5)}100%{box-shadow:0 0 0 9px rgba(31,95,208,0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
-#fr{align-self:center;padding-bottom:6px;flex:none}
+.frw{align-self:center;padding-bottom:6px;flex:none;display:flex;align-items:center;gap:8px}
+#rq{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;color:#fff;border:1px solid #ffffff66;padding:2px 11px;border-radius:999px;white-space:nowrap}
+#rq[hidden]{display:none}#rq:hover{background:#ffffff1f}#rq:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}#rq:disabled{opacity:.6;cursor:default;background:none}
 .fr{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#fff;background:#ffffff1c;border-radius:999px;padding:3px 11px;white-space:nowrap}
 .fr .ld{background:#7fb0ff}.fr.wait .ld{background:#e8b13a}.fr.old .ld{background:transparent;box-shadow:inset 0 0 0 2px #8c9a92}.fr.old{color:#a9bdb2}
 .fr small{font-weight:400;color:#cfe3d8;font-size:12px}
@@ -188,11 +190,11 @@ main{max-width:1228px;margin:0 auto;padding:22px 24px 70px}
 .tip b{display:block;font-weight:600}.tip span{display:block;color:#b9cbc1}
 .tip::after{content:'';position:absolute;left:var(--ax,50%);top:100%;margin-left:-5px;border:5px solid transparent;border-top-color:var(--side)}
 .tip.dn::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--side)}
-@media(max-width:860px){.rail{position:static;max-height:none}.tbr{flex-direction:column-reverse;align-items:stretch;gap:8px}#fr{align-self:flex-start;padding:0}}
+@media(max-width:860px){.rail{position:static;max-height:none}.tbr{flex-direction:column-reverse;align-items:stretch;gap:8px}.frw{align-self:flex-start;padding:0;flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){.pl,.ico.w.on{animation:none}}
 </style></head><body>
 <header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><span class="qb" id="qb"></span><div class="ses" id="ses"></div><div class="sy" id="sy" hidden></div></div><div class="mini" id="mini" aria-label="Readiness by project"></div></div>
-<div class="tbr"><div class="tabs" role="tablist" id="tabs"></div><span id="fr"></span></div></header>
+<div class="tbr"><div class="tabs" role="tablist" id="tabs"></div><span class="frw"><span id="fr"></span><button type="button" id="rq" hidden>↻ Request status</button></span></div></header>
 <main id="main"></main>
 <script>window.PANEL=/*__DATA__*/null;</script>
 <script>
@@ -279,6 +281,7 @@ function renderRail(){var el=$('stl');if(!el)return;var S=P.stages,a=P.live?agen
 
 var FORM=null,INBOX={},ROUTE=null,BUSY=false;
 function routeText(r){if(!r)return ['b','Finding where to send this…'];
+ if(r.route==='active'&&r.asleep)return ['b','Session'+(r.name?' <b>'+esc(r.name)+'</b>':'')+' is open, but it has been idle for over an hour, so the page cannot wake it. Type anything in that session (even &quot;ok&quot;) and it takes this at once. Another session of this feature that becomes free takes it too.'];
  if(r.route==='active')return ['a','Open session:'+(r.name?' <b>'+esc(r.name)+'</b>':'')+(r.project?' ('+esc(r.project)+')':'')+'. If it is waiting for input, the message wakes it; if it is busy, the message arrives as soon as it is free.'];
  if(r.route==='bg')return ['b','No session is open. A closed session of this feature will be resumed in the background with its previous context and receive the message. To watch it: <code>claude attach</code>.'];
  return ['b','No session is linked to this feature yet, so nobody will receive this. <button type="button" class="lnk" data-ses="open">Choose a session</button> and it goes there right away. Or send it anyway: it waits for the first session that starts working on this feature.']}
@@ -286,6 +289,7 @@ function statusLine(e){if(!e)return '';var st=e.state,when=hm(e.ts),who=e.sessio
  if(st==='done')return '<div class="sent done">Done'+(e.note?': '+esc(e.note):'')+'</div>';
  if(st==='failed')return '<div class="sent failed">Not delivered: '+esc(e.error||'error')+'</div>';
  if(st==='delivered')return '<div class="sent">'+(e.route==='bg'?'Sent at '+when+'. The session is running in the background, waiting for the reply. To watch it: <code>claude attach</code>.':'Delivered at '+hm(e.deliveredAt||e.ts)+(who?' to session '+esc(who):'')+', waiting for the reply.')+'</div>';
+ if(e.asleep)return '<div class="sent">Sent at '+when+', not delivered yet: '+(who?'session '+esc(who)+' has been idle for over an hour, so the page cannot wake it':'no session of this feature can take it right now')+'. Type anything in a session of this feature (even &quot;ok&quot;) and it takes this at once, or attach a session that is working.</div>';
  return '<div class="sent">Sent at '+when+'. '+(e.route==='active'?'Waiting to be delivered'+(who?' to session '+esc(who):'')+'.':'Waiting for a session on this feature.')+'</div>'}
 function formHtml(){var rt=FORM.a==='skip'?['a','Applies immediately: the item stops counting as unfinished, and your decision stays in the dashboard with your reason.']:routeText(ROUTE),
   ph={do:'What exactly to do, if you want to specify (optional)',ask:'Your question about this item',skip:'Why this is not needed (the reason is kept in the dashboard)'}[FORM.a],
@@ -371,15 +375,21 @@ if($('ses'))$('ses').addEventListener('click',function(e){var b=e.target.closest
 if(P.live){loadSes();setInterval(loadSes,3000)}
 var VER=P.ver,SYNC={behind:null,pending:false,busy:false,err:''};
 function syBar(){var b=$('sy');if(!b||!P.live)return;
- var h='';if(SYNC.pending)h='Sync requested: waiting for the session to bring this page up to date.';
+ var rq=$('rq');if(rq){rq.hidden=false;rq.disabled=!!(SYNC.pending||SYNC.busy);rq.textContent=SYNC.pending?'Status requested…':'↻ Request status';rq.title=SYNC.pending?'Waiting for the session to answer':'Ask the session of this feature to bring this page up to date now'}
+ var h='';if(SYNC.pending)h=SYNC.pending==='asleep'?'Status requested, but not delivered yet: '+(SYNC.asleep?'session <b>'+esc(SYNC.asleep)+'</b> has been idle for over an hour, so the page cannot wake it':'no session of this feature can take it right now')+'. Type anything in a session of this feature (even &quot;ok&quot;) and it takes the request at once, or attach a session that is working.':SYNC.pending==='none'?'Status requested, but no session is linked to this feature: the request waits for the first session that starts working on it.':SYNC.pending==='bg'?'Status requested: the closed session was resumed in the background to bring this page up to date.':'Status requested: waiting for the session to bring this page up to date.';
  else if(SYNC.behind)h='This page may be behind: <b>'+esc(SYNC.behind.name)+'</b> finished a turn '+(SYNC.behind.min<1?'right after':SYNC.behind.min+' min after')+' the last update of this feature. <button type="button" data-sy="1"'+(SYNC.busy?' disabled':'')+'>Ask it to sync</button>';
+ if(SYNC.pending)h+=' <button type="button" data-unsy="1"'+(SYNC.busy?' disabled':'')+'>Cancel request</button>';
  if(SYNC.err)h+=' <span>'+esc(SYNC.err)+'</span>';
  b.hidden=!h;b.innerHTML=h}
 function pollVersion(){fetch('/api/version?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){
  if(j.v&&VER&&j.v!==VER&&!FORM&&!BUSY){location.reload();return}
- SYNC.behind=j.behind;SYNC.pending=j.pending;syBar()}).catch(function(){})}
-if($('sy'))$('sy').addEventListener('click',function(e){var b=e.target.closest('button[data-sy]');if(!b||SYNC.busy)return;SYNC.busy=true;SYNC.err='';syBar();
- post({feature:P.slug,action:'sync'}).then(function(r){SYNC.busy=false;if(!r.ok)SYNC.err=(r.j&&r.j.error)||'could not send';else SYNC.pending=true;syBar()}).catch(function(){SYNC.busy=false;SYNC.err='no connection to the server';syBar()})});
+ SYNC.behind=j.behind;SYNC.pending=j.pending;SYNC.asleep=j.asleep||'';syBar()}).catch(function(){})}
+function askSync(){if(SYNC.busy||SYNC.pending)return;SYNC.busy=true;SYNC.err='';syBar();
+ post({feature:P.slug,action:'sync'}).then(function(r){SYNC.busy=false;var e=r.j&&r.j.entry;if(!r.ok)SYNC.err=(r.j&&r.j.error)||'could not send';else if(e&&e.state==='failed')SYNC.err='Could not resume the session: '+(e.error||'unknown error');else SYNC.pending=(e&&e.route)||'active';syBar()}).catch(function(){SYNC.busy=false;SYNC.err='no connection to the server';syBar()})}
+function dropSync(){if(SYNC.busy)return;SYNC.busy=true;SYNC.err='';syBar();
+ post({feature:P.slug,action:'unsync'}).then(function(r){SYNC.busy=false;if(r.ok){SYNC.pending=false;SYNC.asleep=''}else SYNC.err=(r.j&&r.j.error)||'could not cancel';syBar()}).catch(function(){SYNC.busy=false;SYNC.err='no connection to the server';syBar()})}
+if($('sy'))$('sy').addEventListener('click',function(e){if(e.target.closest('button[data-sy]'))askSync();else if(e.target.closest('button[data-unsy]'))dropSync()});
+if($('rq'))$('rq').addEventListener('click',askSync);
 if(P.live){pollVersion();setInterval(pollVersion,3000)}
 // keep the tab and stage across the automatic reload
 function keep(){try{sessionStorage.setItem('wn-'+P.slug,JSON.stringify({tab:curTab,stage:cur}))}catch(e){}}

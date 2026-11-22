@@ -89,6 +89,10 @@ On a feature page opened through the server every item of a stage has actions:
    in the background under the same id with its old context. Watch it with `claude attach <id>`.
 3. **No session is known:** the message waits for the first session that starts working on the feature.
 
+**Request status.** The header of a feature page has a **↻ Request status** button next to "Updated ... ago". It asks the
+feature's session (same routing as above) to compare `feature.json` with what it really did and bring the page up to
+date. Only one such request is open at a time; the page reloads itself when the file changes.
+
 When Claude has handled a message it runs `inbox.py resolve <id> "summary"` and the summary shows on the page.
 
 **Safety.** The page accepts writes only from the server's own page: `Host` and `Origin` are checked, the body must be

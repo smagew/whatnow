@@ -14,6 +14,9 @@ FEATURE = {
 
 class Env(unittest.TestCase):
     def setUp(self):
+        import server
+        self.real_awake = server.awake
+        server.awake = lambda s: True          # sessions can be reached, unless a test says otherwise
         self.home = tempfile.mkdtemp()
         self.feats = os.path.join(self.home, 'features')
         os.makedirs(os.path.join(self.feats, 'demo-feature'))
@@ -24,6 +27,8 @@ class Env(unittest.TestCase):
         os.environ['FEATURES_DIR'] = self.feats
 
     def tearDown(self):
+        import server
+        server.awake = self.real_awake
         for k, v in self.saved.items():
             if v is None:
                 os.environ.pop(k, None)
@@ -114,6 +119,57 @@ class RoutingTest(Env):
         e = self.send()
         self.assertEqual((e['route'], e['state'], e['session'], e['sessionName']), ('active', 'new', '11111111-aaaa', 'api-xy'))
         self.assertEqual(self.launched, [])
+
+    def test_open_session_that_cannot_be_woken(self):
+        # open, but idle for longer than its watcher lives: nothing can wake it
+        self.session('11111111-aaaa', 'idle')
+        self.server.active_sessions = lambda: {'11111111-aaaa': {'name': 'api-xy', 'status': 'idle'}}
+        self.server.awake = self.real_awake
+        e = self.send()
+        self.assertEqual((e['route'], e['state'], e.get('session'), e['asleep'], e['sessionName']), ('active', 'new', None, True, 'api-xy'))
+        self.assertEqual(self.server.version_info('demo-feature')['pending'], False)      # not a sync request
+        # so it is left to the feature: any of its sessions that turns up takes it
+        import common
+        common.bind('22222222-bbbb', 'demo-feature')
+        self.assertEqual([x['id'] for x in common.claim('22222222-bbbb', 'demo-feature')], [e['id']])
+
+    def test_message_stuck_on_a_sleeping_session_is_handed_to_the_feature(self):
+        self.session('11111111-aaaa', 'idle')
+        self.server.active_sessions = lambda: {'11111111-aaaa': {'name': 'api-xy', 'status': 'idle'}}
+        code, obj = self.server.act({'feature': 'demo-feature', 'action': 'sync'})
+        self.assertEqual(obj['entry']['session'], '11111111-aaaa')                         # it was awake then
+        self.server.awake = self.real_awake                                                # ... and fell asleep
+        self.assertEqual(self.server.version_info('demo-feature')['pending'], 'active')    # too early to give up
+        self.server.UNSTICK_AFTER = -1
+        try:
+            info = self.server.version_info('demo-feature')
+        finally:
+            self.server.UNSTICK_AFTER = 10000
+        self.assertEqual((info['pending'], info['asleep']), ('asleep', 'api-xy'))
+        import common
+        self.assertNotIn('session', common.inbox_entries()[0])
+        self.assertFalse(os.path.exists(os.path.join(common.inbox_dir(), obj['entry']['id'] + '.lock')))
+        # a session that can take it is attached: the request goes to it by name on the next poll
+        self.session('22222222-bbbb', 'work')
+        self.server.active_sessions = lambda: {'11111111-aaaa': {'name': 'api-xy'}, '22222222-bbbb': {'name': 'api-new'}}
+        self.server.UNSTICK_AFTER = -1
+        try:
+            info = self.server.version_info('demo-feature')
+        finally:
+            self.server.UNSTICK_AFTER = 10000
+        self.assertEqual((info['pending'], common.inbox_entries()[0]['session']), ('active', '22222222-bbbb'))
+        self.assertEqual([x['id'] for x in common.claim('22222222-bbbb', None)], [obj['entry']['id']])
+
+    def test_status_request_can_be_cancelled(self):
+        self.session('11111111-aaaa', 'idle')
+        self.server.active_sessions = lambda: {'11111111-aaaa': {'name': 'api-xy'}}
+        first = self.server.act({'feature': 'demo-feature', 'action': 'sync'})[1]['entry']
+        self.assertEqual(self.server.act({'feature': 'demo-feature', 'action': 'unsync'}), (200, {'ok': True, 'cancelled': 1}))
+        self.assertEqual(self.server.version_info('demo-feature')['pending'], False)
+        import common
+        self.assertEqual(common.claim('11111111-aaaa', 'demo-feature'), [])                # it never arrives later
+        second = self.server.act({'feature': 'demo-feature', 'action': 'sync'})[1]['entry']
+        self.assertNotEqual(second['id'], first['id'])                                     # and a new one can be made
 
     def test_closed_session_is_resumed_in_background_with_the_message(self):
         self.session('22222222-bbbb', 'closed')
@@ -246,7 +302,7 @@ class SyncTest(Env):
         self.assertEqual((code, obj['entry']['route'], obj['entry']['kind']), (200, 'active', 'sync'))
         code2, obj2 = self.server.act({'feature': 'demo-feature', 'action': 'sync'})
         self.assertEqual(obj2['entry']['id'], obj['entry']['id'])           # no second request while one is open
-        self.assertTrue(self.server.version_info('demo-feature')['pending'])
+        self.assertEqual(self.server.version_info('demo-feature')['pending'], 'active')
         import common
         text = common.format_message(common.inbox_entries()[0])
         self.assertIn('Sync request', text)

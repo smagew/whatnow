@@ -283,11 +283,75 @@ def state():
 # ------------------------------------------------------------------ inbox and routing
 
 PUBLIC = ('id', 'kind', 'feature', 'fid', 'action', 'text', 'item', 'stage', 'state', 'route', 'session',
-          'sessionName', 'ts', 'deliveredAt', 'note', 'error')
+          'sessionName', 'ts', 'deliveredAt', 'note', 'error', 'asleep')
 
 
 def public(e):
     return {k: e[k] for k in PUBLIC if k in e}
+
+
+def awake(s):
+    """Can this open session take a message now? Yes while it works (its Stop hook picks the message
+    up when the turn ends) or while its watcher runs. An open session that has been idle for longer
+    than the watcher lives cannot be woken from here."""
+    return s.get('state') == 'work' or common.watcher_alive(s['id'])
+
+
+UNSTICK_AFTER = 10000             # ms a message may wait for a session that cannot be woken
+
+
+def unstick(e, now):
+    """A message of a feature that nobody can take is re-addressed on every poll: to a session of the
+    feature that can take it now (so attaching a working session delivers at once), else to the
+    feature as a whole, marked "asleep" so the page says why it waits. Returns the entry."""
+    sid = e.get('session')
+    if not (e.get('state') == 'new' and e.get('feature') and e.get('kind') != 'session'
+            and now - e.get('ts', now) > UNSTICK_AFTER):
+        return e
+    if sid:
+        row = next((r for r in read_sessions([], now, include_closed=True, with_hidden=True) if r['id'] == sid), None)
+        if row and awake(row):
+            return e
+    route, session, name = plan_route(e['feature'])
+    target = session['id'] if route == 'active' and awake(session) else None
+    want = {'session': target, 'asleep': not target, 'sessionName': name if route == 'active' else ''}
+    if all(e.get(k) == v for k, v in want.items()):
+        return e
+    lock = os.path.join(common.inbox_dir(), '%s.lock' % e['id'])
+    try:
+        os.close(os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY))     # the same lock a delivery takes
+    except OSError:
+        return e
+    try:
+        cur = common.read_json(os.path.join(common.inbox_dir(), '%s.json' % e['id'])) or e
+        if cur.get('state') == 'new':
+            cur.update(want)
+            if not target:
+                cur.pop('session', None)
+            common.save_entry(cur)
+        return cur
+    finally:
+        try:
+            os.remove(lock)
+        except OSError:
+            pass
+
+
+def cancel_sync(slug):
+    """The user gives up on an open status request, so that a new one can be made."""
+    n = 0
+    for e in common.inbox_entries():
+        if e.get('feature') == slug and e.get('kind') == 'sync' and e.get('state') in ('new', 'delivered'):
+            if e['state'] == 'new':               # take the delivery lock for good: it must not arrive later
+                try:
+                    os.close(os.open(os.path.join(common.inbox_dir(), '%s.lock' % e['id']), os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+                except OSError:
+                    pass
+            e = common.read_json(os.path.join(common.inbox_dir(), '%s.json' % e['id'])) or e
+            e.update(state='done', note='cancelled by the user')
+            common.save_entry(e)
+            n += 1
+    return 200, {'ok': True, 'cancelled': n}
 
 
 def plan_route(slug):
@@ -302,6 +366,7 @@ def plan_route(slug):
     else:                                   # claude not available: trust the hook data
         live = [s for s in mine if s['state'] != 'closed']
     if live:
+        live.sort(key=lambda s: not awake(s))      # a session that can take the message now goes first
         return 'active', live[0], (agents or {}).get(live[0]['id'], {}).get('name', '')
     closed = [s for s in mine if s['state'] == 'closed' or (agents is not None and s['id'] not in agents)]
     for s in closed:
@@ -415,11 +480,11 @@ def act(body):
         return tell_session(body)
     if body.get('action') == 'attach':
         return attach(body)
-    if body.get('action') == 'sync':
+    if body.get('action') in ('sync', 'unsync'):
         f = body.get('feature')
         if not (isinstance(f, str) and SLUG.match(f)):
             return 400, {'error': 'bad feature'}
-        return request_sync(f)
+        return request_sync(f) if body['action'] == 'sync' else cancel_sync(f)
     slug, fid, action = body.get('feature'), body.get('fid'), body.get('action')
     text = (body.get('text') or '').strip()
     if not (isinstance(slug, str) and SLUG.match(slug)):
@@ -475,7 +540,11 @@ def send_entry(entry):
     route, session, name = plan_route(entry['feature'])
     entry['route'] = route
     if route == 'active':
-        entry.update(session=session['id'], sessionName=name)
+        entry.update(sessionName=name)
+        if awake(session):
+            entry.update(session=session['id'])
+        else:                     # nobody can take it now: leave it to the first session of the feature that can
+            entry.update(asleep=True)
     elif route == 'bg':
         ok, out = resume_in_background(session, entry)
         entry.update(session=session['id'])
@@ -517,9 +586,16 @@ def version_info(slug):
         if s['state'] == 'wait' and s['t'] > mtime + 30000:
             behind = {'name': (agents.get(s['id']) or {}).get('name', '') or s['project'], 'min': round((s['t'] - mtime) / 60000)}
             break
-    pending = any(e.get('feature') == slug and e.get('kind') == 'sync' and e.get('state') in ('new', 'delivered')
-                  for e in common.inbox_entries())
-    return {'v': common.feature_version(slug), 'behind': behind, 'pending': pending}
+    # the route of the open request ('active', 'bg', 'none'), or False: the page words its note by it
+    pending, asleep = False, ''
+    for e in common.inbox_entries():
+        if e.get('feature') == slug and e.get('kind') == 'sync' and e.get('state') in ('new', 'delivered'):
+            e = unstick(e, now)
+            pending = e.get('route') or 'active'
+            if e.get('state') == 'new' and e.get('asleep'):
+                pending, asleep = 'asleep', e.get('sessionName', '')
+            break
+    return {'v': common.feature_version(slug), 'behind': behind, 'pending': pending, 'asleep': asleep}
 
 
 def inbox_state():
@@ -533,7 +609,7 @@ def inbox_state():
                 except OSError:
                     pass
             continue
-        out.append(public(e))
+        out.append(public(unstick(e, now)))
     return out[-200:]
 
 
@@ -593,6 +669,7 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json(400, {'error': 'bad feature'})
                 route, session, name = plan_route(slug)
                 return self._json(200, {'route': route, 'session': (session or {}).get('id'), 'name': name,
+                                        'asleep': route == 'active' and not awake(session),
                                         'project': (session or {}).get('project', '')})
             m = re.match(r'^/f/([^/]+)/?$', path)
             if m and SLUG.match(m.group(1)):
