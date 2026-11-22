@@ -217,6 +217,30 @@ class AttachTest(Env):
         self.assertEqual([s['id'] for s in pick['sessions']], ['55555555-eeee'])
         self.assertEqual(self.server.plan_route('demo-feature')[0], 'active')
 
+    def test_a_finished_turn_with_a_background_task_does_not_wait_for_the_user(self):
+        self.session('44444444-dddd', 'wait', feature='demo-feature')
+        now = int(time.time() * 1000)
+        row = lambda: self.server.read_sessions([], now)[0]
+        self.assertEqual(row()['state'], 'wait')
+        self.server.active_sessions = lambda: {'44444444-dddd': {'name': 'api-work', 'status': 'busy'}}
+        saved = self.server.agents_at
+        try:
+            self.server.agents_at = lambda: 0                    # the list is older than the end of the turn
+            self.assertEqual(row()['state'], 'wait')
+            self.server.agents_at = lambda: now + 60000
+            self.assertEqual((row()['state'], row()['what']), ('bg', 'waiting for a background task'))
+            self.assertEqual(self.server.pick_list('demo-feature')['bound'][0]['state'], 'bg')
+        finally:
+            self.server.agents_at = saved
+
+    def test_feature_switcher_lists_features_with_what_their_session_does(self):
+        self.session('44444444-dddd', 'wait', feature='demo-feature')
+        rows = self.server.features_list()
+        demo = next(f for f in rows if f['id'] == 'demo-feature')
+        self.assertEqual((demo['state'], demo['fav']), ('wait', False))
+        self.server.act({'action': 'fav', 'kind': 'feature', 'id': 'demo-feature'})
+        self.assertTrue(self.server.features_list()[0]['fav'])
+
     def test_attach_validates_input(self):
         self.assertEqual(self.server.act({'feature': 'nope', 'action': 'attach', 'session': '44444444-dddd'})[0], 404)
         self.assertEqual(self.server.act({'feature': 'demo-feature', 'action': 'attach', 'session': '../x'})[0], 400)
@@ -345,6 +369,37 @@ class SessionsTabTest(Env):
         self.assertEqual(r['lastU'], 'and how do we fix it')
         self.assertEqual(r['lastA'], 'Replace it with an exception.')
         self.assertNotIn('quiet', r)
+
+    def test_feature_page_gets_the_last_reply_in_full(self):
+        text = 'Run is **still going**.\n\n- 21 of 21 checks match\n- left: `S17a`, `S17b`' + ' x' * 300
+        with open(os.path.join(self.claude, 'projects', '-x', '77777777-aaaa.jsonl'), 'a') as fh:
+            fh.write(json.dumps({'timestamp': '2026-01-02T03:04:05.678Z',
+                                 'message': {'role': 'assistant', 'content': [{'type': 'text', 'text': text}]}}) + '\n')
+            fh.write(json.dumps({'message': {'role': 'assistant', 'content': [{'type': 'tool_use', 'name': 'Bash'}]}}) + '\n')
+        self.server._TRANSCRIPTS.clear()
+        self.assertNotIn('said', self.server.pick_list('demo-feature')['sessions'][0])     # only for the feature's own
+        self.server.act({'feature': 'demo-feature', 'action': 'attach', 'session': '77777777-aaaa'})
+        row = self.server.pick_list('demo-feature')['bound'][0]
+        self.assertEqual(row['said'], text)                    # not cut to a line, markdown and line breaks kept
+        self.assertEqual(row['saidT'], 1767323045678)
+
+    def test_chat_shows_the_conversation_and_what_was_sent_from_the_page(self):
+        stamp = lambda n: '2026-01-02T03:04:%02d.000Z' % n
+        with open(os.path.join(self.claude, 'projects', '-x', '77777777-aaaa.jsonl'), 'a') as fh:
+            tool = [{'type': 'tool_use', 'name': 'Bash'}]
+            for n, role, text in ((1, 'user', 'what is the progress'), (2, 'assistant', 'Let me look.'), (2, 'assistant', tool),
+                                  (2, 'user', [{'type': 'tool_result', 'content': 'ok'}]), (3, 'assistant', 'Done: **21 of 21**'),
+                                  (4, 'user', 'Stop hook feedback: [whatnow] sync'), (5, 'assistant', 'dashboard in sync'),
+                                  (6, 'assistant', 'Checking S17b now.'), (6, 'assistant', tool)):
+                fh.write(json.dumps({'timestamp': stamp(n), 'message': {'role': role, 'content': text}}) + '\n')
+        self.server._TRANSCRIPTS.clear()
+        code, r = self.server.act({'action': 'tell', 'session': '77777777-aaaa', 'text': 'and S17a?'})
+        self.assertEqual(code, 200)
+        items = self.server.chat('77777777-aaaa')['items'][-5:]
+        self.assertEqual([(i['who'], i['text']) for i in items],          # the note before a tool call is left out,
+                         [('u', 'what is the progress'), ('a', 'Done: **21 of 21**'), ('a', 'dashboard in sync'),
+                          ('a', 'Checking S17b now.'), ('me', 'and S17a?')])       # except the newest one
+        self.assertEqual((items[4]['state'], items[4]['id']), ('new', r['entry']['id']))
 
     def test_hide_and_unhide(self):
         self.assertEqual(self.server.act({'action': 'hide', 'session': '77777777-aaaa'})[0], 200)

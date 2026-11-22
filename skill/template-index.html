@@ -33,7 +33,7 @@ main{max-width:1148px;margin:0 auto;padding:20px 24px 70px}
 .steps i.ok{background:var(--ok)}.steps i.part{background:linear-gradient(90deg,var(--part) 50%,var(--no) 50%)}
 .row .pass{color:var(--mut)}
 .lv{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:600;border-radius:999px;padding:1px 10px;white-space:nowrap}
-.lv.work{background:#dff3e8;color:#0f6b40}.lv.wait{background:#fbeccb;color:#7a5200}.lv.idle{background:#e7ece9;color:#586860}
+.lv.work{background:#dff3e8;color:#0f6b40}.lv.wait{background:#fbeccb;color:#7a5200}.lv.bg{background:#e3ecfc;color:#1f5fd0}.lv.idle{background:#e7ece9;color:#586860}
 .lv i{width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block}.lv.work i{animation:pulse 1.6s infinite}
 .lv small{font-weight:400;opacity:.85}
 .evb{all:unset;cursor:pointer;display:block;box-sizing:border-box;padding:6px 18px 10px 84px;font-size:12px;color:var(--acc);font-weight:600}
@@ -62,11 +62,11 @@ header{padding-bottom:0}
 .sg{margin:20px 0 8px;font-size:15px;font-weight:600;display:flex;gap:10px;align-items:baseline}.sg:first-child{margin-top:0}.sg small{font-weight:400;color:var(--mut);font-size:13px}
 .ss{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .s{background:var(--paper);border:1px solid var(--line);border-left:6px solid #c6d0ca;border-radius:12px;padding:11px 16px}
-.s.wait{border-left-color:#e8b13a}.s.work{border-left-color:#9fd2b8}.s.hid{opacity:.6}
+.s.wait{border-left-color:#e8b13a}.s.work{border-left-color:#9fd2b8}.s.bg{border-left-color:#b9cdf3}.s.hid{opacity:.6}
 .s.bare{padding:6px 16px}.s.bare .t1{align-items:center}.s.bare .acts{margin-top:0}.s.bare .ago2{margin-right:4px}
 .s .t1{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.s .nm2{font-weight:600}
 .s .ago2{margin-left:auto;font-size:12.5px;color:var(--mut)}
-.st{font-size:12px;font-weight:600;border-radius:99px;padding:1px 10px;background:#e7ece9;color:#586860;white-space:nowrap}.st.wait{background:var(--warnb);color:#7a5200}
+.st{font-size:12px;font-weight:600;border-radius:99px;padding:1px 10px;background:#e7ece9;color:#586860;white-space:nowrap}.st.wait{background:var(--warnb);color:#7a5200}.st.bg{background:#e3ecfc;color:#1f5fd0}
 .st.work::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:6px}
 .ftg{font-size:12px;font-weight:600;border-radius:99px;padding:1px 10px;background:#dff3e8;color:#0f6b40;text-decoration:none}.ftg:hover{text-decoration:underline}
 .s p{margin:5px 0 0;font-size:13.5px;max-width:80ch}.s p b{font-weight:600;color:var(--mut);font-size:12.5px;margin-right:6px}.s p.a{color:var(--mut)}
@@ -109,7 +109,7 @@ function hm(ts){var d=new Date(ts);return ('0'+d.getHours()).slice(-2)+':'+('0'+
 function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 // text from feature.json: everything is escaped, only <code> and <b> survive (entities already written stay as they are)
 function rich(t){return String(t==null?'':t).replace(/&(?!(?:[a-z]+|#\d+|#x[0-9a-f]+);)/gi,'&amp;').replace(/[<>"]/g,function(c){return{'<':'&lt;','>':'&gt;','"':'&quot;'}[c]}).replace(/&lt;(\/?)(code|b)&gt;/g,'<$1$2>')}
-var LV={work:'working',wait:'waiting for you',idle:'session open'},rank={work:0,wait:1,idle:2};
+var LV={work:'working',bg:'background task running',wait:'waiting for you',idle:'session open'},rank={work:0,bg:1,wait:2,idle:3};
 function lastPassed(l){var d=-1;for(var i=0;i<6;i++){if(l[i]==='ok')d=i;else break}return d<0?'nothing passed':'passed up to: '+SHORT[d]}
 function chip(s,withWhat){return '<span class="lv '+s.state+'"><i></i>'+LV[s.state]+(withWhat&&s.what&&s.state==='work'?': '+esc(s.what):'')+(s.quiet?'':' <small class="ago" data-t="'+s.t+'">'+agoMs(s.t)+'</small>')+'</span>'}
 function paint(D){
@@ -154,12 +154,12 @@ function sentLine(e){if(!e)return '';var st=e.state;
  if(st==='failed')return '<div class="sent failed">Not delivered: '+esc(e.error||'error')+'</div>';
  if(st==='delivered')return '<div class="sent">'+(e.route==='bg'?'Sent at '+hmS(e.ts)+'. The session runs in the background and is working on it.':'Delivered at '+hmS(e.deliveredAt||e.ts)+', waiting for the reply.')+'</div>';
  return '<div class="sent">Sent at '+hmS(e.ts)+'. Waiting to be delivered: the session gets it when it is free.</div>'}
-function stOf(s){return s.state==='work'?'work':s.state==='closed'?'closed':'wait'}
+function stOf(s){return s.state==='work'||s.state==='bg'?s.state:s.state==='closed'?'closed':'wait'}
 function isBare(s){return !s.first&&!s.lastU&&!s.lastA}                    // nothing known about it: shown as one line
-function rankS(s){var st=stOf(s);return st==='wait'&&!isBare(s)?0:st==='work'?1:2}   // what waits for you comes first
+function rankS(s){var st=stOf(s);return st==='wait'&&!isBare(s)?0:st==='work'||st==='bg'?1:2}   // what waits for you comes first
 function sessCard(s,D){var open=SF.form&&SF.form.id===s.id,att=SF.attach===s.id,st=stOf(s),bare=isBare(s),more=SF.menu===s.id||att;
  var feats=(D.features||[]).filter(function(f){return !f.done});
- var pill=bare&&st==='wait'?['idle','open']:[st,{work:'working',wait:'waiting for you',closed:'closed'}[st]];
+ var pill=bare&&st==='wait'?['idle','open']:[st,{work:'working',bg:'background task running',wait:'waiting for you',closed:'closed'}[st]];
  var extra='<button type="button" data-a="copy">'+(SF.copied===s.id?'Copied':'Copy resume command')+'</button>'+
   (s.feature||s.state==='closed'?'':'<button type="button" data-a="track" title="Ask this session to put its work on the dashboard as a feature with phases"'+(SF.sent[s.id]?' disabled':'')+'>'+(SF.sent[s.id]?'Requested':'Track as a feature')+'</button>')+(s.feature?'':(att?'<select id="fsel" aria-label="Feature"><option value="">Choose a feature…</option>'+feats.map(function(f){return '<option value="'+esc(f.id)+'">'+esc(f.name)+'</option>'}).join('')+'</select><button type="button" data-a="attach-go">Attach</button><button type="button" data-a="attach-x">Cancel</button>':(feats.length?'<button type="button" data-a="attach">Attach to a feature</button>':'')))+
   '<button type="button" data-a="'+(s.hidden?'unhide':'hide')+'">'+(s.hidden?'Show again':'Hide')+'</button>';
@@ -173,11 +173,11 @@ function sessCard(s,D){var open=SF.form&&SF.form.id===s.id,att=SF.attach===s.id,
   (SF.err[s.id]?'<div class="err">'+esc(SF.err[s.id])+'</div>':'')+sentLine(SF.sent[s.id])+'</li>';
  return h}
 function paintS(D){if(!D.live)return;var all=D.sessions||[];var vis=all.filter(function(s){return s.state!=='closed'&&(SF.showHidden||!s.hidden)});
- var rows=vis.filter(function(s){return SF.f==='all'||(SF.f==='wait'&&rankS(s)===0)||(SF.f==='busy'&&s.state==='work')||(SF.f==='feat'&&s.feature)});
+ var rows=vis.filter(function(s){return SF.f==='all'||(SF.f==='wait'&&rankS(s)===0)||(SF.f==='busy'&&(s.state==='work'||s.state==='bg'))||(SF.f==='feat'&&s.feature)});
  var by={};rows.forEach(function(s){(by[s.group]=by[s.group]||[]).push(s)});
  var top=function(k){return Math.min.apply(0,by[k].map(rankS))},late=function(k){return Math.max.apply(0,by[k].map(function(s){return s.t}))};
  var keys=Object.keys(by).sort(function(a,b){return top(a)-top(b)||late(b)-late(a)});
- var nh=all.filter(function(s){return s.hidden&&s.state!=='closed'}).length,waitN=all.filter(function(s){return !s.hidden&&s.state!=='closed'&&rankS(s)===0}).length,work=all.filter(function(s){return !s.hidden&&s.state==='work'}).length,nv=all.filter(function(s){return s.state!=='closed'}).length-all.filter(function(s){return s.hidden&&s.state!=='closed'}).length;
+ var nh=all.filter(function(s){return s.hidden&&s.state!=='closed'}).length,waitN=all.filter(function(s){return !s.hidden&&s.state!=='closed'&&rankS(s)===0}).length,work=all.filter(function(s){return !s.hidden&&(s.state==='work'||s.state==='bg')}).length,nv=all.filter(function(s){return s.state!=='closed'}).length-all.filter(function(s){return s.hidden&&s.state!=='closed'}).length;
  $('nS').textContent=nv;$('nF').textContent=D.features.filter(function(f){return !f.done}).length;
  $('fl').innerHTML=[['all','All'],['wait','Waiting for you'],['busy','Working now'],['feat','On a feature']].map(function(f){return '<button type="button" data-f="'+f[0]+'" aria-pressed="'+(SF.f===f[0])+'">'+f[1]+'</button>'}).join('')+'<span class="sp"></span>'+(nh?'<button type="button" data-f="hidden" aria-pressed="'+SF.showHidden+'">Hidden: '+nh+'</button>':'')+'<span class="hint">Grouped by project, what waits for you first</span>';
  var ta=document.activeElement&&document.activeElement.id==='stext';

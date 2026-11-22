@@ -10,7 +10,7 @@ one place to look, instead of reading long CLI transcripts. It shows progress, n
 - **Home page**: one card per feature. Readiness in percent, a ladder of six check steps per project
   (Code, Tests, Review, Manual, Staging, Prod), problems, when it was last updated, the next step, and whether
   a session is working on it right now.
-- **Feature page** (tabs: Overview, Progress, Deployment, Quality, Decisions and questions): what was planned
+- **Feature page** (tabs: Progress, What is left, Deployment, Quality, Decisions and questions): what was planned
   and what really happened, stage by stage; the deployment plan and how much of it is done; which checks were
   run in which project; the blockers and what to do next.
 - **Buttons on every item**: *Do it*, *Ask*, *Not needed*. They send your instruction or question into the
@@ -92,6 +92,22 @@ On a feature page opened through the server every item of a stage has actions:
 **Request status.** The header of a feature page has a **↻ Request status** button next to "Updated ... ago". It asks the
 feature's session (same routing as above) to compare `feature.json` with what it really did and bring the page up to
 date. Only one such request is open at a time; the page reloads itself when the file changes.
+
+**Switching features.** A feature page has the list of all features on the left, in groups: favorites, the ones a
+session works on right now, the rest, finished ones. One click opens another feature. The dot and the line under a
+name show what its session does, a red number how many items wait for you. The arrow at the top collapses the list
+to a narrow strip (remembered); on a narrow screen it becomes a row of chips above the title.
+
+**Last reply and chat.** A feature page shows the latest reply of the feature's session as one line, under the tabs
+and in the bottom right corner (that one stays in view while you scroll). **Reply** on either opens a chat window:
+the recent conversation of the session read from its transcript (what you typed in the terminal, what Claude answered)
+and a field to write to it. A message goes to that session like one from the Sessions tab, and its delivery state
+shows under it. A red dot marks a reply you have not opened yet. Drag the top or left edge of the window to resize it
+(double click an edge to reset); **Full width** stretches it along the bottom of the screen. The size is remembered.
+
+**Background task running.** A session that ended its turn while a background command or agent is still running does
+not wait for you: it goes on by itself when the task ends. Claude Code reports such a session as busy, and the pages
+show it as "background task running" instead of "waiting for you".
 
 When Claude has handled a message it runs `inbox.py resolve <id> "summary"` and the summary shows on the page.
 

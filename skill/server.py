@@ -18,6 +18,7 @@ Buttons on a feature page (Do / Ask / Not needed) post to /api/act:
 Config: see common.py. Only listens on 127.0.0.1, rejects foreign Host/Origin headers.
 """
 import json, os, re, subprocess, sys, threading, time, uuid, webbrowser
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -68,6 +69,14 @@ def active_sessions():
     return _AGENTS['v']
 
 
+def agents_at():
+    """When the list of open sessions was last taken, in ms."""
+    return int(_AGENTS['t'] * 1000)
+
+
+BG_MARGIN = 5000                  # ms the list of open sessions must be newer than the hook event it overrides
+
+
 def _active_sessions():
     claude = common.claude_bin()
     if not claude:
@@ -91,6 +100,23 @@ def _clean(t):
     t = t.replace('**', '').replace('`', '')
     t = re.sub(r'(?m)^\s{0,3}(?:#{1,6}|[-*])\s+', '', t)          # markdown headings and list marks
     return re.sub(r'\s+', ' ', t).strip()
+
+
+FULL = 6000                      # characters of the last reply shown on a feature page
+
+
+def _full(t):
+    """The last reply as it was written: line breaks and markdown stay, the page formats them."""
+    t = re.sub(r'\n{3,}', '\n\n', NOISE.sub('', t)).strip()
+    return t if len(t) <= FULL else t[:FULL].rstrip() + ' …'
+
+
+def _stamp(row, default):
+    """Time of a transcript line in ms ("timestamp": "2026-01-02T03:04:05.678Z")."""
+    try:
+        return int(datetime.fromisoformat(str(row.get('timestamp')).replace('Z', '+00:00')).timestamp() * 1000)
+    except (TypeError, ValueError):
+        return default
 
 
 def _text(m):
@@ -137,7 +163,9 @@ def transcript_info(sid):
     hit = _TRANSCRIPTS.get(sid)
     if hit and hit[0] == path and hit[1] == key:
         return hit[2]
-    first = last_u = last_a = ''
+    first = last_u = last_a = full = ''
+    mtime = int(st.st_mtime * 1000)
+    said = mtime
     try:
         with open(path, 'rb') as fh:
             for i, line in enumerate(fh):
@@ -159,15 +187,49 @@ def transcript_info(sid):
         if last_u and last_a:
             break
         try:
-            m = json.loads(line).get('message') or {}
-        except ValueError:
+            row = json.loads(line)
+            m = row.get('message') or {}
+        except (ValueError, AttributeError):
             continue
-        t = _clean(_text(m))
+        raw = _text(m)
+        t = _clean(raw)
         if m.get('role') == 'assistant' and t and not last_a:
-            last_a = t
+            last_a, full, said = t, _full(raw), _stamp(row, mtime)
         elif m.get('role') == 'user' and _real_user(t) and not last_u:
             last_u = t
-    info = {'first': first[:140], 'lastU': last_u[:160], 'lastA': last_a[:200], 'mtime': int(st.st_mtime * 1000)}
+    # The recent conversation, for the chat window of a feature page: what the user typed and what Claude
+    # answered. A text that Claude follows with a tool call is a note made on the way, not an answer: it is
+    # left out, except the newest one, which is all there is to show while a long turn runs.
+    chat, at, note, locked = [], 0, None, True
+    for line in lines:
+        try:
+            row = json.loads(line)
+            m = row.get('message') or {}
+            role = m.get('role')
+        except (ValueError, AttributeError):
+            continue
+        if role not in ('user', 'assistant') or row.get('isSidechain'):
+            continue
+        c = m.get('content')
+        kinds = {x.get('type') for x in c if isinstance(x, dict)} if isinstance(c, list) else set()
+        raw = _text(m)
+        t = _clean(raw)
+        at = max(at, _stamp(row, at))          # file order is the order of the conversation
+        if role == 'assistant':
+            if t:
+                chat.append(('a', _full(raw), at))
+                locked = False
+            if 'tool_use' in kinds and chat and not locked:
+                note = chat.pop()
+                locked = True
+        elif 'tool_result' not in kinds:
+            locked = True                      # the turn ended: what Claude said last in it is its answer
+            if _real_user(t) and '[whatnow]' not in t:
+                chat.append(('u', _full(raw)[:2000], at))
+    if note and (not chat or note[2] >= chat[-1][2]):
+        chat.append(note)
+    info = {'first': first[:140], 'lastU': last_u[:160], 'lastA': last_a[:200], 'mtime': mtime,
+            'said': full, 'saidT': said, 'chat': chat[-80:]}
     _TRANSCRIPTS[sid] = (path, key, info)
     return info
 
@@ -211,14 +273,20 @@ def read_sessions(feats, now, include_closed=False, with_hidden=False, details=F
                 continue
         elif not is_open and age > DROP_AFTER:
             continue
-        if state == 'work' and age > WORK_STALE:
+        what = s.get('what', '')
+        busy = is_open and (agents.get(sid) or {}).get('status') == 'busy'
+        if state == 'work' and age > WORK_STALE and not busy:
             state = 'idle'
+        elif state in ('wait', 'idle') and busy and what != 'waiting for permission' and agents_at() > int(s.get('t', 0)) + BG_MARGIN:
+            # The turn ended, yet Claude Code still reports the session busy: a background command or agent
+            # runs, and the session goes on by itself when it finishes. It does not wait for the user.
+            state, what = 'bg', 'waiting for a background task'
         project = aliases.get(s.get('project'), s.get('project'))
         seen.add(sid)
         if sid in gone:
             continue
         out.append({'id': sid, 'project': project, 'branch': s.get('branch', ''), 'cwd': s.get('cwd', ''),
-                    'state': state, 'what': s.get('what', ''), 't': s.get('t', now), 'feature': bound.get(sid),
+                    'state': state, 'what': what, 't': s.get('t', now), 'feature': bound.get(sid),
                     'name': ((agents or {}).get(sid) or {}).get('name', '')})
     for sid, a in (agents or {}).items():
         if sid in seen or sid in gone:
@@ -278,6 +346,26 @@ def state():
     payload['favorites'] = common.favorites()
     payload['events'] = read_events(payload['features'], now)
     return payload
+
+
+def features_list():
+    """Every feature for the switcher at the top of a feature page. Favorites come first, then the features
+    somebody works on right now (busiest first), then the rest by name, finished ones last.
+    "state" is what its busiest open session does ('' when none is open)."""
+    now = int(time.time() * 1000)
+    feats = render.collect(features_dir())['features']
+    order = ['work', 'bg', 'wait', 'idle']
+    best = {}
+    for s in read_sessions(feats, now):
+        cur = best.get(s['feature'])
+        if s['feature'] and s['state'] in order and (cur is None or order.index(s['state']) < order.index(cur)):
+            best[s['feature']] = s['state']
+    fav = set(common.favorites())
+    out = [{'id': f['id'], 'name': f['name'], 'done': f['done'], 'waiting': f['waiting'],
+            'fav': 'f:' + f['id'] in fav, 'state': best.get(f['id'], '')} for f in feats]
+    rank = lambda f: order.index(f['state']) if f['state'] else len(order)
+    out.sort(key=lambda f: (0 if f['fav'] else 1 if f['state'] else 3 if f['done'] else 2, rank(f), f['name'].lower()))
+    return out
 
 
 # ------------------------------------------------------------------ inbox and routing
@@ -402,6 +490,10 @@ def pick_list(slug):
         row = {'id': s['id'], 'name': (agents.get(s['id']) or {}).get('name', ''), 'project': s['project'],
                'what': s['what'], 't': s['t'], 'open': live, 'state': s['state'] if live else 'closed',
                'other': titles.get(s['feature'], s['feature'] or '')}
+        if s['feature'] == slug:              # the page of the feature shows what its session said last, in full
+            info = transcript_info(s['id'])
+            if info and info['said']:
+                row.update(said=info['said'], saidT=info['saidT'])
         (mine if s['feature'] == slug else out).append(row)
     out.sort(key=lambda x: (not x['open'], -x['t']))
     mine.sort(key=lambda x: (not x['open'], -x['t']))
@@ -443,6 +535,27 @@ def tell_session(body):
         return 404, {'error': 'this session is closed and its folder is unknown, so it cannot be resumed'}
     common.save_entry(entry)
     return 200, {'ok': True, 'entry': public(entry)}
+
+
+def chat(sid):
+    """The recent conversation of one session for the chat window: what the user typed in the terminal ('u'),
+    what was sent from the page ('me', with its delivery state) and what Claude answered ('a')."""
+    info = transcript_info(sid) or {}
+    items = [{'who': w, 'text': t, 't': ts} for w, t, ts in info.get('chat', [])]
+    row = None
+    for e in common.inbox_entries():
+        if e.get('kind') != 'session' or e.get('session') != sid:
+            continue
+        it = {'who': 'me', 'text': e.get('text', ''), 't': e.get('ts', 0)}
+        it.update({k: e[k] for k in ('id', 'state', 'deliveredAt', 'note', 'error', 'route') if k in e})
+        if e.get('state') == 'new':
+            if row is None:
+                row = next((r for r in read_sessions([], int(time.time() * 1000), include_closed=True, with_hidden=True)
+                            if r['id'] == sid), {})
+            it['asleep'] = bool(row) and not awake(row)
+        items.append(it)
+    items.sort(key=lambda x: x['t'])
+    return {'items': items[-30:]}
 
 
 def favorite(body):
@@ -663,6 +776,13 @@ class Handler(BaseHTTPRequestHandler):
                 if not SLUG.match(slug):
                     return self._json(400, {'error': 'bad feature'})
                 return self._json(200, pick_list(slug))
+            if path == '/api/features':
+                return self._json(200, {'features': features_list()})
+            if path == '/api/chat':
+                sid = (parse_qs(u.query).get('session') or [''])[0]
+                if not SID.match(sid):
+                    return self._json(400, {'error': 'bad session'})
+                return self._json(200, chat(sid))
             if path == '/api/route':
                 slug = (parse_qs(u.query).get('feature') or [''])[0]
                 if not SLUG.match(slug):
