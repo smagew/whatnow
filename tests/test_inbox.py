@@ -235,11 +235,13 @@ class AttachTest(Env):
 
     def test_feature_switcher_lists_features_with_what_their_session_does(self):
         self.session('44444444-dddd', 'wait', feature='demo-feature')
-        rows = self.server.features_list()
-        demo = next(f for f in rows if f['id'] == 'demo-feature')
-        self.assertEqual((demo['state'], demo['fav']), ('wait', False))
+        got = self.server.features_list()
+        demo = next(f for f in got['features'] if f['id'] == 'demo-feature')
+        self.assertEqual((demo['state'], demo['fav'], demo['ask'], got['waiting']), ('wait', False, 'reply', 1))
         self.server.act({'action': 'fav', 'kind': 'feature', 'id': 'demo-feature'})
-        self.assertTrue(self.server.features_list()[0]['fav'])
+        self.assertTrue(self.server.features_list()['features'][0]['fav'])
+        self.session('44444444-dddd', 'idle', feature='demo-feature')
+        self.assertEqual(self.server.features_list()['features'][0]['ask'], '')        # an idle session asks nothing
 
     def test_attach_validates_input(self):
         self.assertEqual(self.server.act({'feature': 'nope', 'action': 'attach', 'session': '44444444-dddd'})[0], 404)

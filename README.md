@@ -93,10 +93,13 @@ On a feature page opened through the server every item of a stage has actions:
 feature's session (same routing as above) to compare `feature.json` with what it really did and bring the page up to
 date. Only one such request is open at a time; the page reloads itself when the file changes.
 
-**Switching features.** A feature page has the list of all features on the left, in groups: favorites, the ones a
-session works on right now, the rest, finished ones. One click opens another feature. The dot and the line under a
-name show what its session does, a red number how many items wait for you. The arrow at the top collapses the list
-to a narrow strip (remembered); on a narrow screen it becomes a row of chips above the title.
+**The bar on the left.** Every live page has a bar on the left: **Sessions** and **Features** (the two views of the
+home page), then all features in groups: favorites, the ones a session works on right now, the rest, finished ones.
+One click opens another feature. The dot and the line under a name show what its session does. A feature whose
+session wrote something and now waits for your answer is marked with 💬 (✋ when Claude asks for a permission).
+While you have not opened that feature since the reply, the row is highlighted, the mark has a red dot, and the
+browser tab title starts with the number of such features. "N items for you" counts the open items of the feature that only you can do. The arrow at the
+top collapses the bar to a narrow strip (remembered); on a narrow screen it becomes a row of chips.
 
 **Last reply and chat.** A feature page shows the latest reply of the feature's session as one line, under the tabs
 and in the bottom right corner (that one stays in view while you scroll). **Reply** on either opens a chat window:

@@ -77,38 +77,7 @@ main{max-width:1228px;margin:0 auto;padding:22px 24px 70px}
 .bk p{margin:5px 0 0;color:var(--mut);font-size:13px}
 .td{margin-top:8px;font-size:13px;background:#f1f6f3;border-radius:8px;padding:7px 10px}.td b{color:var(--acc);font-weight:600;margin-right:6px}
 .td button{all:unset;cursor:pointer;color:var(--acc);text-decoration:underline;margin-left:6px;font-size:12.5px}.td button:focus-visible{outline:3px solid #2a8cff}
-/* one click from a feature to any other: a list on the left, and a row of chips on a narrow screen */
-body{--sw:0px}body.sb{--sw:256px;padding-left:var(--sw)}body.sb.sm{--sw:54px}
-.fsb{position:fixed;z-index:35;left:0;top:0;bottom:0;width:var(--sw);background:#0f1b16;color:#cfe3d8;overflow-y:auto;padding:12px 8px 20px;font-size:13px;box-shadow:inset -1px 0 0 #ffffff14}
-.fsb[hidden]{display:none}
-.fsb .top{display:flex;align-items:center;gap:8px;margin:0 6px 8px;min-height:24px}.fsb .top a{color:#9fb3a8;text-decoration:none;font-size:12.5px}.fsb .top a:hover{color:#fff;text-decoration:underline}
-.fsb .top button{all:unset;cursor:pointer;margin-left:auto;color:#9fb3a8;padding:1px 8px;border-radius:6px;font-size:15px}.fsb .top button:hover{background:#ffffff1f;color:#fff}
-.fsb .top a:focus-visible,.fsb .top button:focus-visible,.fsb a.f:focus-visible{outline:3px solid #7ab8ff;outline-offset:-2px}
-.fsb h4{margin:12px 8px 4px;font-size:11.5px;font-weight:600;color:#7f968a}
-.fsb a.f{display:grid;grid-template-columns:10px 1fr auto;gap:2px 9px;align-items:baseline;padding:7px 8px;border-radius:9px;color:#dfe9e3;text-decoration:none;line-height:1.3}
-.fsb a.f:hover{background:#ffffff14}
-.fsb a.f[aria-current]{background:#fff;color:var(--side);font-weight:600}
-.fsb a.f span{display:-webkit-box;-webkit-line-clamp:3;overflow-wrap:anywhere;-webkit-box-orient:vertical;overflow:hidden}
-.fsb a.f small{grid-column:2/4;font-size:11.5px;color:#8ea398;font-weight:400}.fsb a.f[aria-current] small{color:var(--mut)}
-.fsb a.dn:not([aria-current]){opacity:.55}
-.fsb i,.fsw i{width:8px;height:8px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 2px #8c9a92;display:inline-block}
-.fsb i.work{background:#3fbf86;box-shadow:none}.fsb i.bg{background:#7fb0ff;box-shadow:none}.fsb i.wait{background:#e8b13a;box-shadow:none}
-.fsb em{font-style:normal;font-size:11px;font-weight:700;background:#c8372d;color:#fff;border-radius:999px;padding:0 6px}
-body.sm .fsb{padding:12px 6px}body.sm .fsb h4,body.sm .fsb .top a,body.sm .fsb a.f small,body.sm .fsb a.f span,body.sm .fsb em{display:none}
-body.sm .fsb .top{margin:0 0 8px;justify-content:center}body.sm .fsb .top button{margin:0}
-body.sm .fsb a.f{grid-template-columns:1fr;justify-items:center;padding:8px 0;position:relative;margin-bottom:2px}
-body.sm .fsb a.f::after{content:attr(data-ab);font-size:11px;font-weight:700}body.sm .fsb a.f i{position:absolute;right:5px;top:5px}
-.fsw{display:none!important}
-@media(max-width:860px){body.sb,body.sb.sm{--sw:0px}.fsb{display:none}.fsw:not([hidden]){display:flex!important}}
-.fsw{max-width:1180px;margin:0 auto 10px;display:flex;gap:6px;align-items:center;overflow-x:auto;padding:2px 2px 4px}.fsw[hidden]{display:none}
-.fsw a{flex:none;display:inline-flex;gap:7px;align-items:center;max-width:250px;padding:4px 12px;border-radius:999px;font-size:12.5px;font-weight:500;color:#cfe3d8;text-decoration:none;background:#ffffff14;white-space:nowrap}
-.fsw a span{overflow:hidden;text-overflow:ellipsis}
-.fsw a:hover{background:#ffffff2b;color:#fff}.fsw a:focus-visible{outline:3px solid #7ab8ff;outline-offset:1px}
-.fsw a[aria-current]{background:#fff;color:var(--side);font-weight:600}
-.fsw a.all{background:none;color:#9fb3a8;padding-left:0}.fsw a.all:hover{color:#fff;text-decoration:underline}
-.fsw a.dn:not([aria-current]){opacity:.55}
-.fsw i.work{background:#3fbf86;box-shadow:none}.fsw i.bg{background:#7fb0ff;box-shadow:none}.fsw i.wait{background:#e8b13a;box-shadow:none}
-.fsw em{font-style:normal;font-size:11px;font-weight:700;background:#c8372d;color:#fff;border-radius:999px;padding:0 6px}
+body{--sw:0px}
 .back{display:inline-block;color:#9fb3a8;font-size:13px;text-decoration:none;margin-bottom:6px}.back:hover{color:#fff;text-decoration:underline}
 
 .fi{flex-wrap:wrap;position:relative;align-items:flex-start}
@@ -254,8 +223,7 @@ body.sm .fsb a.f::after{content:attr(data-ab);font-size:11px;font-weight:700}bod
 @media(max-width:860px){.rail{position:static;max-height:none}.tbr{flex-direction:column-reverse;align-items:stretch;gap:8px}.frw{align-self:flex-start;padding:0;flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){.pl,.ico.w.on{animation:none}}
 </style></head><body>
-<nav class="fsb" id="fsb" aria-label="Features" hidden></nav>
-<header><nav class="fsw" id="fsw" aria-label="Features" hidden></nav><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><span class="qb" id="qb"></span><div class="ses" id="ses"></div><div class="sy" id="sy" hidden></div></div></div>
+<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><span class="qb" id="qb"></span><div class="ses" id="ses"></div><div class="sy" id="sy" hidden></div></div></div>
 <div class="tbr"><div class="tabs" role="tablist" id="tabs"></div><span class="frw"><span id="fr"></span><button type="button" id="rq" hidden>↻ Request status</button></span></div></header>
 <section class="lm" id="lm" aria-label="Last message of the session" hidden></section>
 <main id="main"></main>
@@ -496,22 +464,8 @@ if($('ses'))$('ses').addEventListener('click',function(e){var b=e.target.closest
  if(v==='pick'){SES.pick=!SES.pick;SES.err='';sesBar();return}
  post({feature:P.slug,action:'attach',session:v}).then(function(r){if(!r.ok){SES.err=(r.j&&r.j.error)||'could not attach';sesBar();return}SES.pick=false;SES.err='';loadSes()}).catch(function(){SES.err='no connection to the server';sesBar()})});
 if(P.live){loadSes();setInterval(loadSes,3000)}
-// every feature in a list on the left: one click to switch
-var FSW='',FGRP=['Favorites','Active now','Other','Finished'],SIDE_SM=false;
-try{SIDE_SM=localStorage.getItem('wn-side')==='sm'}catch(e){}
-function fgrp(x){return x.fav?FGRP[0]:x.state?FGRP[1]:x.done?FGRP[3]:FGRP[2]}
-function abbr(n){var w=String(n).replace(/[^0-9A-Za-z\u0400-\u04ff\s]/g,' ').split(/\s+/).filter(Boolean);return ((w[0]||'?').charAt(0)+((w[1]||'').charAt(0))).toUpperCase()}
-function sideDraw(f){var el=$('fsb');document.body.classList.add('sb');document.body.classList.toggle('sm',SIDE_SM);
- el.innerHTML='<div class="top"><a href="/">← All features</a><button type="button" id="fsbt" aria-expanded="'+!SIDE_SM+'" aria-label="'+(SIDE_SM?'Show the names of the features':'Collapse the list of features')+'">'+(SIDE_SM?'›':'‹')+'</button></div>'+FGRP.map(function(g){var it=f.filter(function(x){return fgrp(x)===g});
-  return it.length?'<h4>'+g+'</h4>'+it.map(function(x){var note=(x.state?'Its session is '+STX[x.state]:'No open session')+(x.waiting?'. '+x.waiting+' item'+(x.waiting>1?'s wait':' waits')+' for you':'')+(x.done?'. Ready to release':'')+'.';
-   return '<a class="f'+(x.done?' dn':'')+'" href="/f/'+encodeURIComponent(x.id)+'/" data-ab="'+esc(abbr(x.name))+'"'+(x.id===P.slug?' aria-current="page"':'')+tipA(x.name,note)+'><i class="'+x.state+'"></i><span>'+esc(x.name)+'</span>'+(x.waiting?'<em>'+x.waiting+'</em>':'')+'<small>'+(x.state?STX[x.state]:'no open session')+'</small></a>'}).join(''):''}).join('');
- el.hidden=false;$('fsbt').onclick=function(){SIDE_SM=!SIDE_SM;try{localStorage.setItem('wn-side',SIDE_SM?'sm':'')}catch(e){}sideDraw(f);$('fsbt').focus();if(typeof boxApply==='function')boxApply()}}
-function loadFeats(){fetch('/api/features',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){var f=j.features||[],k=JSON.stringify(f);if(k===FSW)return;var first=!FSW;FSW=k;
- var el=$('fsw'),bk=document.querySelector('.back');if(bk)bk.style.display='none';
- el.innerHTML='<a class="all" href="/">← All features</a>'+f.map(function(x){var cur=x.id===P.slug;
-  return '<a href="/f/'+encodeURIComponent(x.id)+'/"'+(cur?' aria-current="page"':'')+(x.done?' class="dn"':'')+tipA(x.name,(x.state?'Its session is '+STX[x.state]:'No open session')+(x.waiting?'. '+x.waiting+' item'+(x.waiting>1?'s wait':' waits')+' for you':'')+(x.done?'. Ready to release':'')+'.')+'><i class="'+x.state+'"></i><span>'+esc(x.name)+'</span>'+(x.waiting?'<em>'+x.waiting+'</em>':'')+'</a>'}).join('');
- el.hidden=false;sideDraw(f);if(first){[el,$('fsb')].forEach(function(n){var c=n.querySelector('[aria-current]');if(c&&c.scrollIntoView)c.scrollIntoView({block:'nearest',inline:'center'})})}}).catch(function(){})}
-if(P.live){loadFeats();setInterval(loadFeats,6000)}
+// the bar on the left (sessions, features, one click to another feature) is shared with the home page
+if(P.live&&/^https?:$/.test(location.protocol)){var sd=document.createElement('script');sd.src='/side.js';document.body.appendChild(sd)}
 var VER=P.ver,SYNC={behind:null,pending:false,busy:false,err:''};
 function syBar(){var b=$('sy');if(!b||!P.live)return;
  var rq=$('rq');if(rq){rq.hidden=false;rq.disabled=!!(SYNC.pending||SYNC.busy);rq.textContent=SYNC.pending?'Status requested…':'↻ Request status';rq.title=SYNC.pending?'Waiting for the session to answer':'Ask the session of this feature to bring this page up to date now'}

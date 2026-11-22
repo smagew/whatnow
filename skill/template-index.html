@@ -224,7 +224,9 @@ function released(){if(!DOWN)return;DOWN=false;if(LATE){LATE=false;setTimeout(fu
 document.addEventListener('pointerup',released,true);document.addEventListener('pointercancel',released,true);
 
 // tabs
-function showTab(k){$('pS').hidden=k!=='S';$('pF').hidden=k!=='F';$('pV').hidden=k!=='V';$('tS').setAttribute('aria-selected',k==='S');$('tF').setAttribute('aria-selected',k==='F');$('tV').setAttribute('aria-selected',k==='V');try{localStorage.setItem('whatnow-tab',k)}catch(e){}}
+window.wnShowTab=function(k){showTab(k);try{history.replaceState(null,'',k==='S'?'#sessions':k==='F'?'#features':'#favorites')}catch(e){}};
+window.addEventListener('hashchange',function(){var k={'#sessions':'S','#features':'F','#favorites':'V'}[location.hash];if(k)showTab(k)});
+function showTab(k){window.WN_TAB=k;if(window.wnSide)window.wnSide.refresh();$('pS').hidden=k!=='S';$('pF').hidden=k!=='F';$('pV').hidden=k!=='V';$('tS').setAttribute('aria-selected',k==='S');$('tF').setAttribute('aria-selected',k==='F');$('tV').setAttribute('aria-selected',k==='V');try{localStorage.setItem('whatnow-tab',k)}catch(e){}}
 $('tS').onclick=function(){showTab('S')};$('tF').onclick=function(){showTab('F')};$('tV').onclick=function(){showTab('V')};
 var pollNow=function(){};
 
@@ -232,6 +234,7 @@ if(D.live&&/^https?:$/.test(location.protocol)){$('tabs').hidden=false;var tab='
 paint(D);
 if(D.mock)$('mock').innerHTML='<div class="mockbanner">'+D.mock+'</div>';
 if(D.live&&/^https?:$/.test(location.protocol)){
+ var sd=document.createElement('script');sd.src='/side.js';document.body.appendChild(sd);
  $('connbox').hidden=false;
  function conn(ok){$('cdot').className='cdot'+(ok?' pulse':' off');var s=Math.round((Date.now()-lastOk)/1000);$('conn').textContent=ok?'connected, updated '+(s<3?'just now':s+' s ago'):'no connection to the server, showing the last data'}
  pollNow=function(){poll()};

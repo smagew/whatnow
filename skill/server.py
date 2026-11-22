@@ -349,23 +349,36 @@ def state():
 
 
 def features_list():
-    """Every feature for the switcher at the top of a feature page. Favorites come first, then the features
+    """Every feature for the bar on the left of the pages (side.js). Favorites come first, then the features
     somebody works on right now (busiest first), then the rest by name, finished ones last.
-    "state" is what its busiest open session does ('' when none is open)."""
+    "state" is what its busiest open session does ('' when none is open); "ask" says that a session of the
+    feature ended its turn and waits for the user ('reply', or 'permission' for a permission prompt)."""
     now = int(time.time() * 1000)
     feats = render.collect(features_dir())['features']
     order = ['work', 'bg', 'wait', 'idle']
-    best = {}
+    best, ask, waiting = {}, {}, 0
     for s in read_sessions(feats, now):
+        # The turn ended and nothing runs in the background: Claude wrote something and it is the user's move.
+        # A minute later the hook calls the same session "idle", so idle counts too once it has said something.
+        said = (transcript_info(s['id']) or {}).get('saidT') if s['state'] in ('wait', 'idle') else 0
+        asks = s['state'] == 'wait' or bool(said) and s['what'] != 'session started'
+        if asks:
+            waiting += 1
         cur = best.get(s['feature'])
         if s['feature'] and s['state'] in order and (cur is None or order.index(s['state']) < order.index(cur)):
             best[s['feature']] = s['state']
+        if s['feature'] and asks:
+            kind = 'permission' if s['what'] == 'waiting for permission' else 'reply'
+            said = said or s['t']
+            if s['feature'] not in ask or kind == 'permission' or said > ask[s['feature']][1]:
+                ask[s['feature']] = (kind, said)
     fav = set(common.favorites())
     out = [{'id': f['id'], 'name': f['name'], 'done': f['done'], 'waiting': f['waiting'],
-            'fav': 'f:' + f['id'] in fav, 'state': best.get(f['id'], '')} for f in feats]
+            'fav': 'f:' + f['id'] in fav, 'state': best.get(f['id'], ''),
+            'ask': ask.get(f['id'], ('', 0))[0], 'saidT': ask.get(f['id'], ('', 0))[1]} for f in feats]
     rank = lambda f: order.index(f['state']) if f['state'] else len(order)
     out.sort(key=lambda f: (0 if f['fav'] else 1 if f['state'] else 3 if f['done'] else 2, rank(f), f['name'].lower()))
-    return out
+    return {'features': out, 'waiting': waiting}
 
 
 # ------------------------------------------------------------------ inbox and routing
@@ -777,7 +790,10 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json(400, {'error': 'bad feature'})
                 return self._json(200, pick_list(slug))
             if path == '/api/features':
-                return self._json(200, {'features': features_list()})
+                return self._json(200, features_list())
+            if path == '/side.js':
+                with open(os.path.join(HERE, 'side.js'), encoding='utf-8') as fh:
+                    return self._send(200, fh.read(), 'text/javascript; charset=utf-8')
             if path == '/api/chat':
                 sid = (parse_qs(u.query).get('session') or [''])[0]
                 if not SID.match(sid):
