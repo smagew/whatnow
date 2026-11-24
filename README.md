@@ -127,8 +127,17 @@ either way. A session can be shown when it runs in the background:
   terminal and attaches by itself when the session has moved. Claude Code gives a moved session a new id; its
   feature and its star follow it.
 
+Shift+Enter is a new line, as in a terminal set up for Claude Code. A web address in the terminal (and any outside
+link on a page) opens in your browser.
+
 The terminal is full access to your machine, so it is never served on the 127.0.0.1 port: a browser tab does not get
 it. Not available on Windows yet.
+
+**Folders and resources.** Under the stages a feature page shows, for every session of the feature, the folder it
+works in, the folder it was started in (the agent reaches everything under it), the folders added to it (`--add-dir`,
+`/add-dir`) and the others it worked in lately; these come from the environment snapshots Claude Code writes into the
+transcript. For an open session it also shows the CPU (percent of one core) and memory its process takes together with
+everything started under it; the Sessions list shows the same. Not read on Windows yet.
 
 **Background task running.** A session that ended its turn while a background command or agent is still running does
 not wait for you: it goes on by itself when the task ends. Claude Code reports such a session as busy, and the pages

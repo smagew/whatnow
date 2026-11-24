@@ -58,3 +58,32 @@ func TestASessionMovedToTheBackgroundKeepsItsFeature(t *testing.T) {
 	contains(t, fav, "s:"+next, "the star follows the session")
 	_ = e
 }
+
+// A link clicked in the window opens in the browser; nothing but a web address is ever opened.
+func TestOnlyWebAddressesAreOpened(t *testing.T) {
+	for _, u := range []string{"file:///etc/passwd", "javascript:alert(1)", "/Applications/Calculator.app", "x-apple.systempreferences:", "http://", ""} {
+		if code, _ := openLink(u); code != 400 {
+			t.Errorf("%q was accepted", u)
+		}
+	}
+}
+
+// The folders of a session come from the environment snapshots of its transcript.
+func TestFoldersOfASession(t *testing.T) {
+	withDemo(t)
+	sid := "cccccccc-0000-0000-0000-000000000003"
+	env := func(dir string, add ...string) string {
+		return string(encodeJSON(map[string]any{"type": "attachment", "cwd": "/work", "attachment": map[string]any{"type": "environment",
+			"snapshot": map[string]any{"workingDirectory": dir, "additionalWorkingDirectories": add}}})) + "\n"
+	}
+	writeFile(t, filepath.Join(os.Getenv("CLAUDE_CONFIG_DIR"), "projects", "p", sid+".jsonl"),
+		[]byte(env("/work")+env("/work/api")+env("/work/web")+env("/work/api", "/data/shared")))
+	info := transcriptInfo(sid)
+	if info == nil {
+		t.Fatal("no transcript")
+	}
+	eq(t, info.Root, "/work", "started in")
+	eq(t, info.Dir, "/work/api", "works in")
+	eqList(t, info.AddDirs, []string{"/data/shared"}, "added")
+	eqList(t, info.Seen, []string{"/work/web", "/work"}, "worked in before, newest first")
+}

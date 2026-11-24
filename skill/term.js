@@ -35,6 +35,10 @@ function save(){ST.o[SCOPE]=S.open;ST.c[SCOPE]=S.cur;ST.h=S.h;try{localStorage.s
 function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function post(body){return fetch('/api/term',{method:'POST',headers:{'Content-Type':'application/json','X-Whatnow':'1'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})}
 
+// a web address opens in the browser: the window itself never leaves the dashboard
+function link(u){if(/^https?:\/\//i.test(u))post({op:'link',url:u}).catch(function(){})}
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;var u;try{u=new URL(a.getAttribute('href'),location.href)}catch(x){return}
+ if(/^https?:$/.test(u.protocol)&&u.origin!==location.origin){e.preventDefault();link(u.href)}},true);
 var dock=document.createElement('section');dock.className='wnt';dock.hidden=true;dock.setAttribute('aria-label','Terminal');
 dock.innerHTML='<div class="wtg" title="Drag to resize, double click to reset"></div><div class="wth"><div class="wtl" role="tablist" style="display:flex;gap:2px;min-width:0;overflow-x:auto"></div><span class="wts"></span><button type="button" class="wta" data-x="leave" title="Close this terminal. The session keeps running in the background.">Disconnect</button><button type="button" class="wta" data-x="hide" title="Hide the terminal, keep it connected">Hide</button></div><div class="wtb"><div class="wtx"></div><div class="wtm" hidden></div></div>';
 var pill=document.createElement('button');pill.type='button';pill.className='wnp';pill.hidden=true;
@@ -60,7 +64,7 @@ new MutationObserver(function(){mark()}).observe(document.body,{childList:true,s
 
 var libs=null;
 function lib(){if(libs)return libs;libs=new Promise(function(ok,bad){var l=document.createElement('link');l.rel='stylesheet';l.href='/xterm.css';document.head.appendChild(l);
-  var a=document.createElement('script');a.src='/xterm.js';a.onerror=bad;a.onload=function(){var b=document.createElement('script');b.src='/xterm-addon-fit.js';b.onerror=bad;b.onload=ok;document.head.appendChild(b)};document.head.appendChild(a)});return libs}
+  var a=document.createElement('script');a.src='/xterm.js';a.onerror=bad;a.onload=function(){var b=document.createElement('script');b.src='/xterm-addon-fit.js';b.onerror=bad;b.onload=function(){var c=document.createElement('script');c.src='/xterm-addon-web-links.js';c.onerror=bad;c.onload=ok;document.head.appendChild(c)};document.head.appendChild(b)};document.head.appendChild(a)});return libs}
 function bytes(b64){var s=atob(b64),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
 var SENT={cols:0,rows:0};
 function fit(){if(!X||dock.hidden)return;try{FIT.fit()}catch(e){}if(X.cols!==SENT.cols||X.rows!==SENT.rows){SENT={cols:X.cols,rows:X.rows};post({op:'resize',id:S.cur,cols:X.cols,rows:X.rows}).catch(function(){})}}
@@ -70,11 +74,15 @@ function say(html){msg.hidden=!html;xt.hidden=!!html;msg.innerHTML=html||''}
 // nothing goes back to the program: old output holds questions to the terminal, and their answers would be typed in.
 function show(t,isNew){var replay=!isNew,quiet=replay;S.cur=t.id;S.open=true;WAIT=null;save();say('');layout();var run=++RUN;
  lib().then(function(){if(run!==RUN)return;if(X){X.dispose();X=null}xt.innerHTML='';
-  X=new Terminal({fontFamily:'ui-monospace,SFMono-Regular,Menlo,monospace',fontSize:13,cursorBlink:true,scrollback:5000,allowProposedApi:true,
+  X=new Terminal({fontFamily:'ui-monospace,SFMono-Regular,Menlo,monospace',fontSize:13,cursorBlink:true,scrollback:5000,allowProposedApi:true,linkHandler:{activate:function(e,uri){link(uri)}},
    theme:{background:'#16241e',foreground:'#e6efe9',cursor:'#e6efe9',selectionBackground:'#3b7be066'}});
-  FIT=new FitAddon.FitAddon();X.loadAddon(FIT);X.open(xt);try{FIT.fit()}catch(e){}
+  FIT=new FitAddon.FitAddon();X.loadAddon(FIT);X.loadAddon(new WebLinksAddon.WebLinksAddon(function(e,uri){link(uri)}));X.open(xt);try{FIT.fit()}catch(e){}
   var q=Promise.resolve();                       // keys go out one request after another, in the order typed
-  X.onData(function(d){if(quiet)return;for(var i=0;i<d.length;i+=4000)(function(part){q=q.then(function(){return post({op:'write',id:t.id,data:part})}).catch(function(){})})(d.slice(i,i+4000))});
+  function send(d){if(quiet)return;for(var i=0;i<d.length;i+=4000)(function(part){q=q.then(function(){return post({op:'write',id:t.id,data:part})}).catch(function(){})})(d.slice(i,i+4000))}
+  X.onData(send);
+  // Shift+Enter is a new line in Claude Code, not "send": a terminal has to say so with ESC + Enter (what iTerm and
+  // Terminal send after /terminal-setup); xterm.js alone sends a plain Enter for both
+  X.attachCustomKeyEventHandler(function(e){if(e.key==='Enter'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey&&!e.altKey){if(e.type==='keydown')send('\x1b\r');e.preventDefault();return false}return true});
   SENT={cols:0,rows:0};fit();
   X.focus();read(t,replay?0:t.off,run,function(){setTimeout(function(){quiet=false},150)})}).catch(function(){say('<p class="wte">Could not load the terminal.</p>')})}
 function read(t,off,run,first){if(run!==RUN)return;

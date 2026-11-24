@@ -221,6 +221,9 @@ body{--sw:0px}
 /* the page stays invisible until its script has drawn it: while a new page shows nothing, the browser keeps the old
    one on screen, so going from one page to another never shows a half-drawn page. Shown anyway after 1.5 s. */
 body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes wnshow{to{visibility:visible}}
+/* the folders the sessions of the feature work in: a card under the stages */
+.dcard{margin:18px 0 4px 2px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:12px;font-size:13px;color:var(--mut);line-height:1.5}
+.dcard h4{margin:0 0 6px;font-size:13px;color:var(--ink)}.dcard .dp{display:block;margin-top:6px}.dcard .dn{margin-top:12px}.dcard code{white-space:normal;word-break:break-all}.dcard b{color:var(--ink);font-weight:600}
 </style>
 <script>window.PANEL=/*__DATA__*/null;</script></head><body>
 <header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="qb" id="qb"></span></div></div></div>
@@ -459,7 +462,22 @@ if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);
   post({action:'tell',session:CHAT.sid,text:txt}).then(function(r){if(!r.ok)return fail((r.j&&r.j.error)||'could not send');
    CHAT.busy=false;t.value='';chatFit();CHAT.lkey='';var l=$('cwl');l.scrollTop=l.scrollHeight;pollChat();lastMsg()}).catch(function(){fail('no connection to the server')})});
  if(P.live)setInterval(pollChat,3000)}
-function gotSes(j){SES.bound=j.bound||[];SES.sessions=j.sessions||[];sesBar();lastMsg();var a=agent(),k=a?a.id+a.state:'';if(k!==SES.key){SES.key=k;if(FORM)renderRail();else renderStage(cur)}if(!TC||!$('fr').contains(TC))freshBar()}
+// Where the sessions of this feature work: the folder a session was started in (the agent reaches everything under
+// it), the folder it is in now, the folders added to it, and the others it worked in lately. A card under the stages.
+function dirsOf(s){var d=s.dirs||{};return{root:d.root||'',now:d.now||d.root||'',add:d.add||[],seen:(d.seen||[]).filter(function(x){return x!==d.root&&x!==d.now})}}
+function useTxt(u){if(!u)return '';var c=u.cpu>=10?Math.round(u.cpu):u.cpu,m=u.ram>=1024?(u.ram/1024).toFixed(1)+' GB':u.ram+' MB';return 'CPU '+c+'% · memory '+m}
+function dirsLine(s){var d=dirsOf(s),codes=function(l){return l.map(function(x){return '<code>'+esc(x)+'</code>'}).join(' ')},h='<span class="dp"><b>Works in</b> <code>'+esc(d.now)+'</code>'+(d.root&&d.root!==d.now?'':' <small>(started here, reaches everything under it)</small>')+'</span>';
+ if(d.root&&d.root!==d.now)h+='<span class="dp"><b>Started in</b> <code>'+esc(d.root)+'</code> <small>(reaches everything under it)</small></span>';
+ if(d.add.length)h+='<span class="dp"><b>Added</b> '+codes(d.add)+'</span>';
+ if(d.seen.length)h+='<span class="dp"><b>Also worked in</b> '+codes(d.seen)+'</span>';
+ if(s.use)h+='<span class="dp" title="The process of the session and everything started under it (commands, MCP servers). CPU is in percent of one core."><b>Uses now</b> '+useTxt(s.use)+(s.use.procs>1?' <small>('+s.use.procs+' processes)</small>':'')+'</span>';
+ return h}
+function dirsUI(){if(!P.live)return;var stl=$('stl'),b=SES.bound.filter(function(s){return s.dirs&&(s.dirs.now||s.dirs.root)});if(!stl)return;var c=stl.querySelector('.dcard');
+ if(!b.length){if(c)c.remove();return}
+ var h='<h4>'+(b.some(function(s){return s.use})?'Folders and resources':'Folders')+'</h4>'+b.map(function(s){return (b.length>1?'<span class="dp dn"><b>'+esc(sesName(s))+'</b></span>':'')+dirsLine(s)}).join('');
+ if(!c){c=document.createElement('div');c.className='dcard';stl.appendChild(c)}if(c.dataset.h!==h){c.dataset.h=h;c.innerHTML=h}}
+var renderRail0=renderRail;renderRail=function(){renderRail0();dirsUI()};
+function gotSes(j){SES.bound=j.bound||[];SES.sessions=j.sessions||[];sesBar();dirsUI();lastMsg();var a=agent(),k=a?a.id+a.state:'';if(k!==SES.key){SES.key=k;if(FORM)renderRail();else renderStage(cur)}if(!TC||!$('fr').contains(TC))freshBar()}
 function loadSes(){if(INIT.ses){var j=INIT.ses;INIT.ses=null;gotSes(j);return}fetch('/api/sessions?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(gotSes).catch(function(){})}
 if($('ses'))$('ses').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.dataset.term)return;var v=b.dataset.ses;
  if(v==='pick'){SES.pick=!SES.pick;SES.err='';sesBar();return}

@@ -43,3 +43,8 @@ func stopProcess(pid int) {
 
 // parentGone: Windows does not hand orphans over to another process, so the parent itself is looked up.
 func parentGone(ppid int) bool { return exeOf(ppid) == "" }
+
+// readUsage: not read on Windows yet, so the pages show no CPU and memory there.
+func readUsage() (map[int]float64, map[int]int64, map[int][]int) {
+	return map[int]float64{}, map[int]int64{}, map[int][]int{}
+}

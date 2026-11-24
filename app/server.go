@@ -137,6 +137,7 @@ type session struct {
 	First   *string `json:"first,omitempty"`
 	LastU   *string `json:"lastU,omitempty"`
 	LastA   *string `json:"lastA,omitempty"`
+	Use     any     `json:"use,omitempty"` // what its process and the processes under it take: {cpu, ram, procs}
 }
 
 func (s *session) feature() string { f, _ := s.Feature.(string); return f }
@@ -239,6 +240,7 @@ func readSessions(now int64, includeClosed, withHidden, details bool) []*session
 	homeDir := strings.TrimRight(userHome(), "/")
 	for _, r := range out {
 		r.Hidden = hid[r.ID]
+		r.Use = usageOf(ag[r.ID])
 		switch {
 		case strings.TrimRight(r.Cwd, "/") == homeDir:
 			r.Group = "~ home"
@@ -473,6 +475,77 @@ func resumeInBackground(sid, cwd string, entry map[string]any) (bool, string) {
 	return err == nil, runes(strings.TrimSpace(string(out)), 400)
 }
 
+// usage of the processes of the machine, read with one `ps` and kept for a few seconds.
+var procUse struct {
+	mu   sync.Mutex
+	at   time.Time
+	cpu  map[int]float64
+	rss  map[int]int64 // KB
+	kids map[int][]int
+}
+
+// usageOf is what an open session takes right now: its own process and everything started under it (commands,
+// MCP servers). cpu is in percent of one core, ram in MB. nil when it is not known (closed, or no `ps`).
+func usageOf(a map[string]any) any {
+	pid := int(num(a["pid"]))
+	if pid <= 0 {
+		return nil
+	}
+	procUse.mu.Lock()
+	defer procUse.mu.Unlock()
+	if time.Since(procUse.at) > 5*time.Second {
+		procUse.cpu, procUse.rss, procUse.kids = readUsage()
+		procUse.at = time.Now()
+	}
+	if _, ok := procUse.rss[pid]; !ok {
+		return nil
+	}
+	var cpu float64
+	var rss int64
+	n := 0
+	var walk func(p, depth int)
+	walk = func(p, depth int) {
+		cpu, rss, n = cpu+procUse.cpu[p], rss+procUse.rss[p], n+1
+		if depth < 12 {
+			for _, k := range procUse.kids[p] {
+				walk(k, depth+1)
+			}
+		}
+	}
+	walk(pid, 0)
+	return map[string]any{"cpu": math.Round(cpu*10) / 10, "ram": rss / 1024, "procs": n}
+}
+
+// sessionDirs says where a session may work: the folder it was started in (the agent reaches everything under
+// it), the folder it works in now, the folders added to it, and the other folders it worked in lately.
+func sessionDirs(s *session, info *transcript) map[string]any {
+	short := func(l []string) []any {
+		out := []any{}
+		for _, d := range l {
+			out = append(out, tilde(d))
+		}
+		return out
+	}
+	root, now := s.Cwd, s.Cwd
+	add, seen := []any{}, []any{}
+	if info != nil {
+		if info.Root != "" {
+			root = info.Root
+		}
+		if info.Dir != "" {
+			now = info.Dir
+		}
+		add, seen = short(info.AddDirs), short(info.Seen)
+	}
+	if root == "" {
+		root = now
+	}
+	if now == "" {
+		now = root
+	}
+	return map[string]any{"root": tilde(root), "now": tilde(now), "add": add, "seen": seen}
+}
+
 // pickList gives the sessions that can be attached to a feature, open ones first. Sessions already on this
 // feature are listed apart, with what they said last.
 func pickList(slug string) map[string]any {
@@ -499,8 +572,13 @@ func pickList(slug string) map[string]any {
 		}
 		r := row{"id": s.ID, "name": ag.name(s.ID), "project": s.Project, "what": s.What, "t": s.T, "open": live, "state": state, "other": other}
 		if s.feature() == slug {
-			if info := transcriptInfo(s.ID); info != nil && info.Said != "" {
+			info := transcriptInfo(s.ID)
+			if info != nil && info.Said != "" {
 				r["said"], r["saidT"] = info.Said, info.SaidT
+			}
+			r["dirs"] = sessionDirs(s, info)
+			if u := usageOf(ag[s.ID]); u != nil {
+				r["use"] = u
 			}
 			mine = append(mine, r)
 		} else {
@@ -1068,7 +1146,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if s, ok := slugArg(); ok {
 			sendJSON(w, 200, pickList(s))
 		}
-	case "/api/term/list", "/api/term/read", "/xterm.js", "/xterm.css", "/xterm-addon-fit.js":
+	case "/api/term/list", "/api/term/read", "/xterm.js", "/xterm.css", "/xterm-addon-fit.js", "/xterm-addon-web-links.js":
 		if !h.local { // never on the 127.0.0.1 port
 			text(w, 404, "not found")
 			return
@@ -1116,6 +1194,16 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// openLink opens a web address in the user's browser. Only http and https: nothing a page shows may start a program.
+func openLink(raw string) (int, any) {
+	u, err := url.Parse(raw)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || len(raw) > 4000 {
+		return 400, map[string]any{"error": "not a web address"}
+	}
+	openFile(u.String())
+	return 200, map[string]any{"ok": true}
+}
+
 // post takes the buttons. Anything on the web can make a browser POST to 127.0.0.1, so besides Host/Origin
 // the body must be JSON and a custom header is required (a cross-site page cannot add it without a CORS
 // preflight, which this server never allows).
@@ -1151,6 +1239,8 @@ func (h handler) post(w http.ResponseWriter, r *http.Request) {
 			code, obj = termResize(str(body, "id"), n("cols"), n("rows"))
 		case "close":
 			code, obj = termClose(str(body, "id"))
+		case "link": // a link clicked in the window: the window cannot leave the dashboard, the browser opens it
+			code, obj = openLink(str(body, "url"))
 		}
 		sendJSON(w, code, obj)
 		return

@@ -127,6 +127,63 @@ type transcript struct {
 	First, LastU, LastA, Said string
 	Mtime, SaidT              int64
 	Chat                      []chatLine
+	// Where the session works, from the "environment" snapshots Claude Code writes into the transcript:
+	// the working directory now, the directories added to it (--add-dir, /add-dir), and the other working
+	// directories it was in lately, newest first.
+	Root    string // the folder it was started in
+	Dir     string
+	AddDirs []string
+	Seen    []string
+}
+
+// tilde shortens a path under the home folder, as people write it.
+func tilde(p string) string {
+	if h := userHome(); h != "" && (p == h || strings.HasPrefix(p, h+"/")) {
+		return "~" + p[len(h):]
+	}
+	return p
+}
+
+// noteEnv takes the working directories out of one transcript row, when it is an environment snapshot.
+func (t *transcript) noteEnv(row map[string]any) {
+	a, _ := row["attachment"].(map[string]any)
+	if a == nil || a["type"] != "environment" {
+		return
+	}
+	snap, _ := a["snapshot"].(map[string]any)
+	dir := str(snap, "workingDirectory")
+	if dir == "" {
+		return
+	}
+	if t.Dir != "" && t.Dir != dir {
+		seen := []string{t.Dir}
+		for _, d := range t.Seen {
+			if d != t.Dir && d != dir {
+				seen = append(seen, d)
+			}
+		}
+		if len(seen) > 6 {
+			seen = seen[:6]
+		}
+		t.Seen = seen
+	} else if t.Dir == "" {
+		t.Seen = nil
+	}
+	t.Dir = dir
+	for i, d := range t.Seen { // back in a folder it was in before: that one is "now", not "before"
+		if d == dir {
+			t.Seen = append(t.Seen[:i], t.Seen[i+1:]...)
+			break
+		}
+	}
+	t.AddDirs = nil
+	if l, ok := snap["additionalWorkingDirectories"].([]any); ok {
+		for _, x := range l {
+			if s, _ := x.(string); s != "" {
+				t.AddDirs = append(t.AddDirs, s)
+			}
+		}
+	}
 }
 
 type cacheItem struct {
@@ -205,7 +262,11 @@ func transcriptInfo(sid string) *transcript {
 	for i := 0; i <= 400 && info.First == ""; i++ {
 		line, err := r.ReadBytes('\n')
 		if len(line) > 0 {
-			if _, m := rowOf(line); m != nil && m["role"] == "user" {
+			row, m := rowOf(line)
+			if info.Root == "" { // the folder the session was started in
+				info.Root = str(row, "cwd")
+			}
+			if m != nil && m["role"] == "user" {
 				if t := clean(msgText(m)); realUser(t) {
 					info.First = t
 				}
@@ -253,6 +314,10 @@ func transcriptInfo(sid string) *transcript {
 	for _, line := range lines {
 		row, m := rowOf(line)
 		if row == nil {
+			continue
+		}
+		if row["type"] == "attachment" {
+			info.noteEnv(row)
 			continue
 		}
 		role, _ := m["role"].(string)
