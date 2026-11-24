@@ -1,0 +1,94 @@
+# Builds the whatnow program for macOS, Windows and Linux. Run it by hand (Actions → build → Run workflow),
+# or push a tag like v0.2.0: then the files are also attached to a GitHub release of that tag.
+name: build
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+env:
+  WAILS: github.com/wailsapp/wails/v2/cmd/wails@v2.17.1
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod}
+      - name: go vet for every system
+        run: for os in darwin windows linux; do GOOS=$os GOARCH=amd64 go vet ./app; done
+      - name: tests
+        run: python3 -m unittest discover -s tests
+
+  macos:
+    needs: check
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod}
+      - run: go install $WAILS
+      - name: build (Apple Silicon and Intel in one app)
+        working-directory: app
+        run: wails build -platform darwin/universal -clean
+      - name: pack
+        run: ditto -c -k --keepParent app/build/bin/whatnow.app whatnow-macos-universal.zip
+      - uses: actions/upload-artifact@v4
+        with: {name: whatnow-macos-universal, path: whatnow-macos-universal.zip}
+
+  windows:
+    needs: check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod}
+      - run: go install $env:WAILS
+      - name: build
+        working-directory: app
+        run: wails build -platform windows/amd64 -clean -o whatnow.exe
+      - run: Compress-Archive -Path app/build/bin/whatnow.exe -DestinationPath whatnow-windows-amd64.zip
+      - uses: actions/upload-artifact@v4
+        with: {name: whatnow-windows-amd64, path: whatnow-windows-amd64.zip}
+
+  linux:
+    needs: check
+    strategy:
+      matrix:
+        include:
+          - {runner: ubuntu-24.04, arch: amd64}
+          - {runner: ubuntu-24.04-arm, arch: arm64}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod}
+      - run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+      - name: build
+        run: go build -tags desktop,production,webkit2_41 -ldflags "-s -w" -o whatnow ./app
+      - name: smoke test
+        run: |
+          ./whatnow --help
+          mkdir -p $RUNNER_TEMP/h/features/demo && cp examples/csv-export.json $RUNNER_TEMP/h/features/demo/feature.json
+          WHATNOW_HOME=$RUNNER_TEMP/h ./whatnow render --index
+          test -s $RUNNER_TEMP/h/features/demo/panel.html
+      - run: tar czf whatnow-linux-${{ matrix.arch }}.tar.gz whatnow
+      - uses: actions/upload-artifact@v4
+        with: {name: whatnow-linux-${{ matrix.arch }}, path: whatnow-linux-${{ matrix.arch }}.tar.gz}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [macos, windows, linux]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with: {path: dist, merge-multiple: true}
+      - env: {GH_TOKEN: '${{ github.token }}'}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
