@@ -94,9 +94,11 @@ header{padding-bottom:0}
 .pjs{display:flex;gap:6px 14px;flex-wrap:wrap;margin:8px 18px 12px 84px;font-size:12.5px}.pj1{display:inline-flex;gap:8px;align-items:center}.pj1 .pn{font-weight:600}
 .k.bad{background:#c3453d}
 @media(max-width:820px){.stg,.stn,.pjs{margin-left:18px}}
-/* going to another page of the dashboard: the old page stays until the new one is ready, then a short fade */
-@view-transition{navigation:auto}::view-transition-old(root),::view-transition-new(root){animation-duration:.12s}@media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
-</style></head><body>
+/* the page stays invisible until its script has drawn it: while a new page shows nothing, the browser keeps the old
+   one on screen, so going from one page to another never shows a half-drawn page. Shown anyway after 1.5 s. */
+body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes wnshow{to{visibility:visible}}
+</style>
+<script>window.IDX_DATA=/*__DATA__*/null;</script></head><body>
 <header><div class="hd"><span class="conn" id="connbox" hidden><span class="cdot pulse" id="cdot"></span><span id="conn"></span></span><h1>Work with Claude</h1><p class="sub" id="sub"></p><div class="tabs" role="tablist" id="tabs" hidden><button role="tab" id="tS" aria-selected="false">Sessions<span class="n" id="nS"></span></button><button role="tab" id="tF" aria-selected="true">Features<span class="n" id="nF"></span></button><button role="tab" id="tV" aria-selected="false">Favorites<span class="n" id="nV"></span></button></div></div></header>
 <main>
 <div id="mock"></div><div id="broken"></div>
@@ -108,7 +110,6 @@ header{padding-bottom:0}
 <div id="free"></div>
 <div class="done" id="done"></div>
 </div></main>
-<script>window.IDX_DATA=/*__DATA__*/null;</script>
 <script>
 (function(){
 var D=window.IDX_DATA,$=function(i){return document.getElementById(i)};
@@ -255,4 +256,4 @@ if(D.live&&location.protocol!=='file:'){
  setInterval(function(){document.querySelectorAll('.ago').forEach(function(e){e.textContent=agoMs(+e.dataset.t)});conn($('cdot').className.indexOf('off')<0)},1000);
 }
 })();
-</script></body></html>
+</script><script>document.body.classList.add('wnok')/* separate: shown even if the script above fails */</script></body></html>

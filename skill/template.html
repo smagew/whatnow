@@ -218,9 +218,11 @@ body{--sw:0px}
 .cwn{margin:0;padding:2px 14px 10px;font-size:12px;color:var(--mut)}.cwn.err{color:var(--bad)}
 @media(max-width:860px){.rail{position:static;max-height:none}.tbr{flex-direction:column-reverse;align-items:stretch;gap:8px}.frw{align-self:flex-start;padding:0;flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){.pl,.ico.w.on{animation:none}}
-/* going to another page of the dashboard: the old page stays until the new one is ready, then a short fade */
-@view-transition{navigation:auto}::view-transition-old(root),::view-transition-new(root){animation-duration:.12s}@media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
-</style></head><body>
+/* the page stays invisible until its script has drawn it: while a new page shows nothing, the browser keeps the old
+   one on screen, so going from one page to another never shows a half-drawn page. Shown anyway after 1.5 s. */
+body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes wnshow{to{visibility:visible}}
+</style>
+<script>window.PANEL=/*__DATA__*/null;</script></head><body>
 <header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="qb" id="qb"></span></div></div></div>
 <div class="tbr"><div class="tabs" role="tablist" id="tabs"></div><span class="frw"><span id="fr"></span><button type="button" id="rq" hidden>↻ Request status</button></span></div></header>
 <section class="lm" id="lm" aria-label="Last message of the session" hidden></section>
@@ -231,7 +233,6 @@ body{--sw:0px}
 <div class="cwl" id="cwl" aria-live="polite"></div>
 <form class="cwf" id="cwf"><textarea id="cwi" rows="1" placeholder="Write to Claude…" aria-label="Message to Claude"></textarea><button type="submit" id="cws" disabled>Send</button></form>
 <p class="cwn" id="cwn"></p></div></aside>
-<script>window.PANEL=/*__DATA__*/null;</script>
 <script>
 // WN_INIT: the first answers of the polls, put into the page by the server, so the first paint is already complete
 var INIT=window.WN_INIT||{};
@@ -492,4 +493,4 @@ function keep(){try{sessionStorage.setItem('wn-'+P.slug,JSON.stringify({tab:curT
 
 $('p-ov').addEventListener('click',function(e){var b=e.target.closest('button[data-stage]');if(!b)return;var si=P.stages.map(function(s){return s.n}).indexOf(+b.dataset.stage);if(si<0)return;show('work');renderStage(si);document.getElementById('tab-work').focus()});
 })();
-</script></body></html>
+</script><script>document.body.classList.add('wnok')/* separate: shown even if the script above fails */</script></body></html>

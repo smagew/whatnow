@@ -968,12 +968,15 @@ type handler struct {
 // withSide puts the bar on the left into a live page before anything else, with its data: it is drawn in the
 // first paint, so going from one feature to another does not flash and shift the page.
 // A feature page also gets the first answers of its own polls (sessions, version) for the same reason.
+// The data goes into <head> and the bar's code is inline: nothing in <body> waits for the network or holds the
+// parser up, so WebKit (the app window) has no moment to show a half-built page.
 func withSide(html string, init map[string]any) string {
-	head := "<body><script>window.WN_SIDE=" + blob(featuresList())
+	data := "<script>window.WN_SIDE=" + blob(featuresList())
 	if init != nil {
-		head += ";window.WN_INIT=" + blob(init)
+		data += ";window.WN_INIT=" + blob(init)
 	}
-	return strings.Replace(html, "<body>", head+`;</script><script src="/side.js"></script>`, 1)
+	html = strings.Replace(html, "</head>", data+";</script></head>", 1)
+	return strings.Replace(html, "<body>", "<body><script>"+page("side.js")+"</script>", 1)
 }
 
 func send(w http.ResponseWriter, code int, body []byte, ctype string) {

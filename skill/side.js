@@ -3,7 +3,6 @@
 (function(){
 if(window.wnSide)return;
 var CSS="body{--sw:0px}body.sb{--sw:256px;padding-left:var(--sw)}body.sb.sm{--sw:54px}body.sb .back{display:none}"+
-".wns{view-transition-name:wbar}::view-transition-old(wbar),::view-transition-new(wbar){animation:none}"+
 ".wns{position:fixed;z-index:35;left:0;top:0;bottom:0;width:var(--sw);box-sizing:border-box;background:#0f1b16;color:#cfe3d8;overflow-y:auto;padding:10px 8px 20px;font:13px/1.3 Geologica,system-ui,sans-serif;box-shadow:inset -1px 0 0 #ffffff14}"+
 ".wns a{text-decoration:none;color:#dfe9e3;border-radius:9px}.wns a:focus-visible,.wns button:focus-visible{outline:3px solid #7ab8ff;outline-offset:-2px}"+
 ".wns .wtop{display:flex;align-items:center;margin:0 4px 6px 8px;min-height:26px;font-weight:600;color:#fff;font-size:14px}"+
