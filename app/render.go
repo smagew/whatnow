@@ -309,6 +309,20 @@ func prepare(d map[string]any, overrides map[string]any) (err error) {
 			}
 		}
 	}
+	// What the user closed on the page ("done" or "not needed", overrides.json) is no longer open: it leaves
+	// the list at once and is shown apart, until the session takes it out of feature.json.
+	open, closed := []any{}, []any{}
+	for _, x := range d["blockers"].([]any) {
+		b := x.(map[string]any)
+		o, _ := overrides[fmt.Sprint(b["bid"])].(map[string]any)
+		if k := o["kind"]; k == "done" || k == "skip" {
+			b["closed"], b["reason"], b["closedTs"] = k, o["reason"], o["ts"]
+			closed = append(closed, b)
+			continue
+		}
+		open = append(open, b)
+	}
+	d["blockers"], d["closedBlockers"] = open, closed
 
 	// ready only when nothing blocks and every stage of the plan is done
 	ready := len(d["blockers"].([]any)) == 0 && len(stages) > 0

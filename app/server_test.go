@@ -313,9 +313,34 @@ func TestAskAndDoGoToTheInboxWithTheItemText(t *testing.T) {
 	}
 }
 
-func TestNotNeededIsRefusedForTheseItems(t *testing.T) {
-	_, bid := withBlocker(t)
-	code, _ := act2(t, map[string]any{"feature": "demo-feature", "fid": bid, "kind": "blocker", "action": "skip"})
+// The user closes an open item on the page: "done" (did it) or "not needed". It leaves the open list at once
+// and the session of the feature is told, so that it records it in feature.json. Restore brings it back.
+func TestTheUserClosesAnOpenItem(t *testing.T) {
+	for _, action := range []string{"done", "skip"} {
+		e, bid := withBlocker(t)
+		code, obj := act2(t, map[string]any{"feature": "demo-feature", "fid": bid, "kind": "blocker", "action": action, "text": "my word"})
+		eq(t, code, 200, action)
+		en := entryOf(t, obj)
+		eq(t, fmt.Sprint(en["action"], en["item"]), action+"Need an account", "the session is told")
+		contains(t, formatMessage(map[string]any{"action": action, "item": "Need an account", "text": "my word", "feature": "demo-feature", "id": "x"}),
+			map[string]string{"done": "DONE", "skip": "NOT NEEDED"}[action], action)
+		d := e.loadDemo()
+		eq(t, len(d["blockers"].([]any)), 0, "no longer open")
+		c := d["closedBlockers"].([]any)[0].(map[string]any)
+		eq(t, fmt.Sprint(c["closed"], c["reason"]), action+"my word", "shown apart with the user's word")
+		row, err := summary("demo-feature", d, time.Now())
+		must(t, err)
+		eq(t, num(row["waiting"]), 0, "not counted as waiting for the user")
+		code, _ = act2(t, map[string]any{"feature": "demo-feature", "fid": bid, "kind": "blocker", "action": "unskip"})
+		eq(t, code, 200, "restore")
+		eq(t, len(e.loadDemo()["blockers"].([]any)), 1, "open again")
+	}
+}
+
+// "Done" is the user's word about an open item; a fact of a stage is marked done by the session only, with evidence.
+func TestDoneIsOnlyForOpenItems(t *testing.T) {
+	e := withDemo(t)
+	code, _ := act2(t, map[string]any{"feature": "demo-feature", "fid": e.fid(1), "action": "done"})
 	eq(t, code, 400)
 }
 

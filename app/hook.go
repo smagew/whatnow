@@ -483,8 +483,18 @@ func runHook(args []string) (rc int) {
 	}
 	switch mode {
 	case "--deliver":
-		if got := claim(sid, featureOf(sid)); len(got) > 0 {
+		slug := featureOf(sid)
+		if got := claim(sid, slug); len(got) > 0 {
 			os.Stdout.WriteString(messages(got))
+		}
+		// A session that keeps a dashboard is reminded at every prompt to put new work into the plan before it
+		// starts: the user then sees at once that the request was taken and where it went. "remind": false in
+		// config.json turns it off.
+		if slug != "" && config()["remind"] != false && isFile(filepath.Join(featuresDir(), slug, "feature.json")) {
+			fmt.Fprintf(os.Stdout, `[whatnow] This session keeps the dashboard of feature "%s". If this message gives you new work or changes `+
+				`the plan, write it into feature.json BEFORE you start: each new task as an item of its stage (kind q; w for the one `+
+				`you begin now; a new stage with "unplanned": true if it fits none), then run %s render --index. `+
+				`The user watches the dashboard and must see the request there at once. A plain question needs no change.`+"\n", slug, cliPath)
 		}
 		return 0
 	case "--watch":

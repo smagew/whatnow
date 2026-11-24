@@ -306,7 +306,11 @@ func nowMs() int64 { return time.Now().UnixMilli() }
 
 // ------------------------------------------------------------------ inbox (messages from the page)
 
-var actions = map[string]string{"do": "Task: do this item", "ask": "Question: answer the user in this session"}
+var actions = map[string]string{"do": "Task: do this item", "ask": "Question: answer the user in this session",
+	"done": "The user says this open item is DONE: they did it themselves and closed it on the dashboard. Do not do it again. " +
+		"Record it: take it out of \"blockers\" and add a fact (kind y) to its stage, with the user's word as the evidence",
+	"skip": "The user decided this open item is NOT NEEDED and closed it on the dashboard. Do not do it. " +
+		"Record it: take it out of \"blockers\" and add the decision, with the user's reason, to \"decisions\""}
 
 // formatMessage is the text Claude sees when a message from the page is delivered.
 func formatMessage(e map[string]any) string {

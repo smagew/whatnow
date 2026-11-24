@@ -768,7 +768,7 @@ func act(body map[string]any) (int, any) {
 		return 400, map[string]any{"error": "bad item id"}
 	}
 	isBlocker := body["kind"] == "blocker"
-	if action != "do" && action != "ask" && action != "skip" && action != "unskip" {
+	if action != "do" && action != "ask" && action != "skip" && action != "unskip" && !(action == "done" && isBlocker) {
 		return 400, map[string]any{"error": "bad action"}
 	}
 	if len([]rune(text)) > 2000 {
@@ -784,11 +784,9 @@ func act(body map[string]any) (int, any) {
 	}
 	var stage map[string]any
 	var fact []any
-	if isBlocker { // an item of "what is left": only Do it / Ask, no "not needed"
-		if action != "do" && action != "ask" {
-			return 400, map[string]any{"error": "bad action"}
-		}
-		for _, x := range data["blockers"].([]any) {
+	if isBlocker { // an item of "what is left"; the user can also close it: "done" (did it) or "skip" (not needed)
+		all := append(append([]any{}, data["blockers"].([]any)...), data["closedBlockers"].([]any)...)
+		for _, x := range all {
 			if b := x.(map[string]any); b["bid"] == fid {
 				for _, y := range data["stages"].([]any) {
 					if s := y.(map[string]any); num(s["n"]) == num(b["stage"]) {
@@ -812,21 +810,28 @@ func act(body map[string]any) (int, any) {
 	if stage == nil {
 		return 404, map[string]any{"error": "this item no longer exists, reload the page"}
 	}
-	if action == "skip" || action == "unskip" {
+	if action == "skip" || action == "unskip" || action == "done" {
 		path := filepath.Join(featuresDir(), slug, "overrides.json")
 		ov := readMap(path)
-		if action == "skip" {
+		if action == "unskip" {
+			delete(ov, fid)
+		} else {
 			if k := kindOf(fact[0]); k == "y" || k == "fixed" {
 				return 400, map[string]any{"error": "a finished item cannot be marked as not needed"}
 			}
-			ov[fid] = map[string]any{"kind": "skip", "reason": text, "ts": nowMs()}
-		} else {
-			delete(ov, fid)
+			ov[fid] = map[string]any{"kind": action, "reason": text, "ts": nowMs()}
 		}
 		if err := atomicWriteJSON(path, ov); err != nil {
 			return 500, map[string]any{"error": "error: " + err.Error()}
 		}
-		return 200, map[string]any{"ok": true, "applied": action}
+		if !isBlocker || action == "unskip" {
+			return 200, map[string]any{"ok": true, "applied": action}
+		}
+		// an open item closed by the user: it is closed on the page already, and the session is told, so that
+		// it records it in feature.json (a fact with the user's word as evidence, or a decision)
+		entry := map[string]any{"id": newID(), "ts": nowMs(), "state": "new", "feature": slug, "featureTitle": data["title"], "fid": fid,
+			"stage": stage["n"], "stageTitle": stage["title"], "item": fact[1], "action": action, "text": text}
+		return 200, map[string]any{"ok": true, "applied": action, "entry": publicOf(sendEntry(entry))}
 	}
 	entry := map[string]any{"id": newID(), "ts": nowMs(), "state": "new", "feature": slug, "featureTitle": data["title"], "fid": fid,
 		"stage": stage["n"], "stageTitle": stage["title"], "item": fact[1], "action": action, "text": text}

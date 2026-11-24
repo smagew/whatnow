@@ -97,6 +97,18 @@ On a feature page opened through the server every item of a stage has actions:
    in the background under the same id with its old context. Watch it with `claude attach <id>`.
 3. **No session is known:** the message waits for the first session that starts working on the feature.
 
+**Closing an item yourself.** In **What is left** every item that waits for you ("Waits for you", "Needs your look") has
+**✓ Done** and **Not needed**. Either one applies at once: the item moves to "Closed by you" with your note, stops
+counting as open, and the session of the feature is told, so that it records it in `feature.json` (a fact with your
+word as the evidence, or a decision). **Restore** undoes it.
+
+**What changed since you last looked.** When the plan of a feature gets new items, new plan lines, a new stage or new
+open items, the page says so on top ("The plan changed since you last looked"), marks the stages with the number of
+changes and makes the changed items glow for a few seconds; **Show** leads to the first of them. "Last looked" is kept
+per feature in the browser. With the system's "reduce motion" nothing moves, the glow stays. A session that keeps a
+dashboard is reminded at every prompt to write new work into the plan before it starts (`"remind": false` in
+`~/.whatnow/config.json` turns the reminder off), so a request you make shows up at once.
+
 **Request status.** The header of a feature page has a **↻ Request status** button next to "Updated ... ago". It asks the
 feature's session (same routing as above) to compare `feature.json` with what it really did and bring the page up to
 date. Only one such request is open at a time; the page reloads itself when the file changes.

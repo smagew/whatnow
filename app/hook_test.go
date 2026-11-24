@@ -312,7 +312,24 @@ func TestDeliverPrintsTheMessageOnce(t *testing.T) {
 	contains(t, out, `[whatnow] Message from the dashboard for feature "Demo"`)
 	contains(t, out, "inbox resolve abc123def456") // Python: "inbox.py resolve"; the Go CLI is "whatnow inbox resolve"
 	_, out, _ = d.run("--deliver", d.payload)
-	eq(t, out, "")
+	if strings.Contains(out, "Message from the dashboard") {
+		t.Errorf("the message was delivered twice: %q", out)
+	}
+}
+
+// A session that keeps a dashboard is reminded at every prompt to put new work into the plan before it starts;
+// a session without a feature is not, and "remind": false turns it off.
+func TestEveryPromptRemindsToPutNewWorkIntoThePlan(t *testing.T) {
+	d := newDeliveryT(t)
+	d.run("--deliver", d.payload) // takes the waiting message
+	_, out, _ := d.run("--deliver", d.payload)
+	contains(t, out, `keeps the dashboard of feature "demo-feature"`)
+	contains(t, out, "BEFORE you start")
+	_, out, _ = d.run("--deliver", map[string]any{"session_id": "s-without-a-feature", "cwd": d.repo, "hook_event_name": "UserPromptSubmit"})
+	eq(t, out, "", "a session without a feature")
+	d.writeConfig(map[string]any{"remind": false})
+	_, out, _ = d.run("--deliver", d.payload)
+	eq(t, out, "", "turned off in config.json")
 }
 
 func TestDeliverIgnoresASessionNotLinkedToTheFeature(t *testing.T) {
