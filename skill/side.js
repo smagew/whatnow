@@ -2,7 +2,8 @@
    one click away. Served by the server as /side.js and loaded by both pages; a page opened as a file has no bar. */
 (function(){
 if(window.wnSide)return;
-var CSS="body{--sw:0px}body.sb{--sw:256px;padding-left:var(--sw)}body.sb.sm{--sw:54px}"+
+var CSS="body{--sw:0px}body.sb{--sw:256px;padding-left:var(--sw)}body.sb.sm{--sw:54px}body.sb .back{display:none}"+
+".wns{view-transition-name:wbar}::view-transition-old(wbar),::view-transition-new(wbar){animation:none}"+
 ".wns{position:fixed;z-index:35;left:0;top:0;bottom:0;width:var(--sw);box-sizing:border-box;background:#0f1b16;color:#cfe3d8;overflow-y:auto;padding:10px 8px 20px;font:13px/1.3 Geologica,system-ui,sans-serif;box-shadow:inset -1px 0 0 #ffffff14}"+
 ".wns a{text-decoration:none;color:#dfe9e3;border-radius:9px}.wns a:focus-visible,.wns button:focus-visible{outline:3px solid #7ab8ff;outline-offset:-2px}"+
 ".wns .wtop{display:flex;align-items:center;margin:0 4px 6px 8px;min-height:26px;font-weight:600;color:#fff;font-size:14px}"+
@@ -36,7 +37,7 @@ var CSS="body{--sw:0px}body.sb{--sw:256px;padding-left:var(--sw)}body.sb.sm{--sw
 var st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
 var el=document.createElement('nav');el.className='wns';el.setAttribute('aria-label','Sessions and features');document.body.insertBefore(el,document.body.firstChild);
 var STX={work:'working',bg:'background task running',wait:'waits for you',idle:'session open'},GRP=['Favorites','Active now','Other','Finished'];
-var small=false,data=null,key='',title=document.title,first=true;
+var small=false,data=window.WN_SIDE||null,key='',title=document.title,first=true;
 try{small=localStorage.getItem('wn-side')==='sm'}catch(e){}
 function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function abbr(n){var w=String(n).replace(/[^0-9A-Za-zЀ-ӿ\s]/g,' ').split(/\s+/).filter(Boolean);return ((w[0]||'?').charAt(0)+((w[1]||'').charAt(0))).toUpperCase()}
@@ -66,5 +67,6 @@ function load(){fetch('/api/features',{cache:'no-store'}).then(function(r){retur
 // on the home page Sessions and Features switch its tab without loading it again
 el.addEventListener('click',function(e){var a=e.target.closest('a[data-tab]');if(a&&location.pathname==='/'&&typeof window.wnShowTab==='function'){e.preventDefault();window.wnShowTab(a.dataset.tab)}});
 window.wnSide={refresh:draw};
-load();setInterval(load,5000);
+// a page from the server comes with the data: draw at once, before the first paint
+if(data)draw();else load();setInterval(load,5000);
 })();

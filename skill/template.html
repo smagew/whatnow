@@ -5,7 +5,7 @@
 :root{--bg:#eef1ee;--paper:#fff;--ink:#17231d;--mut:#586860;--line:#d7dfda;--side:#16241e;--sideink:#dfe9e3;
 --ok:#0f7a4a;--okb:#dff3e8;--bad:#b3261e;--badb:#fbe5e3;--part:#8a5a00;--partb:#fbeccb;--no:#586860;--nob:#e7ece9;--acc:#0b6b4f}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.5 Geologica,system-ui,sans-serif;min-height:100vh}
+html{background:var(--bg)}body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.5 Geologica,system-ui,sans-serif;min-height:100vh}
 code{font:12px ui-monospace,Menlo,monospace;background:#e8eeea;padding:1px 5px;border-radius:4px}
 :focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
 header{background:var(--side);color:var(--sideink);padding:14px 24px 0}
@@ -214,6 +214,8 @@ body{--sw:0px}
 .cwn{margin:0;padding:2px 14px 10px;font-size:12px;color:var(--mut)}.cwn.err{color:var(--bad)}
 @media(max-width:860px){.rail{position:static;max-height:none}.tbr{flex-direction:column-reverse;align-items:stretch;gap:8px}.frw{align-self:flex-start;padding:0;flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){.pl,.ico.w.on{animation:none}}
+/* going to another page of the dashboard: the old page stays until the new one is ready, then a short fade */
+@view-transition{navigation:auto}::view-transition-old(root),::view-transition-new(root){animation-duration:.12s}@media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
 </style></head><body>
 <header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><span class="qb" id="qb"></span><div class="ses" id="ses"></div><div class="sy" id="sy" hidden></div></div></div>
 <div class="tbr"><div class="tabs" role="tablist" id="tabs"></div><span class="frw"><span id="fr"></span><button type="button" id="rq" hidden>↻ Request status</button></span></div></header>
@@ -226,6 +228,8 @@ body{--sw:0px}
 <p class="cwn" id="cwn"></p></div></aside>
 <script>window.PANEL=/*__DATA__*/null;</script>
 <script>
+// WN_INIT: the first answers of the polls, put into the page by the server, so the first paint is already complete
+var INIT=window.WN_INIT||{};
 (function(){
 var P=window.PANEL,$=function(i){return document.getElementById(i)};
 var DONE_K={y:1,fixed:1};
@@ -371,8 +375,9 @@ function onAct(e){var b=e.target.closest('button');if(!b||b.dataset.stage)return
    if(FORM.a==='skip'){location.hash='work/'+P.stages[cur].n;location.reload();return}
    if(r.j.entry)INBOX[r.j.entry.fid]=r.j.entry;FORM=null;renderStage(cur)}).catch(function(){BUSY=false;FORM.err='no connection to the server';renderStage(cur)})}}
 $('det').addEventListener('click',onAct);if($('ovl'))$('ovl').addEventListener('click',onAct);
-function pollInbox(){fetch('/api/inbox',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){var m={};(j.entries||[]).filter(function(e){return e.feature===P.slug}).forEach(function(e){m[e.fid]=e});
- if(JSON.stringify(m)!==JSON.stringify(INBOX)){INBOX=m;if(!FORM)renderStage(cur);else queue()}}).catch(function(){})}
+function pollInbox(){if(INIT.inbox){var j0=INIT.inbox;INIT.inbox=null;gotInbox(j0);return}fetch('/api/inbox',{cache:'no-store'}).then(function(r){return r.json()}).then(gotInbox).catch(function(){})}
+function gotInbox(j){var m={};(j.entries||[]).filter(function(e){return e.feature===P.slug}).forEach(function(e){m[e.fid]=e});
+ if(JSON.stringify(m)!==JSON.stringify(INBOX)){INBOX=m;if(!FORM)renderStage(cur);else queue()}}
 $('stl').addEventListener('click',function(e){var b=e.target.closest('.rr');if(!b)return;
  if(b.dataset.more){MORE=!MORE;if(!MORE&&cur>CUR)cur=CUR;renderStage(cur);var mb=document.querySelector('#stl .more');if(mb)mb.focus();return}
  renderStage(+b.dataset.i)});
@@ -448,13 +453,14 @@ if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);
   post({action:'tell',session:CHAT.sid,text:txt}).then(function(r){if(!r.ok)return fail((r.j&&r.j.error)||'could not send');
    CHAT.busy=false;t.value='';chatFit();CHAT.lkey='';var l=$('cwl');l.scrollTop=l.scrollHeight;pollChat();lastMsg()}).catch(function(){fail('no connection to the server')})});
  if(P.live)setInterval(pollChat,3000)}
-function loadSes(){fetch('/api/sessions?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){SES.bound=j.bound||[];SES.sessions=j.sessions||[];sesBar();lastMsg();var a=agent(),k=a?a.id+a.state:'';if(k!==SES.key){SES.key=k;if(FORM)renderRail();else renderStage(cur)}if(!TC||!$('fr').contains(TC))freshBar()}).catch(function(){})}
+function gotSes(j){SES.bound=j.bound||[];SES.sessions=j.sessions||[];sesBar();lastMsg();var a=agent(),k=a?a.id+a.state:'';if(k!==SES.key){SES.key=k;if(FORM)renderRail();else renderStage(cur)}if(!TC||!$('fr').contains(TC))freshBar()}
+function loadSes(){if(INIT.ses){var j=INIT.ses;INIT.ses=null;gotSes(j);return}fetch('/api/sessions?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(gotSes).catch(function(){})}
 if($('ses'))$('ses').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var v=b.dataset.ses;
  if(v==='pick'){SES.pick=!SES.pick;SES.err='';sesBar();return}
  post({feature:P.slug,action:'attach',session:v}).then(function(r){if(!r.ok){SES.err=(r.j&&r.j.error)||'could not attach';sesBar();return}SES.pick=false;SES.err='';loadSes()}).catch(function(){SES.err='no connection to the server';sesBar()})});
 if(P.live){loadSes();setInterval(loadSes,3000)}
 // the bar on the left (sessions, features, one click to another feature) is shared with the home page
-if(P.live&&location.protocol!=='file:'){var sd=document.createElement('script');sd.src='/side.js';document.body.appendChild(sd)}
+if(P.live&&location.protocol!=='file:'){if(!window.wnSide){var sd=document.createElement('script');sd.src='/side.js';document.body.appendChild(sd)}}
 var VER=P.ver,SYNC={behind:null,pending:false,busy:false,err:''};
 function syBar(){var b=$('sy');if(!b||!P.live)return;
  var rq=$('rq');if(rq){rq.hidden=false;rq.disabled=!!(SYNC.pending||SYNC.busy);rq.textContent=SYNC.pending?'Status requested…':'↻ Request status';rq.title=SYNC.pending?'Waiting for the session to answer':'Ask the session of this feature to bring this page up to date now'}
@@ -463,9 +469,10 @@ function syBar(){var b=$('sy');if(!b||!P.live)return;
  if(SYNC.pending)h+=' <button type="button" data-unsy="1"'+(SYNC.busy?' disabled':'')+'>Cancel request</button>';
  if(SYNC.err)h+=' <span>'+esc(SYNC.err)+'</span>';
  b.hidden=!h;b.innerHTML=h}
-function pollVersion(){fetch('/api/version?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){
+function gotVer(j){
  if(j.v&&VER&&j.v!==VER&&!FORM&&!BUSY){location.reload();return}
- SYNC.behind=j.behind;SYNC.pending=j.pending;SYNC.asleep=j.asleep||'';syBar()}).catch(function(){})}
+ SYNC.behind=j.behind;SYNC.pending=j.pending;SYNC.asleep=j.asleep||'';syBar()}
+function pollVersion(){if(INIT.ver){var j=INIT.ver;INIT.ver=null;gotVer(j);return}fetch('/api/version?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(gotVer).catch(function(){})}
 function askSync(){if(SYNC.busy||SYNC.pending)return;SYNC.busy=true;SYNC.err='';syBar();
  post({feature:P.slug,action:'sync'}).then(function(r){SYNC.busy=false;var e=r.j&&r.j.entry;if(!r.ok)SYNC.err=(r.j&&r.j.error)||'could not send';else if(e&&e.state==='failed')SYNC.err='Could not resume the session: '+(e.error||'unknown error');else SYNC.pending=(e&&e.route)||'active';syBar()}).catch(function(){SYNC.busy=false;SYNC.err='no connection to the server';syBar()})}
 function dropSync(){if(SYNC.busy)return;SYNC.busy=true;SYNC.err='';syBar();

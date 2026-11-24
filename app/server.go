@@ -965,6 +965,17 @@ type handler struct {
 	port  int
 }
 
+// withSide puts the bar on the left into a live page before anything else, with its data: it is drawn in the
+// first paint, so going from one feature to another does not flash and shift the page.
+// A feature page also gets the first answers of its own polls (sessions, version) for the same reason.
+func withSide(html string, init map[string]any) string {
+	head := "<body><script>window.WN_SIDE=" + blob(featuresList())
+	if init != nil {
+		head += ";window.WN_INIT=" + blob(init)
+	}
+	return strings.Replace(html, "<body>", head+`;</script><script src="/side.js"></script>`, 1)
+}
+
 func send(w http.ResponseWriter, code int, body []byte, ctype string) {
 	w.Header().Set("Content-Type", ctype)
 	w.Header().Set("Cache-Control", "no-store")
@@ -1020,7 +1031,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	switch path := r.URL.Path; path {
 	case "/":
-		send(w, 200, []byte(indexHTML(stateJSON())), "text/html; charset=utf-8")
+		send(w, 200, []byte(withSide(indexHTML(stateJSON()), nil)), "text/html; charset=utf-8")
 	case "/side.js":
 		send(w, 200, []byte(page("side.js")), "text/javascript; charset=utf-8")
 	case "/api/state":
@@ -1067,7 +1078,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					text(w, 500, "feature.json: "+err.Error())
 					return
 				}
-				send(w, 200, []byte(html), "text/html; charset=utf-8")
+				send(w, 200, []byte(withSide(html, map[string]any{"ses": pickList(slug), "ver": versionInfo(slug), "inbox": map[string]any{"entries": inboxState()}})), "text/html; charset=utf-8")
 				return
 			}
 		}

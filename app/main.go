@@ -63,7 +63,7 @@ func main() {
 		Height:           860,
 		MinWidth:         420,
 		MinHeight:        360,
-		BackgroundColour: &options.RGBA{R: 246, G: 247, B: 244, A: 255},
+		BackgroundColour: &options.RGBA{R: 238, G: 241, B: 238, A: 255}, // the page background (--bg),
 		AssetServer:      &assetserver.Options{Handler: handler{local: true}},
 		Mac: &mac.Options{
 			About: &mac.AboutInfo{Title: "whatnow", Message: "Claude Code sessions and features at a glance"},
