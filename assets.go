@@ -4,5 +4,5 @@ package whatnow
 
 import "embed"
 
-//go:embed skill/template.html skill/template-index.html skill/side.js
+//go:embed skill/template.html skill/template-index.html skill/side.js skill/term.js skill/vendor
 var Web embed.FS

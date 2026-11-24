@@ -395,7 +395,7 @@ var SES={bound:[],sessions:[],pick:false,err:''};
 function ago2(ts){var m=Math.round((Date.now()-ts)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago'}
 function sesName(s){return s.name||s.project||s.id.slice(0,8)}
 function sesBar(){var b=$('ses');if(!b||!P.live)return;
- var h=SES.bound.length?'<span>Session:</span>'+SES.bound.slice(0,3).map(function(s){return '<b>'+esc(sesName(s))+'</b><span class="st '+s.state+'">'+STX[s.state]+'</span>'}).join(' ')+'<button type="button" data-ses="pick">'+(SES.pick?'Close':'Attach another')+'</button>'
+ var h=SES.bound.length?'<span>Session:</span>'+SES.bound.slice(0,3).map(function(s){return '<b>'+esc(sesName(s))+'</b><span class="st '+s.state+'">'+STX[s.state]+'</span>'+(window.WN_TERM?'<button type="button" data-term="'+esc(s.id)+'">Terminal</button>':'')}).join(' ')+'<button type="button" data-ses="pick">'+(SES.pick?'Close':'Attach another')+'</button>'
   :'<span>No session is linked to this feature yet.</span><button type="button" data-ses="pick">'+(SES.pick?'Close':'Attach a session')+'</button>';
  if(SES.pick){h+='<div class="pick">'+(SES.err?'<div class="rt err"><span>'+esc(SES.err)+'</span></div>':'')+(SES.sessions.length?'<ul>'+SES.sessions.map(function(s){return '<li><button type="button" data-ses="'+esc(s.id)+'"><b>'+esc(sesName(s))+'</b><span class="st '+s.state+'">'+STX[s.state]+'</span><small>'+esc(s.project)+(s.what?' · '+esc(s.what):'')+' · '+ago2(s.t)+(s.other?' · now on: '+esc(s.other):'')+'</small></button></li>'}).join('')+'</ul>':'<small>No sessions seen yet. Install the hooks and work in Claude Code; sessions appear here.</small>')+'</div>'}
  b.innerHTML=h}
@@ -461,7 +461,7 @@ if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);
  if(P.live)setInterval(pollChat,3000)}
 function gotSes(j){SES.bound=j.bound||[];SES.sessions=j.sessions||[];sesBar();lastMsg();var a=agent(),k=a?a.id+a.state:'';if(k!==SES.key){SES.key=k;if(FORM)renderRail();else renderStage(cur)}if(!TC||!$('fr').contains(TC))freshBar()}
 function loadSes(){if(INIT.ses){var j=INIT.ses;INIT.ses=null;gotSes(j);return}fetch('/api/sessions?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(gotSes).catch(function(){})}
-if($('ses'))$('ses').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var v=b.dataset.ses;
+if($('ses'))$('ses').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.dataset.term)return;var v=b.dataset.ses;
  if(v==='pick'){SES.pick=!SES.pick;SES.err='';sesBar();return}
  post({feature:P.slug,action:'attach',session:v}).then(function(r){if(!r.ok){SES.err=(r.j&&r.j.error)||'could not attach';sesBar();return}SES.pick=false;SES.err='';loadSes()}).catch(function(){SES.err='no connection to the server';sesBar()})});
 if(P.live){loadSes();setInterval(loadSes,3000)}

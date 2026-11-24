@@ -116,6 +116,19 @@ and a field to write to it. A message goes to that session like one from the Ses
 shows under it. A red dot marks a reply you have not opened yet. Drag the top or left edge of the window to resize it
 (double click an edge to reset); **Full width** stretches it along the bottom of the screen. The size is remembered.
 
+**Terminal (app window only).** Every session has a **Terminal** button; it opens the session in a dock at the
+bottom of the window (xterm.js on a pseudo-terminal that runs `claude attach`). The dock stays connected when you go
+to another page, its top edge resizes it, **Hide** keeps it connected, **Disconnect** closes it; the session goes on
+either way. A session can be shown when it runs in the background:
+- it already does (`claude --bg`): the terminal attaches at once;
+- it is closed: it is continued in the background under the same id (`claude --resume <id> --bg`), then attached;
+- it is open in another terminal: nothing can take it from there. The dock asks you to type `/background` in that
+  terminal and attaches by itself when the session has moved. Claude Code gives a moved session a new id; its
+  feature and its star follow it.
+
+The terminal is full access to your machine, so it is never served on the 127.0.0.1 port: a browser tab does not get
+it. Not available on Windows yet.
+
 **Background task running.** A session that ended its turn while a background command or agent is still running does
 not wait for you: it goes on by itself when the task ends. Claude Code reports such a session as busy, and the pages
 show it as "background task running" instead of "waiting for you".
@@ -149,10 +162,11 @@ argument and is never concatenated into a command.
 ## Files
 - `skill/SKILL.md`: instructions for Claude: when and how to keep a dashboard, the honesty rules.
 - `skill/SCHEMA.md`: the `feature.json` format.
-- `skill/template.html` is the feature page, `skill/template-index.html` the home page, `skill/side.js` the bar on the left.
+- `skill/template.html` is the feature page, `skill/template-index.html` the home page, `skill/side.js` the bar on the left,
+  `skill/term.js` the terminal dock; `skill/vendor/` holds xterm.js (MIT).
   They are embedded into the program (`assets.go`).
 - `app/`: the program. `render.go` validation, derivation and page building; `server.go` the live pages and buttons;
-  `hook.go` the hooks; `cli.go` the commands; `transcript.go` reading session transcripts; `main.go` the window.
+  `hook.go` the hooks; `cli.go` the commands; `term.go` the terminal; `transcript.go` reading session transcripts; `main.go` the window.
 - `app/*_test.go`: the tests.
 - `examples/csv-export.json`: a complete example with made-up data.
 - `install.sh`: copies `skill/` into `~/.claude/skills/whatnow`. Edit the files here, then run it again.

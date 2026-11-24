@@ -7,6 +7,7 @@ package main
 //	whatnow render | inbox | hook | hooks | autostart   see usage in cli.go
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -65,6 +66,8 @@ func main() {
 		MinHeight:        360,
 		BackgroundColour: &options.RGBA{R: 238, G: 241, B: 238, A: 255}, // the page background (--bg),
 		AssetServer:      &assetserver.Options{Handler: handler{local: true}},
+		OnShutdown:       func(context.Context) { termCloseAll() }, // attach processes end, the sessions go on
+
 		Mac: &mac.Options{
 			About: &mac.AboutInfo{Title: "whatnow", Message: "Claude Code sessions and features at a glance"},
 		},

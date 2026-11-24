@@ -168,6 +168,11 @@ func childEnv(claude string) []string {
 		if strings.HasPrefix(kv, "PATH=") {
 			continue
 		}
+		// started from inside a Claude Code session (a terminal, a hook): claude must not take itself for a
+		// child of that session, such a child is not saved and cannot be moved to the background
+		if strings.HasPrefix(kv, "CLAUDECODE=") || strings.HasPrefix(kv, "CLAUDE_CODE_") || strings.HasPrefix(kv, "CLAUDE_PID=") || strings.HasPrefix(kv, "CLAUDE_EFFORT=") {
+			continue
+		}
 		if strings.HasPrefix(kv, "HOME=") {
 			hasHome = true
 		}

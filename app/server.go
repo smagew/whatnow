@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -970,13 +971,22 @@ type handler struct {
 // A feature page also gets the first answers of its own polls (sessions, version) for the same reason.
 // The data goes into <head> and the bar's code is inline: nothing in <body> waits for the network or holds the
 // parser up, so WebKit (the app window) has no moment to show a half-built page.
-func withSide(html string, init map[string]any) string {
+func withSide(html string, init map[string]any, local bool) string {
 	data := "<script>window.WN_SIDE=" + blob(featuresList())
 	if init != nil {
 		data += ";window.WN_INIT=" + blob(init)
 	}
+	if local && termSupported { // the terminal exists in the app window only
+		data += ";window.WN_TERM=1"
+	}
 	html = strings.Replace(html, "</head>", data+";</script></head>", 1)
-	return strings.Replace(html, "<body>", "<body><script>"+page("side.js")+"</script>", 1)
+	html = strings.Replace(html, "<body>", "<body><script>"+page("side.js")+"</script>", 1)
+	if local && termSupported {
+		if i := strings.LastIndex(html, "</body>"); i >= 0 {
+			html = html[:i] + "<script>" + page("term.js") + "</script>" + html[i:]
+		}
+	}
+	return html
 }
 
 func send(w http.ResponseWriter, code int, body []byte, ctype string) {
@@ -1034,7 +1044,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	switch path := r.URL.Path; path {
 	case "/":
-		send(w, 200, []byte(withSide(indexHTML(stateJSON()), nil)), "text/html; charset=utf-8")
+		send(w, 200, []byte(withSide(indexHTML(stateJSON()), nil, h.local)), "text/html; charset=utf-8")
 	case "/side.js":
 		send(w, 200, []byte(page("side.js")), "text/javascript; charset=utf-8")
 	case "/api/state":
@@ -1057,6 +1067,23 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/api/sessions":
 		if s, ok := slugArg(); ok {
 			sendJSON(w, 200, pickList(s))
+		}
+	case "/api/term/list", "/api/term/read", "/xterm.js", "/xterm.css", "/xterm-addon-fit.js":
+		if !h.local { // never on the 127.0.0.1 port
+			text(w, 404, "not found")
+			return
+		}
+		switch path {
+		case "/api/term/list":
+			sendJSON(w, 200, map[string]any{"terms": termList(), "supported": termSupported})
+		case "/api/term/read":
+			off, _ := strconv.ParseInt(q.Get("off"), 10, 64)
+			code, obj := termRead(q.Get("id"), off)
+			sendJSON(w, code, obj)
+		case "/xterm.css":
+			send(w, 200, []byte(page("vendor/xterm.css")), "text/css; charset=utf-8")
+		default:
+			send(w, 200, []byte(page("vendor"+path)), "text/javascript; charset=utf-8")
 		}
 	case "/api/route":
 		if s, ok := slugArg(); ok {
@@ -1081,7 +1108,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					text(w, 500, "feature.json: "+err.Error())
 					return
 				}
-				send(w, 200, []byte(withSide(html, map[string]any{"ses": pickList(slug), "ver": versionInfo(slug), "inbox": map[string]any{"entries": inboxState()}})), "text/html; charset=utf-8")
+				send(w, 200, []byte(withSide(html, map[string]any{"ses": pickList(slug), "ver": versionInfo(slug), "inbox": map[string]any{"entries": inboxState()}}, h.local)), "text/html; charset=utf-8")
 				return
 			}
 		}
@@ -1093,7 +1120,8 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // the body must be JSON and a custom header is required (a cross-site page cannot add it without a CORS
 // preflight, which this server never allows).
 func (h handler) post(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/api/act" {
+	isTerm := r.URL.Path == "/api/term" && h.local // the terminal: the app window only
+	if r.URL.Path != "/api/act" && !isTerm {
 		text(w, 404, "not found")
 		return
 	}
@@ -1111,13 +1139,29 @@ func (h handler) post(w http.ResponseWriter, r *http.Request) {
 		sendJSON(w, 400, map[string]any{"error": "bad json"})
 		return
 	}
+	if isTerm {
+		n := func(k string) int { return int(num(body[k])) }
+		code, obj := 400, any(map[string]any{"error": "bad op"})
+		switch str(body, "op") {
+		case "open":
+			code, obj = termOpen(str(body, "session"), n("cols"), n("rows"))
+		case "write":
+			code, obj = termWrite(str(body, "id"), str(body, "data"))
+		case "resize":
+			code, obj = termResize(str(body, "id"), n("cols"), n("rows"))
+		case "close":
+			code, obj = termClose(str(body, "id"))
+		}
+		sendJSON(w, code, obj)
+		return
+	}
 	code, obj := act(body)
 	sendJSON(w, code, obj)
 }
 
 // listen serves the pages to a browser on 127.0.0.1 as well. Returns an error when the port is taken.
 func listen(p int) error {
-	srv := &http.Server{Addr: fmt.Sprintf("127.0.0.1:%d", p), Handler: handler{port: p}, ReadHeaderTimeout: 10 * time.Second}
+	srv := &http.Server{Addr: fmt.Sprintf("127.0.0.1:%d", p), Handler: handler{port: p, local: debugLocal}, ReadHeaderTimeout: 10 * time.Second}
 	return srv.ListenAndServe()
 }
 

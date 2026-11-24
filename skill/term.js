@@ -1,0 +1,111 @@
+/* The terminal of the app window: a dock at the bottom that shows a background session through `claude attach`.
+   Put into the page by the server only in the app window (window.WN_TERM); a browser tab never gets it.
+   The session keeps running in the background whatever happens to this dock or to the page: going to another
+   page only reconnects the dock to the same terminal. */
+(function(){
+if(!window.WN_TERM||window.wnTerm)return;
+var CSS=
+"body.tm{padding-bottom:var(--th)}"+
+".wnt{position:fixed;z-index:38;left:var(--sw,0px);right:0;bottom:0;height:var(--th);background:#0f1b16;color:#cfe3d8;display:flex;flex-direction:column;box-shadow:0 -6px 24px #0005;font:13px/1.3 Geologica,system-ui,sans-serif}"+
+".wnt[hidden]{display:none}"+
+".wnt .wtg{position:absolute;left:0;right:0;top:-4px;height:9px;cursor:ns-resize}"+
+".wnt .wth{display:flex;align-items:center;gap:4px;padding:6px 10px 0;flex:none}"+
+".wnt .wtt{all:unset;cursor:pointer;padding:6px 12px;border-radius:8px 8px 0 0;color:#9fb3a8;font-weight:500;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}"+
+".wnt .wtt[aria-selected=true]{background:#16241e;color:#fff}.wnt .wtt:hover{color:#fff}"+
+".wnt .wtt:focus-visible,.wnt .wta:focus-visible,.wnp:focus-visible{outline:3px solid #7ab8ff;outline-offset:-2px}"+
+".wnt .wts{flex:1}"+
+".wnt .wta[hidden]{display:none}"+
+".wnt .wta{all:unset;cursor:pointer;color:#cfe3d8;font-size:12.5px;font-weight:600;padding:3px 10px;border-radius:99px;border:1px solid #ffffff3d;white-space:nowrap}.wnt .wta:hover{background:#ffffff1f}"+
+".wnt .wtb{flex:1;min-height:0;background:#16241e;padding:8px 4px 6px 12px;position:relative}"+
+".wnt .wtx{position:absolute;inset:8px 4px 6px 12px}"+
+".wnt .wtm{max-width:640px;margin:26px auto;padding:0 16px;line-height:1.5;font-size:14px;color:#dfe9e3}.wnt .wtm h3{margin:0 0 8px;font-size:16px;color:#fff}.wnt .wtm p{margin:0 0 10px}"+
+".wnt .wtm code{background:#ffffff1c;border-radius:6px;padding:2px 8px;font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:#fff}"+
+".wnt .wtm .wte{color:#ffb4ab}.wnt .wtm small{color:#9fb3a8}"+
+".wnp{all:unset;cursor:pointer;position:fixed;z-index:38;left:calc(var(--sw,0px) + 16px);bottom:16px;background:#0f1b16;color:#fff;font:600 12.5px Geologica,system-ui,sans-serif;padding:7px 14px;border-radius:99px;box-shadow:0 6px 20px #0005}"+
+".wnp[hidden]{display:none}.wnp i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2f9e6a;margin-right:8px}"+
+"body.tm .cw:not(.wide){bottom:calc(var(--th) + 16px)}body.tm .cw.wide{bottom:var(--th)}"+
+"button[data-term].on{background:#2f9e6a!important;border-color:#2f9e6a!important;color:#fff!important}";
+var st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
+var S={open:false,cur:'',h:0};try{S=Object.assign(S,JSON.parse(localStorage.getItem('wn-term')||'{}'))}catch(e){}
+function save(){try{localStorage.setItem('wn-term',JSON.stringify({open:S.open,cur:S.cur,h:S.h}))}catch(e){}}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function post(body){return fetch('/api/term',{method:'POST',headers:{'Content-Type':'application/json','X-Whatnow':'1'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})}
+
+var dock=document.createElement('section');dock.className='wnt';dock.hidden=true;dock.setAttribute('aria-label','Terminal');
+dock.innerHTML='<div class="wtg" title="Drag to resize, double click to reset"></div><div class="wth"><div class="wtl" role="tablist" style="display:flex;gap:2px;min-width:0;overflow-x:auto"></div><span class="wts"></span><button type="button" class="wta" data-x="leave" title="Close this terminal. The session keeps running in the background.">Disconnect</button><button type="button" class="wta" data-x="hide" title="Hide the terminal, keep it connected">Hide</button></div><div class="wtb"><div class="wtx"></div><div class="wtm" hidden></div></div>';
+var pill=document.createElement('button');pill.type='button';pill.className='wnp';pill.hidden=true;
+document.body.appendChild(dock);document.body.appendChild(pill);
+var tabs=dock.querySelector('.wtl'),xt=dock.querySelector('.wtx'),msg=dock.querySelector('.wtm');
+
+var TERMS=[],WAIT=null;            // terminals of this window; a session we wait for (it has to be moved to the background)
+var X=null,FIT=null,RUN=0;         // the xterm on screen and the number of its read loop
+function height(){var max=Math.max(160,window.innerHeight-120);return Math.max(160,Math.min(max,S.h||Math.round(window.innerHeight*0.45)))}
+function layout(){var on=S.open&&(TERMS.length||WAIT);dock.hidden=!on;pill.hidden=on||!(TERMS.length||WAIT);
+ document.body.classList.toggle('tm',!!on);document.body.style.setProperty('--th',on?height()+'px':'0px');
+ pill.innerHTML='<i></i>Terminal'+(TERMS.length>1?' · '+TERMS.length:TERMS.length?': '+esc(TERMS[0].name):'');
+ tabs.innerHTML=TERMS.map(function(t){return '<button type="button" class="wtt" role="tab" data-id="'+t.id+'" aria-selected="'+(t.id===S.cur&&!WAIT)+'" title="'+esc(t.name)+'">'+esc(t.name)+'</button>'}).join('')+(WAIT?'<button type="button" class="wtt" role="tab" aria-selected="true">'+esc(WAIT.name||'session')+'</button>':'');
+ dock.querySelector('[data-x=leave]').hidden=!!WAIT||!TERMS.length;mark();if(on&&X)fit()}
+function has(sid){return TERMS.some(function(t){return t.session===sid})}
+// the buttons "Terminal" on the page: green while that session is in this terminal
+function mark(){document.querySelectorAll('button[data-term]').forEach(function(b){var on=has(b.dataset.term);if(b.classList.contains('on')!==on)b.classList.toggle('on',on);var tx=on?'In terminal':'Terminal';if(b.textContent!==tx)b.textContent=tx;
+ b.title=on?'This session is open in the terminal below':'Open this session in the terminal of the app'})}
+new MutationObserver(function(){mark()}).observe(document.body,{childList:true,subtree:true});
+
+var libs=null;
+function lib(){if(libs)return libs;libs=new Promise(function(ok,bad){var l=document.createElement('link');l.rel='stylesheet';l.href='/xterm.css';document.head.appendChild(l);
+  var a=document.createElement('script');a.src='/xterm.js';a.onerror=bad;a.onload=function(){var b=document.createElement('script');b.src='/xterm-addon-fit.js';b.onerror=bad;b.onload=ok;document.head.appendChild(b)};document.head.appendChild(a)});return libs}
+function bytes(b64){var s=atob(b64),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
+var SENT={cols:0,rows:0};
+function fit(){if(!X||dock.hidden)return;try{FIT.fit()}catch(e){}if(X.cols!==SENT.cols||X.rows!==SENT.rows){SENT={cols:X.cols,rows:X.rows};post({op:'resize',id:S.cur,cols:X.cols,rows:X.rows}).catch(function(){})}}
+function say(html){msg.hidden=!html;xt.hidden=!!html;msg.innerHTML=html||''}
+// show the terminal t: a fresh xterm, the program is asked to draw its screen again (a change of size does that)
+function show(t){S.cur=t.id;S.open=true;WAIT=null;save();say('');layout();var run=++RUN;
+ lib().then(function(){if(run!==RUN)return;if(X){X.dispose();X=null}xt.innerHTML='';
+  X=new Terminal({fontFamily:'ui-monospace,SFMono-Regular,Menlo,monospace',fontSize:13,cursorBlink:true,scrollback:5000,allowProposedApi:true,
+   theme:{background:'#16241e',foreground:'#e6efe9',cursor:'#e6efe9',selectionBackground:'#3b7be066'}});
+  FIT=new FitAddon.FitAddon();X.loadAddon(FIT);X.open(xt);try{FIT.fit()}catch(e){}
+  var q=Promise.resolve();                       // keys go out one request after another, in the order typed
+  X.onData(function(d){for(var i=0;i<d.length;i+=4000)(function(part){q=q.then(function(){return post({op:'write',id:t.id,data:part})}).catch(function(){})})(d.slice(i,i+4000))});
+  SENT={cols:X.cols,rows:Math.max(2,X.rows-1)};
+  post({op:'resize',id:t.id,cols:SENT.cols,rows:SENT.rows}).then(function(){SENT={cols:0,rows:0};fit()}).catch(function(){});
+  X.focus();read(t,t.off,run)}).catch(function(){say('<p class="wte">Could not load the terminal.</p>')})}
+function read(t,off,run){if(run!==RUN)return;
+ fetch('/api/term/read?id='+t.id+'&off='+off,{cache:'no-store'}).then(function(r){if(r.status===404)throw 404;return r.json()}).then(function(j){if(run!==RUN)return;
+  if(j.reset&&X)X.reset();if(j.data&&X)X.write(bytes(j.data));
+  if(j.done){gone(t);return}read(t,j.off,run)}).catch(function(e){if(run!==RUN)return;if(e===404){gone(t);return}setTimeout(function(){read(t,off,run)},1000)})}
+function gone(t){TERMS=TERMS.filter(function(x){return x.id!==t.id});if(S.cur===t.id){RUN++;if(X){X.dispose();X=null}xt.innerHTML='';
+  if(TERMS.length)show(TERMS[0]);else{S.cur='';S.open=false;save();layout()}}else layout()}
+function leave(){var t=TERMS.filter(function(x){return x.id===S.cur})[0];if(!t)return;post({op:'close',id:t.id}).catch(function(){});gone(t)}
+
+// open the terminal of a session; a session that is open in another terminal has to be moved to the background there
+function open(sid,cancelled){var d=X?{cols:X.cols,rows:X.rows}:{cols:Math.max(60,Math.floor((window.innerWidth-300)/8)),rows:Math.max(12,Math.floor(height()/17)-3)};
+ post({op:'open',session:sid,cols:d.cols,rows:d.rows}).then(function(r){if(cancelled&&cancelled())return;var j=r.j||{};
+  if(j.term){if(!TERMS.some(function(x){return x.id===j.term.id}))TERMS.push(j.term);show(j.term);return}
+  if(j.need==='background'){var first=!WAIT||WAIT.sid!==sid;WAIT={sid:sid,name:j.name,t:first?Date.now():WAIT.t};S.open=true;save();RUN++;
+   say('<h3>'+esc(j.name||'This session')+' is open in another terminal</h3><p>A terminal cannot be taken over from outside. In that terminal type <code>/background</code> and press Enter: the session moves to the background and opens here by itself. You can attach to it from any terminal later with <code>claude attach</code>.</p><p><button type="button" class="wta" data-x="copy">Copy /background</button> <button type="button" class="wta" data-x="stop">Cancel</button></p><p><small>Waiting for the session to move…</small></p>');
+   layout();var w=WAIT;setTimeout(function(){if(WAIT===w)open(sid,function(){return WAIT!==w})},2000);return}
+  WAIT=WAIT||{sid:sid,name:''};S.open=true;say('<p class="wte">'+esc(j.error||'Could not open the terminal.')+'</p><p><button type="button" class="wta" data-x="stop">Close</button></p>');layout();WAIT=null
+ }).catch(function(){say('<p class="wte">No connection to the app.</p>');layout()})}
+
+document.addEventListener('click',function(e){var b=e.target.closest('button[data-term]');if(!b)return;e.preventDefault();e.stopPropagation();
+ var sid=b.dataset.term,t=TERMS.filter(function(x){return x.session===sid})[0];if(t){show(t);return}open(sid)},true);
+dock.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var x=b.dataset.x;
+ if(b.dataset.id){var t=TERMS.filter(function(q){return q.id===b.dataset.id})[0];if(t&&(t.id!==S.cur||WAIT))show(t);return}
+ if(x==='hide'){S.open=false;save();layout()}
+ else if(x==='leave')leave()
+ else if(x==='stop'){WAIT=null;say('');if(!TERMS.length){S.open=false;save()}else show(TERMS.filter(function(q){return q.id===S.cur})[0]||TERMS[0]);layout()}
+ else if(x==='copy'){try{navigator.clipboard.writeText('/background');b.textContent='Copied'}catch(err){}}});
+pill.addEventListener('click',function(){S.open=true;save();var t=TERMS.filter(function(q){return q.id===S.cur})[0]||TERMS[0];if(t&&!X)show(t);else{layout();if(X)X.focus()}});
+// the top edge resizes the dock
+var gr=dock.querySelector('.wtg');
+gr.addEventListener('pointerdown',function(e){e.preventDefault();gr.setPointerCapture(e.pointerId);var y=e.clientY,h=height();
+ function mv(ev){S.h=h+(y-ev.clientY);layout()}function up(){gr.removeEventListener('pointermove',mv);gr.removeEventListener('pointerup',up);save();fit()}
+ gr.addEventListener('pointermove',mv);gr.addEventListener('pointerup',up)});
+gr.addEventListener('dblclick',function(){S.h=0;save();layout();fit()});
+window.addEventListener('resize',function(){layout()});
+
+window.wnTerm={open:open,has:has};
+// a page opened while terminals run (another feature, the home page): connect to them again
+fetch('/api/term/list',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){TERMS=(j.terms||[]).filter(function(t){return !t.done});
+ if(!TERMS.length){layout();return}var t=TERMS.filter(function(q){return q.id===S.cur})[0]||TERMS[0];if(S.open)show(t);else{S.cur=t.id;layout()}}).catch(function(){});
+})();
