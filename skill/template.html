@@ -10,9 +10,13 @@ code{font:12px ui-monospace,Menlo,monospace;background:#e8eeea;padding:1px 5px;b
 :focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
 header{background:var(--side);color:var(--sideink);padding:14px 24px 0}
 .hd{max-width:1180px;margin:0 auto}
-h1{margin:0;font-size:22px;font-weight:600;color:#fff}.sub{margin:2px 0 0;color:#9fb3a8;font-size:13px}
+/* the header has the same height on every feature: one line each, the full text in a tooltip */
+h1{margin:0;font-size:22px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sub{margin:2px 0 0;color:#9fb3a8;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{display:flex;align-items:center;gap:10px;margin-top:8px;min-height:26px}
 .tbr{max-width:1180px;margin:14px auto 0;display:flex;align-items:flex-end;gap:12px}
 .tabs{flex:1;min-width:0;display:flex;gap:2px;overflow-x:auto}
+/* a narrow window: the tabs and the update pill get shorter instead of the last tab being cut */
+.tbr{container-type:inline-size}@container (max-width:900px){.tabs button{padding:11px 12px}.frl{display:none}}
 .tabs button{all:unset;cursor:pointer;padding:11px 18px;border-radius:10px 10px 0 0;color:#a9bdb2;font-weight:500;white-space:nowrap}
 .tabs button:hover{color:#fff}.tabs button[aria-selected=true]{background:var(--bg);color:var(--ink);font-weight:600}
 .tabs button:focus-visible{outline:3px solid #2a8cff;outline-offset:-3px}
@@ -92,20 +96,20 @@ body{--sw:0px}
 .fm .cx{all:unset;cursor:pointer;font-size:13px;color:var(--mut);padding:6px 8px}
 .sent{flex-basis:100%;margin:2px 0 4px 30px;font-size:12.5px;border-radius:8px;padding:5px 10px;background:#e8f0fb;color:#1f4a99}
 .sent.done{background:#e6f4ec;color:#0f6b40}.sent.failed{background:#fbe5e3;color:#8c1d18}
-.ses{margin-top:8px;font-size:13px;color:#cfe3d8;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.ses{position:relative;font-size:13px;color:#cfe3d8;display:flex;flex-wrap:nowrap;white-space:nowrap;gap:6px 10px;align-items:center;min-width:0}
 .ses b{color:#fff;font-weight:600}.ses .st{font-size:12px;padding:1px 8px;border-radius:99px;background:#ffffff1f}
 .ses .st.work{background:#2f9e6a;color:#fff}.ses .st.bg{background:#3b7be0;color:#fff}.ses .st.wait{background:#e0a21a;color:#2b2000}
 .ses button{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;color:#fff;border:1px solid #ffffff66;padding:2px 10px;border-radius:99px}
 .ses button:hover{background:#ffffff1f}.ses button:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}
-.pick{margin:8px 0 0;padding:8px;background:#ffffff14;border-radius:10px;max-width:640px;width:100%}
+.pick{position:absolute;z-index:40;top:calc(100% + 6px);left:0;padding:8px;background:#22352c;border-radius:10px;width:min(640px,calc(100vw - var(--sw) - 48px));box-shadow:0 12px 32px #0006;white-space:normal}
 .pick ul{list-style:none;margin:0;padding:0;max-height:260px;overflow:auto}
 .pick li button{display:flex;width:100%;box-sizing:border-box;gap:4px 10px;flex-wrap:wrap;align-items:baseline;border:0;border-radius:8px;padding:6px 8px;font-weight:400}
 .pick li button:hover{background:#ffffff26}.pick small{color:#a9c7b8}
 .lnk{all:unset;cursor:pointer;color:#1f4a99;font-weight:600;text-decoration:underline}.lnk:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
-.sy{margin-top:8px;font-size:13px;color:#ffe3a3;background:#ffffff14;border-radius:8px;padding:6px 10px;display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center;max-width:760px}
-.sy[hidden]{display:none}.sy button{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;color:#fff;border:1px solid #ffffff66;padding:2px 10px;border-radius:99px}
-.sy button:hover{background:#ffffff1f}.sy button:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}
-.qb{display:block;font-size:12.5px;color:#ffd37a;font-weight:600;margin-top:4px}
+.sy{max-width:1180px;margin:14px auto -4px;font-size:13px;color:#5a4300;background:var(--warnb);border-radius:8px;padding:8px 12px;display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center;box-sizing:border-box}.sy[hidden]{display:none}
+.syw{padding:0 24px}.sy button{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;color:#5a4300;border:1px solid #5a430066;padding:2px 10px;border-radius:99px}
+.sy button:hover{background:#5a43001a}.sy button:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
+.qb{font-size:12px;color:#2b2000;background:#ffd37a;font-weight:600;border-radius:99px;padding:1px 9px;white-space:nowrap}.qb:empty{display:none}
 .bd.almost{background:#e2f3ea;color:#0f6b40;box-shadow:inset 0 0 0 2px #2f9e6a}
 .sg{grid-column:2;display:flex;gap:2px;height:6px;margin-top:5px}.sg i{flex:1;border-radius:2px;background:#d9e1dc}.sg i.d{background:var(--ok)}.sg i.p{background:#e8b13a}.sg i.b{background:var(--bad)}
 .bk.you{border-left-color:var(--bad)}.bk.look{border-left-color:#e8b13a}.bk.agent{border-left-color:var(--ok)}.bk.later,.bk.none{border-left-color:#8c9a92}
@@ -217,9 +221,10 @@ body{--sw:0px}
 /* going to another page of the dashboard: the old page stays until the new one is ready, then a short fade */
 @view-transition{navigation:auto}::view-transition-old(root),::view-transition-new(root){animation-duration:.12s}@media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
 </style></head><body>
-<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><span class="qb" id="qb"></span><div class="ses" id="ses"></div><div class="sy" id="sy" hidden></div></div></div>
+<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="qb" id="qb"></span></div></div></div>
 <div class="tbr"><div class="tabs" role="tablist" id="tabs"></div><span class="frw"><span id="fr"></span><button type="button" id="rq" hidden>↻ Request status</button></span></div></header>
 <section class="lm" id="lm" aria-label="Last message of the session" hidden></section>
+<div class="syw"><div class="sy" id="sy" role="status" hidden></div></div>
 <main id="main"></main>
 <aside class="cw" id="cw" aria-label="Messages with Claude" hidden><button type="button" class="cl1 cwp" id="cwp"></button>
 <div class="cwb" id="cwb" hidden><i class="cwr t" data-r="t"></i><i class="cwr l" data-r="l"></i><i class="cwr c" data-r="c"></i><div class="cwh"><i class="lma" aria-hidden="true">C</i><span id="cwt"></span><button type="button" id="cwd"></button><button type="button" id="cwx">Close</button></div>
@@ -254,7 +259,7 @@ CH.forEach(function(c){CHF[c.fid]=c;(CHS[c.stage]=CHS[c.stage]||[]).push(c)});
 function trn(c){return '<span class="tr">'+(c.was?'<i class="ico s '+c.was+'">'+(IC[c.was]||'')+'</i>→':'new ')+'<i class="ico s '+c.now+'">'+(IC[c.now]||'')+'</i></span>'}
 function chText(c){return c.was?'Was '+(LBL[c.was]||c.was)+', now '+(LBL[c.now]||c.now):'New item: '+(LBL[c.now]||c.now)}
 function rich(t){return String(t==null?'':t).replace(/&(?!(?:[a-z]+|#\d+|#x[0-9a-f]+);)/gi,'&amp;').replace(/[<>"]/g,function(c){return{'<':'&lt;','>':'&gt;','"':'&quot;'}[c]}).replace(/&lt;(\/?)(code|b)&gt;/g,'<$1$2>')}
-$('t').textContent=P.title;$('sub').innerHTML=rich(P.sub)+(P.updated&&!P.updatedTs?' Updated '+esc(P.updated)+'.':'');
+$('t').textContent=P.title;$('t').title=P.title;$('sub').innerHTML=rich(P.sub)+(P.updated&&!P.updatedTs?' Updated '+esc(P.updated)+'.':'');$('sub').title=$('sub').textContent;
 var problems=0;P.stages.forEach(function(s){s.facts.forEach(function(f){if(f[0]==='q'||f[0]==='bad')problems++})});
 var tabs=[['work','Progress'],['ov','What is left'],['dec','Decisions and questions']];
 $('tabs').innerHTML=tabs.map(function(t,i){return '<button role="tab" id="tab-'+t[0]+'" aria-controls="p-'+t[0]+'" aria-selected="'+(i===0)+'" tabindex="'+(i?-1:0)+'">'+t[1]+(t[0]==='ov'&&P.blockers.length?'<span class="cnt'+(P.blockers.some(function(b){return b.who==='you'})?' bad':'')+'">'+P.blockers.length+'</span>':'')+'</button>'}).join('');
@@ -345,7 +350,7 @@ function renderStage(i){cur=i;if(typeof keep==='function')keep();var s=P.stages[
 // freshness in the header: when the feature was last updated and what its session does
 function freshBar(){var el=$('fr');if(!el||!P.updatedTs)return;var a=P.live?agent():null,st=a?a.state:'',old=Date.now()-P.updatedTs>H1,n=CH.filter(function(c){return c.ts>=Date.now()-H1}).length;
  var note=st==='work'?'agent is working':st==='bg'?'background task running':st==='wait'?'agent waits for you':st==='idle'?'session is open':P.live?'no open session':'';
- el.innerHTML='<span class="fr'+(st==='work'||st==='bg'?'':st==='wait'?' wait':old||P.live?' old':'')+'" tabindex="0"'+tipA('Last update '+exact(P.updatedTs),(a?'Session '+sesName(a)+' is '+STX[a.state]+', last activity '+age(a.t)+'. ':'')+(n?n+' change'+(n>1?'s':'')+' in the last hour.':'No changes in the last hour.'))+'><i class="ld'+(st==='work'?' pl':'')+'"></i>Updated '+ts(P.updatedTs)+(note?' <small>'+note+'</small>':'')+'</span>'}
+ el.innerHTML='<span class="fr'+(st==='work'||st==='bg'?'':st==='wait'?' wait':old||P.live?' old':'')+'" tabindex="0"'+tipA('Last update '+exact(P.updatedTs),(a?'Session '+sesName(a)+' is '+STX[a.state]+', last activity '+age(a.t)+'. ':'')+(n?n+' change'+(n>1?'s':'')+' in the last hour.':'No changes in the last hour.'))+'><i class="ld'+(st==='work'?' pl':'')+'"></i><span class="frl">Updated </span>'+ts(P.updatedTs)+(note?' <small>'+note+'</small>':'')+'</span>'}
 // relative times keep moving without a re-render, and the highlight of a fresh change fades with its age
 function tick(){document.querySelectorAll('[data-ts]').forEach(function(x){x.textContent=age(+x.dataset.ts,x.dataset.short)});
  document.querySelectorAll('.fi[data-cts]').forEach(function(x){var d=Date.now()-x.dataset.cts;x.classList.toggle('f1',d<=6e5);x.classList.toggle('f2',d>6e5&&d<=H1)})}
