@@ -117,8 +117,9 @@ shows under it. A red dot marks a reply you have not opened yet. Drag the top or
 (double click an edge to reset); **Full width** stretches it along the bottom of the screen. The size is remembered.
 
 **Terminal (app window only).** Every session has a **Terminal** button; it opens the session in a dock at the
-bottom of the window (xterm.js on a pseudo-terminal that runs `claude attach`). The dock stays connected when you go
-to another page, its top edge resizes it, **Hide** keeps it connected, **Disconnect** closes it; the session goes on
+bottom of the window (xterm.js on a pseudo-terminal that runs `claude attach`). Every feature has its own terminal:
+the page of a feature shows the terminals of its sessions, another feature shows its own, the home page shows all of
+them as tabs. A terminal stays connected while you are on other pages. The top edge resizes the dock, **Hide** keeps it connected, **Disconnect** closes it; the session goes on
 either way. A session can be shown when it runs in the background:
 - it already does (`claude --bg`): the terminal attaches at once;
 - it is closed: it is continued in the background under the same id (`claude --resume <id> --bg`), then attached;

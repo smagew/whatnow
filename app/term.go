@@ -76,7 +76,8 @@ func (t *term) end() int64 { return t.start + int64(len(t.buf)) }
 func (t *term) info() map[string]any {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	return map[string]any{"id": t.ID, "session": t.Session, "name": t.Name, "done": t.done, "off": t.end()}
+	// the feature is read now, not kept: a session can be attached to another feature while its terminal runs
+	return map[string]any{"id": t.ID, "session": t.Session, "name": t.Name, "done": t.done, "off": t.end(), "feature": featureOf(t.Session)}
 }
 
 func termOf(id string) *term {
@@ -241,7 +242,7 @@ func termOpen(sid string, cols, rows int) (int, any) {
 	terms[t.ID] = t
 	termsMu.Unlock()
 	go t.pump()
-	return 200, map[string]any{"term": t.info(), "session": sid}
+	return 200, map[string]any{"term": t.info(), "session": sid, "fresh": true} // fresh: nothing to replay yet
 }
 
 // termRead waits for output after offset off. "reset" says the window missed output that is no longer kept.
