@@ -1,0 +1,9 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "whatnow",
+  "outputfilename": "whatnow",
+  "frontend:install": "",
+  "frontend:build": "",
+  "author": {"name": "smagew"},
+  "info": {"productName": "whatnow", "productVersion": "0.1.0", "comments": "Claude Code sessions and features at a glance"}
+}
