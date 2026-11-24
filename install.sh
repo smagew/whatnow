@@ -14,17 +14,24 @@ if ! command -v go >/dev/null 2>&1; then
   exit 1
 fi
 cd "$HERE"
-TMP="$DEST/.whatnow-new"
+EXE=whatnow
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) EXE=whatnow.exe ;; esac
+TMP="$DEST/.new-$EXE"
 # With the window (Wails, system WebView). Where the WebView libraries are missing, build the commands only.
-if [ "$(uname)" = "Darwin" ]; then
-  CGO_LDFLAGS="-framework UniformTypeIdentifiers -mmacosx-version-min=10.13" \
-    go build -tags desktop,production -ldflags "-s -w" -o "$TMP" ./app 2>/dev/null \
-    || go build -ldflags "-s -w" -o "$TMP" ./app
-else
-  go build -tags desktop,production -ldflags "-s -w" -o "$TMP" ./app 2>/dev/null \
-    || go build -ldflags "-s -w" -o "$TMP" ./app
-fi
-mv -f "$TMP" "$DEST/whatnow"   # a rename: hooks running right now keep the old file
+case "$(uname -s)" in
+  Darwin)
+    CGO_LDFLAGS="-framework UniformTypeIdentifiers -mmacosx-version-min=10.13" \
+      go build -tags desktop,production -ldflags "-s -w" -o "$TMP" ./app 2>/dev/null \
+      || go build -ldflags "-s -w" -o "$TMP" ./app ;;
+  Linux)   # WebKitGTK 4.1 (Debian 12, Ubuntu 22.04 and newer), then 4.0, then no window
+    go build -tags desktop,production,webkit2_41 -ldflags "-s -w" -o "$TMP" ./app 2>/dev/null \
+      || go build -tags desktop,production -ldflags "-s -w" -o "$TMP" ./app 2>/dev/null \
+      || { echo "WebKitGTK not found (libwebkit2gtk-4.1-dev): building without the window" >&2;
+           go build -ldflags "-s -w" -o "$TMP" ./app; } ;;
+  *)       # Windows (Git Bash): WebView2 needs no C compiler
+    go build -tags desktop,production -ldflags "-s -w -H windowsgui" -o "$TMP" ./app ;;
+esac
+mv -f "$TMP" "$DEST/$EXE"   # a rename: hooks running right now keep the old file
 
 # The autostarted server runs this program: restart it so it serves the new pages.
 if [ "$(uname)" = "Darwin" ] && [ -f "$HOME/Library/LaunchAgents/whatnow.server.plist" ] \

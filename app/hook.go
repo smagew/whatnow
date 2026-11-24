@@ -22,7 +22,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -257,12 +256,6 @@ func isWatcherCmd(cmdline string) bool {
 	return strings.Contains(cmdline, "--watch") && (strings.Contains(cmdline, "hook.py") || strings.Contains(cmdline, "whatnow hook"))
 }
 
-// isWatcher: a pid file outlives a reboot or a kill -9, and the number may by then belong to some other
-// program, which must not get our SIGTERM.
-func isWatcher(pid int) bool {
-	out, err := exec.Command("ps", "-p", strconv.Itoa(pid), "-o", "command=").Output()
-	return err == nil && isWatcherCmd(string(out))
-}
 
 func readPid(path string) int {
 	b, err := os.ReadFile(path)
@@ -401,7 +394,7 @@ func hookWatch(sid string) int {
 	_ = os.MkdirAll(wdir, 0o755)
 	pidf := filepath.Join(wdir, unsafeName.ReplaceAllString(sid, "_")+".pid")
 	if old := readPid(pidf); old > 0 && old != os.Getpid() && isWatcher(old) {
-		_ = syscall.Kill(old, syscall.SIGTERM) // one watcher per session
+		stopProcess(old) // one watcher per session
 	}
 	_ = os.WriteFile(pidf, []byte(strconv.Itoa(os.Getpid())), 0o644)
 	defer func() {
@@ -409,7 +402,7 @@ func hookWatch(sid string) int {
 			os.Remove(pidf)
 		}
 	}()
-	start := time.Now()
+	start, ppid := time.Now(), os.Getppid()
 	deadline := start.Add(time.Duration(envFloat("WHATNOW_WATCH_SECONDS", 3300) * float64(time.Second))) // below the hook timeout
 	poll := time.Duration(envFloat("WHATNOW_WATCH_POLL", 2) * float64(time.Second))
 	for time.Now().Before(deadline) {
@@ -425,7 +418,7 @@ func hookWatch(sid string) int {
 		if time.Since(start) > 5*time.Second && st["state"] == "work" && num(st["t"]) > start.Add(3*time.Second).UnixMilli() {
 			return 0 // the user typed: the synchronous hook delivers at that prompt
 		}
-		if os.Getppid() == 1 {
+		if parentGone(ppid) {
 			return 0 // Claude Code is gone
 		}
 		time.Sleep(poll)

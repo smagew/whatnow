@@ -75,11 +75,14 @@ func positional(args []string, valued ...string) []string {
 }
 
 func openFile(path string) {
-	cmd := "xdg-open"
-	if runtime.GOOS == "darwin" {
-		cmd = "open"
+	switch runtime.GOOS {
+	case "darwin":
+		_ = exec.Command("open", path).Start()
+	case "windows":
+		_ = exec.Command("rundll32", "url.dll,FileProtocolHandler", path).Start()
+	default:
+		_ = exec.Command("xdg-open", path).Start()
 	}
-	_ = exec.Command(cmd, path).Start()
 }
 
 // ------------------------------------------------------------------ render
@@ -401,8 +404,42 @@ func autostartPath() string {
 		return expandUser("~/Library/LaunchAgents/" + launchLabel + ".plist")
 	case "linux":
 		return expandUser("~/.config/systemd/user/" + unitName)
+	case "windows":
+		return winRunKey + `\` + launchLabel
 	}
 	return ""
+}
+
+// On Windows the server starts at login from the Run key of the user's registry.
+const winRunKey = `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
+
+func winAutostart(op string, exe string) int {
+	switch op {
+	case "status":
+		err := exec.Command("reg", "query", winRunKey, "/v", launchLabel).Run()
+		yes := map[bool]string{true: "yes", false: "no"}
+		fmt.Printf("platform: windows\nautostart entry: %s (%s)\nserver answers on port %d: %s\n",
+			autostartPath(), map[bool]string{true: "exists", false: "absent"}[err == nil], port(), yes[serverAlive()])
+		return 0
+	case "install":
+		cmd := fmt.Sprintf(`"%s" serve %d`, exe, port())
+		if err := runQuiet("reg", "add", winRunKey, "/v", launchLabel, "/t", "REG_SZ", "/d", cmd, "/f"); err != nil {
+			return die(1, "%v", err)
+		}
+		if !serverAlive() {
+			_ = exec.Command(exe, "serve", strconv.Itoa(port())).Start()
+		}
+		fmt.Printf("installed: %s\nPage: http://127.0.0.1:%d/\n", cmd, port())
+		return 0
+	case "uninstall":
+		if runQuiet("reg", "delete", winRunKey, "/v", launchLabel, "/f") == nil {
+			fmt.Println("removed " + autostartPath())
+		} else {
+			fmt.Println("was not installed")
+		}
+		return 0
+	}
+	return die(2, "%s", usage)
 }
 
 func xmlEscape(s string) string {
@@ -471,6 +508,13 @@ func runAutostart(args []string) int {
 		op = args[0]
 	}
 	path := autostartPath()
+	if runtime.GOOS == "windows" {
+		exe, err := os.Executable()
+		if err != nil {
+			return die(1, "cannot find this program: %v", err)
+		}
+		return winAutostart(op, exe)
+	}
 	switch op {
 	case "status":
 		state := "absent"

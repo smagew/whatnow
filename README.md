@@ -18,10 +18,14 @@ one place to look, instead of reading long CLI transcripts. It shows progress, n
 
 ## Requirements
 - Claude Code (tested with 2.1.329) and Go 1.26+ to build. The result is one program of about 10 MB.
-- macOS for the desktop window (system WebView); Linux builds the window where the WebKitGTK libraries are
-  installed, otherwise the commands and the server only. macOS or Linux for autostart.
+- The desktop window uses the system WebView: WebKit on macOS, WebView2 on Windows (part of Windows 10 and 11),
+  WebKitGTK on Linux (`libwebkit2gtk-4.1-dev`; without it `install.sh` builds the commands and the server only).
+- Windows: run `install.sh` in Git Bash (Claude Code on Windows uses it too). Autostart there is an entry in the
+  Run key of the user's registry.
 
 ## Install
+Ready builds for macOS (one app for Apple Silicon and Intel), Windows and Linux (amd64, arm64) are made by the
+`build` workflow in GitHub Actions and attached to a release for every `v*` tag. To build it yourself:
 ```sh
 ./install.sh        # copies skill/ into ~/.claude/skills/whatnow and builds ~/.claude/skills/whatnow/whatnow
 ```

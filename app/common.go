@@ -150,7 +150,8 @@ func claudeBin() string {
 	if p, err := exec.LookPath("claude"); err == nil {
 		return p
 	}
-	for _, c := range []string{"~/.local/bin/claude", "~/.claude/local/claude", "/usr/local/bin/claude", "/opt/homebrew/bin/claude"} {
+	for _, c := range []string{"~/.local/bin/claude", "~/.claude/local/claude", "/usr/local/bin/claude", "/opt/homebrew/bin/claude",
+		"~/.local/bin/claude.exe", "~/AppData/Roaming/npm/claude.cmd"} {
 		if _, err := os.Stat(expandUser(c)); err == nil {
 			return expandUser(c)
 		}
@@ -277,15 +278,11 @@ func watcherAlive(sid string) bool {
 	if err != nil {
 		return false
 	}
-	pid := strings.TrimSpace(string(b))
-	if _, err := fmt.Sscan(pid, new(int)); err != nil {
+	pid := 0
+	if _, err := fmt.Sscan(strings.TrimSpace(string(b)), &pid); err != nil || pid <= 0 {
 		return false
 	}
-	out, err := exec.Command("ps", "-p", pid, "-o", "command=").Output()
-	if err != nil {
-		return false
-	}
-	return isWatcherCmd(string(out))
+	return isWatcher(pid)
 }
 
 // factID is the stable id of one fact: it survives reordering and changes only when the text changes.
