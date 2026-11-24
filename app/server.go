@@ -1,6 +1,6 @@
 package main
 
-// The pages and their API, the same as server.py: the home page, a page per feature, and the buttons on them.
+// The pages and their API: the home page, a page per feature, and the buttons on them.
 
 import (
 	"bufio"

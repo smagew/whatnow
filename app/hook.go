@@ -256,7 +256,6 @@ func isWatcherCmd(cmdline string) bool {
 	return strings.Contains(cmdline, "--watch") && (strings.Contains(cmdline, "hook.py") || strings.Contains(cmdline, "whatnow hook"))
 }
 
-
 func readPid(path string) int {
 	b, err := os.ReadFile(path)
 	if err != nil {

@@ -3,7 +3,7 @@ package main
 // whatnow: the dashboard in its own window (system WebView through Wails), or as a plain server for a browser.
 //
 //	whatnow           open the window; the pages are also served on 127.0.0.1:<port> if the port is free
-//	whatnow serve [port]  only the server on 127.0.0.1:<port>, no window (the same as server.py)
+//	whatnow serve [port]  only the server on 127.0.0.1:<port>, no window (what autostart runs)
 //	whatnow render | inbox | hook | hooks | autostart   see usage in cli.go
 
 import (
@@ -25,7 +25,7 @@ func main() {
 		switch os.Args[1] {
 		case "serve":
 			p := port()
-			if len(os.Args) > 2 { // a port of its own, e.g. to run next to server.py
+			if len(os.Args) > 2 { // a port of its own, e.g. next to a running one
 				if _, err := fmt.Sscan(os.Args[2], &p); err != nil {
 					fmt.Fprintln(os.Stderr, "whatnow: bad port", os.Args[2])
 					os.Exit(2)
@@ -55,7 +55,7 @@ func main() {
 			os.Exit(2)
 		}
 	}
-	// A browser tab keeps working while the window is open; when server.py already holds the port, it stays.
+	// A browser tab keeps working while the window is open; when a server already holds the port, it stays.
 	go func() { _ = listen(port()) }()
 	err := wails.Run(&options.App{
 		Title:            "whatnow",

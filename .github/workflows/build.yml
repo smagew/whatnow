@@ -24,7 +24,7 @@ jobs:
       - name: go vet for every system
         run: for os in darwin windows linux; do GOOS=$os GOARCH=amd64 go vet ./app; done
       - name: tests
-        run: python3 -m unittest discover -s tests
+        run: go test ./app
 
   macos:
     needs: check

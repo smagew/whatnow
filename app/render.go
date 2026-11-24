@@ -1,6 +1,6 @@
 package main
 
-// Reading and checking feature.json, the same rules as render.py. Statuses are derived here, never typed
+// Reading and checking feature.json. Statuses are derived here, never typed
 // by Claude. A file of the wrong shape gives a DataError with a message, never a crash.
 
 import (

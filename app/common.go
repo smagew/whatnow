@@ -1,7 +1,7 @@
 package main
 
-// Settings and the small files shared with the Python skill (common.py). The two must read and write the
-// same files in the same way: the Python hook and the agents' scripts keep writing them while the app runs.
+// Settings and the small files under ~/.whatnow. Their format is the one of the earlier Python version, so data
+// written by it is read as it is.
 
 import (
 	"bytes"

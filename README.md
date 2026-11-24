@@ -153,14 +153,14 @@ argument and is never concatenated into a command.
   They are embedded into the program (`assets.go`).
 - `app/`: the program. `render.go` validation, derivation and page building; `server.go` the live pages and buttons;
   `hook.go` the hooks; `cli.go` the commands; `transcript.go` reading session transcripts; `main.go` the window.
-- `skill/*.py`: the earlier Python version, kept until the Go one has run for a while; `tests/` test it.
+- `app/*_test.go`: the tests.
 - `examples/csv-export.json`: a complete example with made-up data.
 - `install.sh`: copies `skill/` into `~/.claude/skills/whatnow`. Edit the files here, then run it again.
 
 ## Tests
 ```sh
 go vet ./app
-python3 -m unittest discover -s tests
+go test ./app
 ```
 
 ## Limitations

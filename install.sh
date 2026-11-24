@@ -7,6 +7,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 DEST="$HOME/.claude/skills/whatnow"
 mkdir -p "$DEST/examples"
 find "$HERE/skill" -maxdepth 1 -type f -exec cp {} "$DEST"/ \;
+rm -f "$DEST"/*.py; rm -rf "$DEST/__pycache__"   # the earlier Python version
 find "$HERE/examples" -maxdepth 1 -type f -exec cp {} "$DEST/examples/" \;
 
 if ! command -v go >/dev/null 2>&1; then

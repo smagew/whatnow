@@ -1,7 +1,7 @@
 package main
 
-// The commands an agent or the user runs: render, inbox, hooks, autostart. They replace render.py, inbox.py,
-// hooks_install.py and autostart.py and read and write the same files.
+// The commands an agent or the user runs: render, inbox, hooks, autostart. Older installs ran Python scripts
+// (render.py, inbox.py, hook.py); their hooks and watchers are still recognised so that an upgrade replaces them.
 
 import (
 	"bytes"
