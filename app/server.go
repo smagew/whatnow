@@ -21,14 +21,14 @@ import (
 )
 
 const (
-	workStale  = 10 * 60 * 1000       // "work" without a single event for 10 min is not trusted
-	dropAfter  = 6 * 3600 * 1000      // an open session silent for 6 h is not shown
-	historyMs  = 30 * 24 * 3600 * 1000 // closed sessions are remembered for resuming
-	bgMargin   = 5000                  // ms the list of open sessions must be newer than the hook event it overrides
-	unstickMs  = 10000                 // ms a message may wait for a session that cannot be woken
-	maxBody    = 16 * 1024
-	agentsTTL  = 8 * time.Second
-	trackText  = "Please track the work of this session in the whatnow dashboard as a feature. Read ~/.claude/skills/whatnow/SKILL.md and SCHEMA.md, then write a feature.json (short slug) from what we have discussed and decided: the phases of the plan as stages (plan items; facts only for what was really done and verified, with evidence; deployment, tests and review as stages or items of the plan, only if the work really has them), and the open items as blockers with \"who\" set. Write the content in the language we work in. Then run python3 ~/.claude/skills/whatnow/render.py --index and tell me the slug."
+	workStale = 10 * 60 * 1000        // "work" without a single event for 10 min is not trusted
+	dropAfter = 6 * 3600 * 1000       // an open session silent for 6 h is not shown
+	historyMs = 30 * 24 * 3600 * 1000 // closed sessions are remembered for resuming
+	bgMargin  = 5000                  // ms the list of open sessions must be newer than the hook event it overrides
+	unstickMs = 10000                 // ms a message may wait for a session that cannot be woken
+	maxBody   = 16 * 1024
+	agentsTTL = 8 * time.Second
+	trackText = "Please track the work of this session in the whatnow dashboard as a feature. Read ~/.claude/skills/whatnow/SKILL.md and SCHEMA.md, then write a feature.json (short slug) from what we have discussed and decided: the phases of the plan as stages (plan items; facts only for what was really done and verified, with evidence; deployment, tests and review as stages or items of the plan, only if the work really has them), and the open items as blockers with \"who\" set. Write the content in the language we work in. Then run python3 ~/.claude/skills/whatnow/render.py --index and tell me the slug."
 )
 
 var (
@@ -976,7 +976,9 @@ func sendJSON(w http.ResponseWriter, code int, v any) {
 	send(w, code, encodeJSON(v), "application/json; charset=utf-8")
 }
 
-func text(w http.ResponseWriter, code int, s string) { send(w, code, []byte(s), "text/plain; charset=utf-8") }
+func text(w http.ResponseWriter, code int, s string) {
+	send(w, code, []byte(s), "text/plain; charset=utf-8")
+}
 
 func (h handler) hostsOK(r *http.Request) bool {
 	if h.local {
