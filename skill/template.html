@@ -244,7 +244,7 @@ function age(ts,short){var m=Math.max(0,Math.floor((Date.now()-ts)/60000));if(m<
  var s=m<60?m+' min':m<1440?Math.floor(m/60)+' h'+(m%60?' '+(m%60)+' min':''):Math.floor(m/1440)+' d';return short?s:s+' ago'}
 function exact(ts){var d=new Date(ts),n=new Date();return d.toDateString()===n.toDateString()?'today at '+hm(ts):d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)+' '+hm(ts)}
 function ts(t,short){return '<span data-ts="'+t+'"'+(short?' data-short="1"':'')+'>'+age(t,short)+'</span>'}
-// the change log kept by render.py: the latest change of every item and of every stage
+// the change log kept by whatnow render: the latest change of every item and of every stage
 var CH=P.changes||[],CHF={},CHS={};
 CH.forEach(function(c){CHF[c.fid]=c;(CHS[c.stage]=CHS[c.stage]||[]).push(c)});
 function trn(c){return '<span class="tr">'+(c.was?'<i class="ico s '+c.was+'">'+(IC[c.was]||'')+'</i>→':'new ')+'<i class="ico s '+c.now+'">'+(IC[c.now]||'')+'</i></span>'}

@@ -28,7 +28,7 @@ const (
 	unstickMs = 10000                 // ms a message may wait for a session that cannot be woken
 	maxBody   = 16 * 1024
 	agentsTTL = 8 * time.Second
-	trackText = "Please track the work of this session in the whatnow dashboard as a feature. Read ~/.claude/skills/whatnow/SKILL.md and SCHEMA.md, then write a feature.json (short slug) from what we have discussed and decided: the phases of the plan as stages (plan items; facts only for what was really done and verified, with evidence; deployment, tests and review as stages or items of the plan, only if the work really has them), and the open items as blockers with \"who\" set. Write the content in the language we work in. Then run python3 ~/.claude/skills/whatnow/render.py --index and tell me the slug."
+	trackText = "Please track the work of this session in the whatnow dashboard as a feature. Read ~/.claude/skills/whatnow/SKILL.md and SCHEMA.md, then write a feature.json (short slug) from what we have discussed and decided: the phases of the plan as stages (plan items; facts only for what was really done and verified, with evidence; deployment, tests and review as stages or items of the plan, only if the work really has them), and the open items as blockers with \"who\" set. Write the content in the language we work in. Then run " + cliPath + " render --index and tell me the slug."
 )
 
 var (

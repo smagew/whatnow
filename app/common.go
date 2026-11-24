@@ -285,7 +285,7 @@ func watcherAlive(sid string) bool {
 	if err != nil {
 		return false
 	}
-	return strings.Contains(string(out), "hook.py") && strings.Contains(string(out), "--watch")
+	return isWatcherCmd(string(out))
 }
 
 // factID is the stable id of one fact: it survives reordering and changes only when the text changes.
@@ -326,7 +326,7 @@ func formatMessage(e map[string]any) string {
 			"[whatnow] Message from the dashboard.",
 			"User note: " + get("text"),
 			"Answer it in this conversation. When you are done, mark the message resolved: " +
-				"python3 ~/.claude/skills/whatnow/inbox.py resolve " + get("id") + ` "one-line summary".`,
+				cliPath + " inbox resolve " + get("id") + ` "one-line summary".`,
 		}, "\n")
 	case "sync":
 		return strings.Join([]string{
@@ -334,8 +334,8 @@ func formatMessage(e map[string]any) string {
 			"The dashboard may differ from what you last told the user. Compare the feature.json of this feature with " +
 				"your latest status: every open item you listed (and who has to act on it), what is done, what was verified, " +
 				`and what git really shows (merged branches, commits). Fix what differs, set "who" on every blocker, ` +
-				"rebuild the dashboard (python3 ~/.claude/skills/whatnow/render.py --index) and mark the message resolved: " +
-				"python3 ~/.claude/skills/whatnow/inbox.py resolve " + get("id") + ` "what you changed, or: already in sync".`,
+				"rebuild the dashboard (" + cliPath + " render --index) and mark the message resolved: " +
+				cliPath + " inbox resolve " + get("id") + ` "what you changed, or: already in sync".`,
 		}, "\n")
 	}
 	act := actions[get("action")]
@@ -349,8 +349,8 @@ func formatMessage(e map[string]any) string {
 		"Action: " + act,
 		"User note: " + or(get("text"), "none"),
 		fmt.Sprintf(`When you are done: update the feature.json of feature "%s", rebuild the dashboard `+
-			"(python3 ~/.claude/skills/whatnow/render.py --index) and mark the message resolved: "+
-			`python3 ~/.claude/skills/whatnow/inbox.py resolve %s "one-line summary".`, get("feature"), get("id")),
+			"(%s render --index) and mark the message resolved: "+
+			`%s inbox resolve %s "one-line summary".`, get("feature"), cliPath, cliPath, get("id")),
 	}, "\n")
 }
 

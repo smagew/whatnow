@@ -4,6 +4,7 @@ package main
 //
 //	whatnow           open the window; the pages are also served on 127.0.0.1:<port> if the port is free
 //	whatnow serve [port]  only the server on 127.0.0.1:<port>, no window (the same as server.py)
+//	whatnow render | inbox | hook | hooks | autostart   see usage in cli.go
 
 import (
 	"fmt"
@@ -36,8 +37,18 @@ func main() {
 				os.Exit(1)
 			}
 			return
+		case "hook":
+			os.Exit(runHook(os.Args[2:]))
+		case "render":
+			os.Exit(runRender(os.Args[2:]))
+		case "inbox":
+			os.Exit(runInbox(os.Args[2:]))
+		case "hooks":
+			os.Exit(runHooks(os.Args[2:]))
+		case "autostart":
+			os.Exit(runAutostart(os.Args[2:]))
 		case "-h", "--help", "help":
-			fmt.Println("usage: whatnow [serve [port]]")
+			fmt.Println(usage)
 			return
 		default:
 			fmt.Fprintln(os.Stderr, "whatnow: unknown command", os.Args[1])

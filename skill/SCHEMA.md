@@ -44,7 +44,7 @@ Lives next to `feature.json`. It holds the user's "not needed" decisions from th
 and the item text (`common.fact_id`), so a decision survives reordering but is lost when the text is rewritten.
 A finished item (`y`) cannot be marked as not needed.
 
-## history.json (written by render.py and the server, never by Claude)
+## history.json (written by whatnow render and the server, never by Claude)
 Lives next to `feature.json`. Every render compares the items with the previous render and records what changed and when:
 `{"ts": 1795180343217, "fid": "<item id>", "stage": 3, "was": "q", "now": "y", "t": "item text"}` (`was` is `null` for a new item).
 The time is the modification time of `feature.json`. The Progress tab uses it to show what changed recently. An item whose text

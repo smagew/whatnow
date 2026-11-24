@@ -454,13 +454,23 @@ func page(name string) string {
 
 // panelHTML validates one feature.json and returns the page of the feature. Nothing but history.json is written.
 func panelHTML(src, backHref string, live bool) (string, error) {
+	html, _, err := panelPage(src, backHref, live)
+	return html, err
+}
+
+func panelPage(src, backHref string, live bool) (string, map[string]any, error) {
 	data, err := load(src)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
-	slug := filepath.Base(filepath.Dir(src))
+	abs, _ := filepath.Abs(src)
+	slug := filepath.Base(filepath.Dir(abs))
 	data["live"], data["slug"], data["ver"] = live, slug, featureVersion(slug)
-	changes, updated := track(src, data)
+	// the change log is kept only for real features, not for a file rendered from somewhere else
+	changes, updated := []any{}, int64(0)
+	if filepath.Base(src) == "feature.json" {
+		changes, updated = track(src, data)
+	}
 	if len(changes) > 80 {
 		changes = changes[len(changes)-80:]
 	}
@@ -471,7 +481,7 @@ func panelHTML(src, backHref string, live bool) (string, error) {
 	if backHref != "" {
 		link = `<a class="back" href="` + backHref + `">← All features</a>`
 	}
-	return strings.Replace(html, "<!--__BACK__-->", link, 1), nil
+	return strings.Replace(html, "<!--__BACK__-->", link, 1), data, nil
 }
 
 // summary is one row of the home page, derived from a validated feature.
@@ -535,7 +545,10 @@ func summary(slug string, d map[string]any, today time.Time) (row map[string]any
 }
 
 // collect reads every <root>/<slug>/feature.json: the payload of the home page.
-func collect(root string) map[string]any {
+func collect(root string) map[string]any { return collectFiles(root, false) }
+
+// collectFiles with write=true also rewrites each feature's panel.html, for opening the pages without a server.
+func collectFiles(root string, write bool) map[string]any {
 	today := time.Now()
 	feats, broken := []any{}, []any{}
 	entries, _ := os.ReadDir(root)
@@ -549,13 +562,22 @@ func collect(root string) map[string]any {
 		if !isFile(src) {
 			continue
 		}
-		data, err := load(src)
+		var data map[string]any
+		var err error
+		if write {
+			data, err = writePanel(src, filepath.Join(root, slug, "panel.html"), "../index.html")
+		} else {
+			data, err = load(src)
+		}
 		var row map[string]any
 		if err == nil {
 			row, err = summary(slug, data, today)
 		}
 		if err != nil {
 			broken = append(broken, map[string]any{"id": slug, "error": err.Error()})
+			if write {
+				fmt.Fprintf(os.Stderr, "%s: %v\n", slug, err)
+			}
 			continue
 		}
 		feats = append(feats, row)

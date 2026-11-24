@@ -713,7 +713,7 @@ class HooksInstallTest(unittest.TestCase):
         self.assertEqual(once['theme'], 'x')
         stop = [g['hooks'][0]['command'] for g in once['hooks']['Stop']]
         self.assertIn('echo mine', stop)
-        self.assertEqual(sum('whatnow/hook.py' in c for c in stop), 3)       # state hook, watcher, nudge
+        self.assertEqual(sum('whatnow/whatnow hook' in c for c in stop), 3)  # state hook, watcher, nudge
 
     def test_wake_and_deliver_entries(self):
         d = self.h.install({})
@@ -726,6 +726,7 @@ class HooksInstallTest(unittest.TestCase):
         old = {'hooks': {'Stop': [{'hooks': [{'type': 'command', 'command': 'python3 ~/.claude/skills/whatnow/hook.py', 'async': True}]}]}}
         new = self.h.install(json.loads(json.dumps(old)))
         self.assertEqual(len(new['hooks']['Stop']), 3)
+        self.assertFalse(any('hook.py' in g['hooks'][0]['command'] for g in new['hooks']['Stop']))  # replaced, not kept
 
     def test_uninstall_removes_only_ours(self):
         d = self.h.install({'hooks': {'Stop': [{'hooks': [{'type': 'command', 'command': 'echo mine'}]}]}})

@@ -7,12 +7,12 @@
 
 Safe by design: refuses to touch a file that is not valid JSON, keeps every other setting and hook,
 is idempotent (running twice changes nothing), makes a timestamped backup next to the file
-before writing, and writes atomically. Our entries are recognised by the hook.py command.
+before writing, and writes atomically. Our entries are recognised by their command (whatnow hook, or hook.py of older installs).
 """
 import difflib, json, os, shutil, sys, tempfile, time
 
-STATE = 'python3 ~/.claude/skills/whatnow/hook.py'
-MARK = 'whatnow/hook.py'
+STATE = '~/.claude/skills/whatnow/whatnow hook'      # the Go program built by install.sh
+MARKS = ('whatnow/hook.py', 'whatnow/whatnow hook')   # the Python hook of older installs is ours too
 
 # Bash for the events, the file tools so that a session that edits a feature.json is linked to that feature
 TOOLS = 'Bash|Edit|Write|MultiEdit|NotebookEdit'
@@ -49,7 +49,7 @@ def desired():
 
 
 def ours(g):
-    return any(MARK in (h.get('command') or '') for h in g.get('hooks', []))
+    return any(m in (h.get('command') or '') for h in g.get('hooks', []) for m in MARKS)
 
 
 def install(d):

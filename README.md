@@ -17,28 +17,30 @@ one place to look, instead of reading long CLI transcripts. It shows progress, n
   Claude Code session that works on the feature (see below).
 
 ## Requirements
-- Claude Code (tested with 2.1.329) and Python 3.7+. Only the Python standard library is used.
-- macOS or Linux for autostart. The rest works wherever Claude Code and Python do.
+- Claude Code (tested with 2.1.329) and Go 1.26+ to build. The result is one program of about 10 MB.
+- macOS for the desktop window (system WebView); Linux builds the window where the WebKitGTK libraries are
+  installed, otherwise the commands and the server only. macOS or Linux for autostart.
 
 ## Install
 ```sh
-./install.sh        # copies skill/ into ~/.claude/skills/whatnow
+./install.sh        # copies skill/ into ~/.claude/skills/whatnow and builds ~/.claude/skills/whatnow/whatnow
 ```
 Then ask Claude to start a dashboard for a big piece of work (the `whatnow` skill does this). It writes
 `~/.whatnow/features/<name>/feature.json` and builds the pages. Open them:
 
 ```sh
-python3 ~/.claude/skills/whatnow/server.py --open     # live page, updates itself
-python3 ~/.claude/skills/whatnow/render.py --index --open   # static files, rebuilt on demand
+~/.claude/skills/whatnow/whatnow                    # the desktop window
+~/.claude/skills/whatnow/whatnow serve 7777         # the same pages for a browser: http://127.0.0.1:7777/
+~/.claude/skills/whatnow/whatnow render --index --open   # static files, rebuilt on demand
 ```
 
 ## How it works
 ```
-feature.json  ->  render.py  ->  panel.html (feature page) + index.html (home page)
+feature.json  ->  whatnow render  ->  panel.html (feature page) + index.html (home page)
 ```
 - The source of truth is one `feature.json` per feature. Claude writes it while it works (stages,
   blockers, evidence) following the rules in `skill/SKILL.md`. The format is described in `skill/SCHEMA.md`.
-- `render.py` validates the data and **derives** everything that must not be typed by hand: stage colours,
+- `whatnow render` validates the data and **derives** everything that must not be typed by hand: stage colours,
   counts, percentages, "ready to release?", staleness. It refuses a "passed" without a note saying what
   was checked, and a blocker that points to a stage that does not exist.
 - The percent comes from the stages of the feature's own plan: every stage weighs the same and counts by the
@@ -51,24 +53,25 @@ A static `index.html` only changes when it is rebuilt. For a page that updates i
 happening, there are two parts:
 
 ```
-Claude Code hooks -> hook.py -> ~/.whatnow/sessions/*.json + events.jsonl -> server.py -> page (polls every 3 s)
+Claude Code hooks -> whatnow hook -> ~/.whatnow/sessions/*.json + events.jsonl -> whatnow serve / window -> page (polls every 3 s)
 ```
-- `hook.py` is run by Claude Code on session events. It is silent, never blocks and always exits 0. It records
+- `whatnow hook` is run by Claude Code on session events. It is silent, never blocks and always exits 0. It records
   the state of each session and the `git commit`, `git push` and test-run events (other commands are dropped).
   The text of your prompts is never stored.
-- `server.py` serves `http://127.0.0.1:7777/` and re-reads `feature.json` and the hook data on every request.
-  It listens on 127.0.0.1 only.
-- A session is linked to a feature, never a branch or folder. It links itself the moment it touches the feature's files (edits `feature.json`, runs `render.py` on it) or takes a message from the dashboard. You can also click **Attach a session** in the header of the feature page and pick one from the list, open or closed. Links live in `~/.whatnow/bindings.json`.
+- `whatnow serve` serves `http://127.0.0.1:7777/` and re-reads `feature.json` and the hook data on every request.
+  It listens on 127.0.0.1 only. The desktop window shows the same pages without going through the network, and also
+  serves them on the port when the port is free.
+- A session is linked to a feature, never a branch or folder. It links itself the moment it touches the feature's files (edits `feature.json`, runs `whatnow render` on it) or takes a message from the dashboard. You can also click **Attach a session** in the header of the feature page and pick one from the list, open or closed. Links live in `~/.whatnow/bindings.json`.
   A session without a feature is shown in its project's card area as a session without a feature.
 
 Install the hooks (backup, merge with your existing hooks, safe to repeat):
 ```sh
-python3 ~/.claude/skills/whatnow/hooks_install.py --install     # --dry-run shows the diff, --uninstall removes them
-python3 ~/.claude/skills/whatnow/hooks_install.py --print       # just print the hooks block
+~/.claude/skills/whatnow/whatnow hooks install     # --dry-run shows the diff; "hooks uninstall" removes them
+~/.claude/skills/whatnow/whatnow hooks print       # just print the hooks block
 ```
 The hooks are: state tracking (async) on session start, prompt, Bash and file-edit tool use, stop, notification and session end;
 a synchronous `--deliver` hook on prompt submit; and `--watch` hooks (`asyncRewake`) on stop and session start.
-A `--nudge` hook on stop reminds a session that finished a turn without updating its feature file. It never chains (it skips turns caused by a stop hook), waits 30 minutes between reminders to one session, and can be turned off with `"nudge": false` in `~/.whatnow/config.json`.
+Hooks of an older install (`python3 .../hook.py`) are replaced. A `--nudge` hook on stop reminds a session that finished a turn without updating its feature file. It never chains (it skips turns caused by a stop hook), waits 30 minutes between reminders to one session, and can be turned off with `"nudge": false` in `~/.whatnow/config.json`.
 `docs/hooks-settings.example.json` has a copy.
 
 ## The Sessions tab
@@ -113,7 +116,7 @@ shows under it. A red dot marks a reply you have not opened yet. Drag the top or
 not wait for you: it goes on by itself when the task ends. Claude Code reports such a session as busy, and the pages
 show it as "background task running" instead of "waiting for you".
 
-When Claude has handled a message it runs `inbox.py resolve <id> "summary"` and the summary shows on the page.
+When Claude has handled a message it runs `whatnow inbox resolve <id> "summary"` and the summary shows on the page.
 
 **Safety.** The page accepts writes only from the server's own page: `Host` and `Origin` are checked, the body must be
 JSON, a custom `X-Whatnow` header is required (a site in your browser cannot send it without a CORS preflight, which
@@ -122,12 +125,11 @@ argument and is never concatenated into a command.
 
 ## Autostart
 ```sh
-python3 ~/.claude/skills/whatnow/autostart.py --install      # --dry-run, --status, --uninstall
+~/.claude/skills/whatnow/whatnow autostart install      # --dry-run; also "autostart status", "autostart uninstall"
 ```
 - macOS: a LaunchAgent `~/Library/LaunchAgents/whatnow.server.plist`. Linux: a systemd user unit
   `~/.config/systemd/user/whatnow.service`. Other systems: not supported, start the server by hand.
-- The Python interpreter is detected. If you run it inside a virtualenv, the interpreter the venv was made from is used,
-  so the service survives deleting the venv. Run `--install` again after you change your Python.
+- The service runs `whatnow serve <port>`. `./install.sh` restarts it after every new build.
 - Logs: `~/.whatnow/server.log`.
 
 ## Configuration
@@ -143,14 +145,17 @@ python3 ~/.claude/skills/whatnow/autostart.py --install      # --dry-run, --stat
 ## Files
 - `skill/SKILL.md`: instructions for Claude: when and how to keep a dashboard, the honesty rules.
 - `skill/SCHEMA.md`: the `feature.json` format.
-- `skill/render.py`: validation, derivation and page building. `template.html` is the feature page, `template-index.html` the home page.
-- `skill/server.py`, `skill/hook.py`, `skill/inbox.py`, `skill/common.py`: live page, hooks, message handling, shared settings.
-- `skill/hooks_install.py`, `skill/autostart.py`: install and remove the hooks and the autostart.
+- `skill/template.html` is the feature page, `skill/template-index.html` the home page, `skill/side.js` the bar on the left.
+  They are embedded into the program (`assets.go`).
+- `app/`: the program. `render.go` validation, derivation and page building; `server.go` the live pages and buttons;
+  `hook.go` the hooks; `cli.go` the commands; `transcript.go` reading session transcripts; `main.go` the window.
+- `skill/*.py`: the earlier Python version, kept until the Go one has run for a while; `tests/` test it.
 - `examples/csv-export.json`: a complete example with made-up data.
 - `install.sh`: copies `skill/` into `~/.claude/skills/whatnow`. Edit the files here, then run it again.
 
 ## Tests
 ```sh
+go vet ./app
 python3 -m unittest discover -s tests
 ```
 

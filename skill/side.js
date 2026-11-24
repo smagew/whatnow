@@ -1,5 +1,5 @@
 /* whatnow: the bar on the left of every live page. Sessions, Features and Favorites at the top, then every feature,
-   one click away. Served by server.py as /side.js and loaded by both pages; a page opened as a file has no bar. */
+   one click away. Served by the server as /side.js and loaded by both pages; a page opened as a file has no bar. */
 (function(){
 if(window.wnSide)return;
 var CSS="body{--sw:0px}body.sb{--sw:256px;padding-left:var(--sw)}body.sb.sm{--sw:54px}"+
