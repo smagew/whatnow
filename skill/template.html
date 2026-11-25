@@ -194,7 +194,7 @@ body{--sw:0px}
 .tip::after{content:'';position:absolute;left:var(--ax,50%);top:100%;margin-left:-5px;border:5px solid transparent;border-top-color:var(--side)}
 .tip.dn::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--side)}
 /* what the session of the feature said last */
-.lm{max-width:1228px;margin:18px auto -6px;padding:0 24px}.lm[hidden]{display:none}
+
 .lma{width:26px;height:26px;border-radius:50%;background:var(--live);color:#fff;display:grid;place-items:center;font-weight:700;font-style:normal;font-size:12px;flex:none;position:relative}
 .lma.new::after{content:'';position:absolute;right:-3px;top:-3px;width:10px;height:10px;border-radius:50%;background:#e0452f;box-shadow:0 0 0 2px #fff}
 .cl1{all:unset;box-sizing:border-box;cursor:pointer;display:flex;gap:10px;align-items:center;width:100%;min-height:42px;padding:6px 14px 6px 8px;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:12px}
@@ -225,7 +225,14 @@ body{--sw:0px}
 html.mo-off .swB::before,html.mo-off .swB i{transition:none}
 .cwb.t{background:#16241e;border-color:#2c4136}.cwb.t .cwh{background:#0f1b16;border-color:#22352c;color:#dfe9e3}.cwb.t .cwh small{color:#9fb3a8}.cwb.t .cwh button{color:#9fb3a8}.cwb.t .cwh button:hover{background:#ffffff14;color:#fff}
 .cwp.t{background:#16241e;border-color:#2c4136;color:#dfe9e3}.cwp.t small{color:#9fb3a8}.cwp.t .go{color:#9fd3b5}.cl1 .tx.mono{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace}
-.cwp:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
+.cwp:focus-visible,.cwu:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
+.cwp.un .swB::after{content:'';position:absolute;left:24px;top:-3px;width:11px;height:11px;border-radius:50%;background:#e0452f;box-shadow:0 0 0 2px var(--paper);z-index:2}.cwp.t.un .swB::after{box-shadow:0 0 0 2px #16241e}
+.cwu{box-sizing:border-box;cursor:pointer;width:min(400px,calc(100vw - 24px));margin:0 0 10px auto;background:var(--side);color:#fff;border:1px solid #2c4136;border-radius:16px 16px 4px 16px;padding:10px 14px;font-size:13.5px;line-height:1.45;box-shadow:0 10px 30px rgba(22,36,30,.3);transform-origin:100% 100%}
+.cwu[hidden]{display:none}.cwu small{display:block;color:#9fb3a8;font-size:11.5px;margin-bottom:2px}.cwu span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.cw.lft .cwu{margin:0 auto 10px 0;border-radius:16px 16px 16px 4px;transform-origin:0 100%}.cw.wide .cwu{display:none}
+.cwu.on{animation:cwuin .32s cubic-bezier(.2,.7,.2,1)}.cwu.off{animation:cwuout .26s ease-in forwards}
+@keyframes cwuin{from{opacity:0;transform:translateY(10px) scale(.94)}to{opacity:1;transform:none}}@keyframes cwuout{to{opacity:0;transform:translateY(12px) scale(.9)}}
+html.mo-off .cwu{animation:none}@media(prefers-reduced-motion:reduce){html.mo-sys .cwu{animation:none}}
 .cwp.t{width:min(520px,calc(100vw - 24px))}.cwp.t>b{flex:0 1 auto;min-width:0;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cwb .cwl[hidden],.cwb .cwf[hidden],.cwb .cwn[hidden]{display:none}
 .cwtm{flex:1;min-height:0;position:relative;background:#16241e}.cwtm[hidden]{display:none}.cwtx{position:absolute;inset:8px 4px 6px 12px}.cwtx[hidden]{display:none}
@@ -360,11 +367,10 @@ html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
 <script>window.PANEL=/*__DATA__*/null;</script></head><body>
 <header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="qb" id="qb"></span></div></div></div>
 <div class="tbr"><div class="tabs" role="tablist" id="tabs"></div><span class="frw"><span id="fr"></span><button type="button" id="rq" hidden>↻ Request status</button></span></div></header>
-<section class="lm" id="lm" aria-label="Last message of the session" hidden></section>
 <div class="syw"><div class="sy" id="sy" role="status" hidden></div></div>
 <div class="chw"><div class="chn" id="chn" role="status" hidden></div></div>
 <main id="main"></main>
-<aside class="cw" id="cw" aria-label="The session: messages and terminal" hidden><div class="cl1 cwp" id="cwp" role="button" tabindex="0"></div>
+<aside class="cw" id="cw" aria-label="The session: messages and terminal" hidden><div class="cwu" id="cwu" role="status" tabindex="0" hidden></div><div class="cl1 cwp" id="cwp" role="button" tabindex="0"></div>
 <div class="cwb" id="cwb" hidden><i class="cwr t" data-r="t"></i><i class="cwr l" data-r="l"></i><i class="cwr c" data-r="c"></i><div class="cwh"><span id="cwsw"><i class="lma" aria-hidden="true">C</i></span><span id="cwt"></span><button type="button" class="ib" id="cwm" hidden aria-haspopup="menu" aria-expanded="false" aria-label="More" title="More"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="3" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="13" cy="8" r="1.5" fill="currentColor"/></svg></button><button type="button" class="ib" id="cwsd"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 2.5v11M13 8H5.5M8.5 5l-3 3 3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" class="ib" id="cwd"></button><button type="button" class="ib" id="cwx" aria-label="Fold" title="Fold to a line in the corner. Nothing is closed: a terminal stays connected."><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="cwmn" id="cwmn" role="menu" hidden><button type="button" role="menuitem" id="cwdc">Disconnect the terminal<small>The session keeps running in the background</small></button></div></div>
 <div class="cwl" id="cwl" aria-live="polite"></div>
 <div class="cwtm" id="cwtm" hidden><div class="cwtx" id="cwtx"></div><div class="cwtg" id="cwtg" hidden></div></div>
@@ -748,22 +754,33 @@ function modeApply(user){var term=tmode()==='term',b=$('cwb');if(!b)return;b.cla
 function menuShut(){var m=$('cwmn');if(m&&!m.hidden){m.hidden=true;$('cwm').setAttribute('aria-expanded','false')}}
 function keepOpen(){var o=CHAT.box.opens=CHAT.box.opens||{};if(CHAT.open&&tmode()==='term')o[P.slug]=1;else delete o[P.slug];boxSave()}
 function setMode(m,user){CHAT.box.modes=CHAT.box.modes||{};CHAT.box.modes[P.slug]=m;keepOpen();CHAT.lkey='';lastMsg();modeApply(user)}
-function lastMsg(){var el=$('lm'),cw=$('cw');if(!el||!P.live)return;var s=chatSes();
- if(!s){el.hidden=true;cw.hidden=true;CHAT.lkey='';return}
+function lastMsg(){var cw=$('cw');if(!cw||!P.live)return;var s=chatSes();
+ if(!s){cw.hidden=true;CHAT.lkey='';return}
  if(s.id!==CHAT.sid){CHAT.sid=s.id;CHAT.items=[];CHAT.key='';pollChat()}
  if(s.saidT&&(!CHAT.seen||CHAT.open))seen(s.saidT);
- var p=pending(),unread=!!s.saidT&&s.saidT>CHAT.seen,note=s.state==='work'?'working':s.state==='bg'?'background task running':'';
+ bubble(s);var p=pending(),unread=!!s.saidT&&s.saidT>CHAT.seen,note=s.state==='work'?'working':s.state==='bg'?'background task running':'';
  var term=tmode()==='term',tl=term?((TAPI&&TAPI.tail())||actText(s)||(s.said?oneLine(s.said):'not connected')):'';
  var key=[s.id,s.saidT,s.state,unread,CHAT.open,p?p.id+p.state+p.asleep:'',term,tl].join(':');if(key===CHAT.lkey)return;CHAT.lkey=key;
  var av='<i class="lma'+(unread?' new':'')+'" aria-hidden="true">C</i>',line=av+(p?'<b>You</b><span class="tx me">'+oneLine(p.text)+'</span><small>'+(p.state==='delivered'?'delivered, Claude is answering':p.asleep?'not delivered, the session sleeps':'sent, not delivered yet')+'</small>'
   :s.said?'<b>Claude</b><small>'+ts(s.saidT)+'</small><span class="tx">'+(unread?'<b>New reply.</b> ':'')+oneLine(s.said)+'</span>'+(note?'<small>'+note+'</small>':'')
   :'<b>Claude</b><span class="tx me">session '+esc(sesName(s))+' has not said anything yet</span>')+'<span class="go">'+(unread?'Read':'Reply')+'</span>';
- el.hidden=false;el.innerHTML='<button type="button" class="cl1" id="lmo" aria-haspopup="dialog">'+line+'</button>';$('lmo').onclick=function(){chatOpen(true)};
  // the folded line: in the terminal view it is the session by its name and the last thing it said there
  cw.hidden=false;$('cwp').innerHTML=TOK?tswitch()+(term?'<b>'+esc(sesName(s))+'</b><span class="tx mono">'+esc(tl)+'</span><span class="go">Open</span>':line.slice(av.length)):line;
- $('cwp').hidden=CHAT.open;$('cwb').hidden=!CHAT.open;boxApply();
+ $('cwp').classList.toggle('un',unread);$('cwp').hidden=CHAT.open;$('cwb').hidden=!CHAT.open;boxApply();
  $('cwt').innerHTML=term?'<b>'+esc(sesName(s))+'</b> <small>'+STX[s.state]+'</small>':'<b>Claude</b> <small>session '+esc(sesName(s))+', '+STX[s.state]+'</small>';
  if(!CHAT.err){$('cwn').className='cwn';$('cwn').textContent=s.state==='closed'?'This session is closed: it is resumed in the background to answer. Enter sends, Shift+Enter makes a new line.':s.state==='work'||s.state==='bg'?'The session is busy: the message arrives as soon as it is free. Enter sends, Shift+Enter makes a new line.':'The message wakes the session. Enter sends, Shift+Enter makes a new line.'}}
+// A new reply of the session comes out of the folded line as a bubble with its first lines, stays for eight
+// seconds and folds back; the red dot on the line stays until the reply is opened. Only a finished reply is
+// shown this way: what Claude notes while it works would pop up again and again. Nothing pops up for a reply
+// that was there when the page was opened, or while the window is open (the reply is in front of you there).
+var BUB={t:null,due:0,h:0};
+function bubble(s){var el=$('cwu');if(!el)return;if(BUB.t===null||s.id!==BUB.sid){BUB.t=s.saidT||0;BUB.sid=s.id;BUB.due=0;bubOff(true);return}
+ if(s.saidT&&s.saidT>BUB.t){BUB.t=s.saidT;BUB.due=s.saidT}
+ if(CHAT.open){BUB.due=0;bubOff(true);return}
+ if(!BUB.due||s.state==='work'||!s.said)return;BUB.due=0;
+ el.innerHTML='<small>Claude · '+esc(sesName(s))+'</small><span>'+oneLine(s.said)+'</span>';el.className='cwu on';el.hidden=false;clearTimeout(BUB.h);
+ BUB.h=setTimeout(function w(){if(el.matches(':hover')){BUB.h=setTimeout(w,2000);return}bubOff()},8000)}
+function bubOff(now){var el=$('cwu');if(!el||el.hidden)return;clearTimeout(BUB.h);if(now){el.hidden=true;return}el.className='cwu off';BUB.h=setTimeout(function(){el.hidden=true},280)}
 function chatDraw(){var l=$('cwl'),low=l.scrollHeight-l.scrollTop-l.clientHeight<40;
  l.innerHTML=CHAT.items.length?CHAT.items.map(function(m,i){
   if(m.who==='a')return '<div class="cb a">'+md(m.text)+'</div><div class="ct">'+exact(m.t)+'</div>';
@@ -773,9 +790,9 @@ function chatDraw(){var l=$('cwl'),low=l.scrollHeight-l.scrollTop-l.clientHeight
  if(low)l.scrollTop=l.scrollHeight}
 function pollChat(){if(!CHAT.sid)return;var sid=CHAT.sid;fetch('/api/chat?session='+encodeURIComponent(sid),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){
  if(sid!==CHAT.sid)return;var k=JSON.stringify(j.items||[]);if(k===CHAT.key)return;CHAT.key=k;CHAT.items=j.items||[];chatDraw();lastMsg()}).catch(function(){})}
-function chatOpen(on,quiet){CHAT.open=on;keepOpen();CHAT.lkey='';lastMsg();modeApply(!quiet);if(on){if(tmode()==='term'){if(TAPI)TAPI.focus()}else{var l=$('cwl');l.scrollTop=l.scrollHeight;$('cwi').focus()}}else{var o=$('lmo');if(o)o.focus()}}
+function chatOpen(on,quiet){CHAT.open=on;keepOpen();CHAT.lkey='';lastMsg();modeApply(!quiet);if(on){if(tmode()==='term'){if(TAPI)TAPI.focus()}else{var l=$('cwl');l.scrollTop=l.scrollHeight;$('cwi').focus()}}else{var o=$('cwp');if(o)o.focus()}}
 function chatFit(){var t=$('cwi');t.style.height='auto';t.style.height=Math.min(180,t.scrollHeight+2)+'px';$('cws').disabled=CHAT.busy||!t.value.trim()}
-if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);document.querySelector('#cwb .cwh').addEventListener('pointerdown',boxMove);window.addEventListener('resize',boxPlace);
+if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);$('cwu').onclick=function(){chatOpen(true)};$('cwu').onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();chatOpen(true)}};document.querySelector('#cwb .cwh').addEventListener('pointerdown',boxMove);window.addEventListener('resize',boxPlace);
  $('cwsd').onclick=function(){var o=CHAT.box;o.ax=o.ax==='l'?'r':'l';o.x=20;boxSave();boxPlace();setTimeout(noteTop,0);if(tmode()==='term'&&TAPI)TAPI.focus()};
  $('cwb').addEventListener('dblclick',function(e){if(!e.target.dataset.r)return;var o=CHAT.box;if(o.wide)delete o.hw;else{delete o.w;delete o.h}boxSave();boxApply()});
  $('cwd').onclick=function(){CHAT.box.wide=!CHAT.box.wide;boxSave();boxApply();if(tmode()==='term'){if(TAPI){TAPI.fit();TAPI.focus()}}else{var l=$('cwl');l.scrollTop=l.scrollHeight;$('cwi').focus()}};

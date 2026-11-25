@@ -134,8 +134,10 @@ While you have not opened that feature since the reply, the row is highlighted, 
 browser tab title starts with the number of such features. "N items for you" counts the open items of the feature that only you can do. The arrow at the
 top collapses the bar to a narrow strip (remembered); on a narrow screen it becomes a row of chips.
 
-**The window of the session.** A feature page shows the latest reply of the feature's session as one line, under the
-tabs and in the bottom right corner (that one stays in view while you scroll). **Reply** on either opens the window of
+**The window of the session.** A feature page keeps the session of the feature in the bottom right corner, folded to
+one line: its latest reply, or your message that is on its way. A new reply comes out of that line as a bubble with
+its first lines, stays for eight seconds and folds back; a red dot stays on the line until you open the reply (what
+Claude notes while it still works does not pop up). **Reply** on the line, or the bubble, opens the window of
 the session. It has two views, and the switch in its corner (**C** for the messages, **>_** for the terminal) goes
 from one to the other; the switch is on the folded line too.
 - *Messages*: the recent conversation of the session read from its transcript (what you typed in the terminal, what
