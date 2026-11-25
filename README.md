@@ -151,6 +151,23 @@ works in, the folder it was started in (the agent reaches everything under it), 
 transcript. For an open session it also shows the CPU (percent of one core) and memory its process takes together with
 everything started under it; the Sessions list shows the same. Not read on Windows yet.
 
+**The Git tab.** A feature whose sessions work in a repository gets a **Git** tab (a feature without one does not).
+It has a block per repository, found from the folders the sessions worked in and remembered in `repos.json` next to
+`feature.json`:
+- the branch, files in no commit, commits not pushed, and how far the branch is from the main one (`+3 / −1 vs main`);
+- the pull request (GitHub) or merge request (GitLab) of the branch with a link, and whether it is merged; when there
+  is none, a link to create it;
+- the commits of the branch that the main one does not have (on the main branch: the latest ones), each with a link,
+  marked "not pushed" and "this feature" (made by a session of the feature, as the hook saw it);
+- a warning when other sessions are in the same repository right now;
+- **Ask the session to push** and **Ask the session to open it** send that request to the feature's session.
+
+Everything is read with plain git on your machine, with your own keys and credential helpers; nothing is written to a
+repository and git's optional locks are not taken. The requests are found without any extra program: GitLab publishes
+merge requests as `refs/merge-requests/N/head` and GitHub pull requests as `refs/pull/N/head`, which also tells the two
+apart on a self-hosted server. The remote is asked at most once in two minutes per repository. The tab counts unpushed
+commits and repositories with uncommitted files.
+
 **Background task running.** A session that ended its turn while a background command or agent is still running does
 not wait for you: it goes on by itself when the task ends. Claude Code reports such a session as busy, and the pages
 show it as "background task running" instead of "waiting for you".
@@ -179,6 +196,8 @@ argument and is never concatenated into a command.
 - `featuresDir` (or `$FEATURES_DIR`): where the features live. Default `~/.whatnow/features`.
 - `aliases`: use when a repository folder is not named like the project in `feature.json`.
 - `claudeBin`: path to the `claude` executable, for a service whose PATH is short.
+- `gitHosts`: `{"git.example.org": "gitlab"}` (or `"github"`), only for a server whose kind the Git tab cannot tell.
+- `remind`: `false` stops the reminder to write new work into the plan; `nudge`: `false` stops the one after a turn.
 - `$WHATNOW_HOME` changes the root (`~/.whatnow`).
 
 ## Files

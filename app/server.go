@@ -1168,6 +1168,10 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		default:
 			send(w, 200, []byte(page("vendor"+path)), "text/javascript; charset=utf-8")
 		}
+	case "/api/git": // the Git tab; the remote is asked too (the page already has the local state)
+		if s, ok := slugArg(); ok {
+			sendJSON(w, 200, gitState(s, true))
+		}
 	case "/api/route":
 		if s, ok := slugArg(); ok {
 			route, sess, name := planRoute(s)
@@ -1191,7 +1195,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					text(w, 500, "feature.json: "+err.Error())
 					return
 				}
-				send(w, 200, []byte(withSide(html, map[string]any{"ses": pickList(slug), "ver": versionInfo(slug), "inbox": map[string]any{"entries": inboxState()}}, h.local)), "text/html; charset=utf-8")
+				send(w, 200, []byte(withSide(html, map[string]any{"ses": pickList(slug), "ver": versionInfo(slug), "inbox": map[string]any{"entries": inboxState()}, "git": gitState(slug, false)}, h.local)), "text/html; charset=utf-8")
 				return
 			}
 		}

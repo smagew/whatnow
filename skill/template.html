@@ -234,6 +234,21 @@ body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes w
 .chb{display:inline-block;margin-right:6px;font-size:11px;font-weight:700;line-height:1.5;padding:0 6px;border-radius:99px;background:#f3d36b;color:#3a2a00;vertical-align:1px;animation:chb .6s ease-in-out 4}
 /* with "reduce motion" nothing moves; the glow stays, it is a change of colour, not a movement */
 @media(prefers-reduced-motion:reduce){.chn,.chb{animation:none}}
+/* the Git tab: a block per repository */
+.gitw{display:flex;flex-direction:column;gap:14px}.gitw>.why{margin:0}
+.gr{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 18px 10px}
+.grh{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}.grh h3{margin:0;font-size:16px;font-weight:600}.grh .gb{font-size:12.5px;background:var(--liveb);color:var(--live)}
+.grh .gp{color:var(--mut);font-size:12.5px}.grh .gx{flex:1}.gr a{color:var(--acc);font-size:12.5px;font-weight:600;text-decoration:none;white-space:nowrap}.gr a:hover{text-decoration:underline}
+.gc{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-top:10px}
+.gch{font-size:12px;font-weight:600;padding:2px 10px;border-radius:99px;background:var(--no);color:var(--ink);white-space:nowrap}.gch.info{background:#e8eeea;color:var(--ink)}.gch.warn{background:var(--warnb);color:#5a4300}.gch.ok{background:#dff3e8;color:var(--ok)}
+.gr button{all:unset;cursor:pointer;font-size:12px;font-weight:600;padding:2px 10px;border-radius:99px;border:1px solid var(--line);background:#fff;color:var(--ink);white-space:nowrap}.gr button:hover{border-color:var(--acc)}.gr button:disabled{opacity:.5;cursor:default}.gr button:focus-visible,.gr a:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
+.grq{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:10px;font-size:13px}.grq .gq{font-size:13.5px}.gm{color:var(--mut);font-size:13px}
+.go{margin:10px 0 0;padding:8px 12px;border-radius:8px;background:var(--warnb);color:#5a4300;font-size:13px}.gsaid{margin:8px 0 0;font-size:12.5px;color:var(--live)}
+.gr h4{margin:14px 0 4px;font-size:13px;font-weight:600}.gr h4 small{font-weight:400;color:var(--mut)}
+.gcl{list-style:none;margin:0;padding:0}.gcl li{display:flex;gap:6px 10px;align-items:baseline;padding:5px 0;border-top:1px solid var(--line);font-size:13px}.gcl li:first-child{border-top:0}
+.gcl .gs{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gcl .ga{flex:none;color:var(--mut);font-size:12px;white-space:nowrap}.gcl .tag{flex:none}
+.tag.live{background:var(--liveb);color:var(--live)}
+@media(max-width:860px){.gcl li{flex-wrap:wrap}.gcl .gs{flex-basis:100%;white-space:normal}}
 /* the folders the sessions of the feature work in: a card under the stages */
 .dcard{margin:18px 0 4px 2px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:12px;font-size:13px;color:var(--mut);line-height:1.5}
 .dcard h4{margin:0 0 6px;font-size:13px;color:var(--ink)}.dcard .dp{display:block;margin-top:6px}.dcard .dn{margin-top:12px}.dcard code{white-space:normal;word-break:break-all}.dcard b{color:var(--ink);font-weight:600}
@@ -280,6 +295,8 @@ function rich(t){return String(t==null?'':t).replace(/&(?!(?:[a-z]+|#\d+|#x[0-9a
 $('t').textContent=P.title;$('t').title=P.title;$('sub').innerHTML=rich(P.sub)+(P.updated&&!P.updatedTs?' Updated '+esc(P.updated)+'.':'');$('sub').title=$('sub').textContent;
 var problems=0;P.stages.forEach(function(s){s.facts.forEach(function(f){if(f[0]==='q'||f[0]==='bad')problems++})});
 var tabs=[['work','Progress'],['ov','What is left'],['dec','Decisions and questions']];
+// the Git tab exists only for a feature whose sessions work in a repository
+var HASGIT=P.live&&INIT.git&&INIT.git.repos&&INIT.git.repos.length>0;if(HASGIT)tabs.push(['git','Git']);
 $('tabs').innerHTML=tabs.map(function(t,i){return '<button role="tab" id="tab-'+t[0]+'" aria-controls="p-'+t[0]+'" aria-selected="'+(i===0)+'" tabindex="'+(i?-1:0)+'">'+t[1]+(t[0]==='ov'&&P.blockers.length?'<span class="cnt'+(P.blockers.some(function(b){return b.who==='you'})?' bad':'')+'">'+P.blockers.length+'</span>':'')+'</button>'}).join('');
 function ul(a,c){return '<ul class="'+c+'">'+a+'</ul>'}
 var hi=P.blockers.filter(function(b){return b.sev==='high'}).length,mid=P.blockers.filter(function(b){return b.sev==='mid'}).length,lo=P.blockers.filter(function(b){return b.sev==='low'}).length,SV={high:'critical',mid:'important',low:'minor'};
@@ -292,11 +309,11 @@ var ov='<p class="why sum">'+rich(P.summary||'')+'</p><div class="chips">'+GROUP
 var w='<div class="md"><div class="rail" role="tablist" aria-orientation="vertical" aria-label="Stages" id="stl"></div><div class="det" id="det" role="tabpanel" tabindex="0"></div></div>';
 // dec
 var dc='<div class="two"><div class="det"><h2>Decided</h2><ul>'+P.decisions.map(function(x){return '<li>'+rich(x)+'</li>'}).join('')+'</ul></div><div class="det"><h2>Open</h2><ul>'+P.questions.map(function(x){return '<li>'+rich(x)+'</li>'}).join('')+'</ul></div></div>';
-$('main').innerHTML=[['work',w],['ov',ov],['dec',dc]].map(function(x,i){return '<section role="tabpanel" id="p-'+x[0]+'" aria-labelledby="tab-'+x[0]+'"'+(i?' hidden':'')+'>'+x[1]+'</section>'}).join('');
+$('main').innerHTML=[['work',w],['ov',ov],['dec',dc]].concat(HASGIT?[['git','<div class="gitw" id="gitl"></div>']]:[]).map(function(x,i){return '<section role="tabpanel" id="p-'+x[0]+'" aria-labelledby="tab-'+x[0]+'"'+(i?' hidden':'')+'>'+x[1]+'</section>'}).join('');
 // tabs behaviour
 var tb=[].slice.call(document.querySelectorAll('#tabs button'));
 var curTab='work';
-function show(k){curTab=k;tb.forEach(function(b){var on=b.id==='tab-'+k;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1});['ov','work','dec'].forEach(function(x){$('p-'+x).hidden=x!==k});if(typeof keep==='function')keep()}
+function show(k){curTab=k;tb.forEach(function(b){var on=b.id==='tab-'+k;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1});tabs.forEach(function(t){$('p-'+t[0]).hidden=t[0]!==k});if(k==='git'&&typeof gitShow==='function')gitShow();if(typeof keep==='function')keep()}
 tb.forEach(function(b,i){b.addEventListener('click',function(){show(b.id.slice(4))});b.addEventListener('keydown',function(e){var n=e.key==='ArrowRight'?i+1:e.key==='ArrowLeft'?i-1:null;if(n===null)return;n=(n+tb.length)%tb.length;tb[n].focus();show(tb[n].id.slice(4))})});
 // stage detail
 var cur=0,CUR=Math.max(0,P.stages.map(function(s){return s.n}).indexOf(P.cur)),MORE=false;
@@ -512,6 +529,45 @@ if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);
   post({action:'tell',session:CHAT.sid,text:txt}).then(function(r){if(!r.ok)return fail((r.j&&r.j.error)||'could not send');
    CHAT.busy=false;t.value='';chatFit();CHAT.lkey='';var l=$('cwl');l.scrollTop=l.scrollHeight;pollChat();lastMsg()}).catch(function(){fail('no connection to the server')})});
  if(P.live)setInterval(pollChat,3000)}
+// The Git tab: one block per repository the sessions of the feature work in. What is committed and pushed, how far
+// the branch is from the main one, the pull request (GitHub) or merge request (GitLab) of the branch, the commits
+// with links, who else is in the repository, and two things to ask the session for: to push, to open the request.
+var GIT={d:INIT.git||{repos:[]},said:{},busy:false,timer:0};
+function gitLinks(r){var w=r.web,f=r.forge||(r.host==='github.com'?'github':''),e=encodeURIComponent;if(!w||!f)return{f:f};
+ return f==='github'?{f:f,word:'pull request',mark:'#',site:'GitHub',commit:w+'/commit/',req:w+'/pull/',list:w+'/pulls',make:w+'/compare/'+e(r.base)+'...'+e(r.branch)+'?expand=1'}
+  :{f:f,word:'merge request',mark:'!',site:'GitLab',commit:w+'/-/commit/',req:w+'/-/merge_requests/',list:w+'/-/merge_requests',make:w+'/-/merge_requests/new?merge_request%5Bsource_branch%5D='+e(r.branch)+'&merge_request%5Btarget_branch%5D='+e(r.base)}}
+function gitCard(r){var L=gitLinks(r),onBase=r.branch&&r.branch===r.base,chips=[],s=agent()||chatSes(),n=function(c,w){return c+' '+w+(c===1?'':'s')};
+ if(r.dirty)chips.push(['warn',n(r.dirty,'file')+' not committed','Changed or new files that are in no commit yet']);
+ if(r.noUpstream)chips.push(['warn','branch not pushed yet','The branch exists only on this machine'+(r.ahead?': '+n(r.ahead,'commit')+' the remote does not have':'')]);
+ else if(r.ahead)chips.push(['warn',n(r.ahead,'commit')+' not pushed','Commits the remote branch does not have']);
+ if(r.behind)chips.push(['info',n(r.behind,'commit')+' behind its remote','The remote branch has commits this folder does not have yet']);
+ if(!r.remote)chips.push(['info','no remote','This repository has no "origin": there is nowhere to push to']);
+ if(r.remote&&!r.dirty&&!r.ahead&&!r.noUpstream)chips.push(['ok','everything is pushed','No uncommitted files and no unpushed commits']);
+ if(r.baseAhead!=null&&!onBase)chips.push(['info','+'+r.baseAhead+' / −'+r.baseBehind+' vs '+esc(r.base),'This branch has '+n(r.baseAhead,'commit')+' that '+r.base+' does not have, and '+r.base+' has '+r.baseBehind+' that this branch does not have']);
+ var req='';
+ if(GIT.d.remote&&r.remote){
+  if(r.asked===false)req='<span class="gm">Could not reach the remote, so the '+(L.word||'request')+' of the branch is not known.</span>';
+  else if(r.request)req='<a class="gq" href="'+esc(L.req+r.request.n)+'" target="_blank" rel="noopener">'+(L.word==='pull request'?'Pull request':'Merge request')+' '+L.mark+r.request.n+' ↗</a>'+(r.request.merged?'<span class="tag ok">merged</span>':'<span class="tag part">not merged</span>');
+  else if(onBase)req='<span class="gm">Works on the main branch (<code>'+esc(r.base)+'</code>): no '+(L.word||'request')+'.</span>';
+  else if(L.word)req='<span class="gm">No '+L.word+' for this branch yet.</span>'+(r.onRemote?' <a href="'+esc(L.make)+'" target="_blank" rel="noopener">Create one ↗</a>':'')+(P.live?'<button type="button" data-g="req"'+(s?'':' disabled title="No session of this feature is known"')+'>Ask the session to open it</button>':'');
+  else req='<span class="gm">The kind of this server is not known, so its requests cannot be found. Set it in <code>~/.whatnow/config.json</code>: <code>{"gitHosts": {"'+esc(r.host)+'": "gitlab"}}</code></span>'}
+ else if(r.remote)req='<span class="gm">Asking the remote…</span>';
+ var push=P.live&&r.remote&&(r.ahead||r.noUpstream)?'<button type="button" data-g="push"'+(s?'':' disabled title="No session of this feature is known"')+'>Ask the session to push</button>':'';
+ var oth=(r.others||[]).length?'<p class="go" role="note">Also in this repository right now: '+r.others.map(function(o){return '<b>'+esc(o.name)+'</b>'+(o.feature?' (feature '+esc(o.feature)+')':'')}).join(', ')+'. Two sessions in one folder change the same files and the same branch.</p>':'';
+ var cm=r.commits||[],head=onBase||!r.base?'Latest commits':'Commits of this branch that <code>'+esc(r.base)+'</code> does not have';
+ return '<section class="gr" data-repo="'+esc(r.path)+'"><div class="grh"><h3>'+esc(r.name)+(r.worktree?' <span class="tag no">worktree '+esc(r.worktree)+'</span>':'')+'</h3><code class="gb" title="Branch">'+esc(r.branch||('detached at '+r.detached))+'</code><span class="gp">'+esc(r.path)+'</span><span class="gx"></span>'+(r.web?'<a href="'+esc(r.web)+'" target="_blank" rel="noopener">Open'+(L.site?' on '+L.site:'')+' ↗</a>':'')+(L.list?'<a href="'+esc(L.list)+'" target="_blank" rel="noopener">All '+L.word+'s ↗</a>':'')+'</div>'+
+  '<div class="gc">'+chips.map(function(c){return '<span class="gch '+c[0]+'" title="'+esc(c[2])+'">'+c[1]+'</span>'}).join('')+push+'</div>'+(req?'<div class="grq">'+req+'</div>':'')+oth+(GIT.said[r.path]?'<p class="gsaid">'+esc(GIT.said[r.path])+'</p>':'')+
+  '<h4>'+head+(cm.length?' <small>'+cm.length+(cm.length>=15?', the latest':'')+'</small>':'')+'</h4>'+(cm.length?'<ol class="gcl">'+cm.map(function(c){return '<li>'+(L.commit?'<a href="'+esc(L.commit+c.hash)+'" target="_blank" rel="noopener"><code>'+c.short+'</code></a>':'<code>'+c.short+'</code>')+'<span class="gs">'+esc(c.subject)+'</span>'+(c.pushed===false?'<span class="tag part" title="The remote does not have this commit yet">not pushed</span>':'')+(c.mine?'<span class="tag live" title="Made by a session of this feature">this feature</span>':'')+'<span class="ga">'+esc(c.author)+' · '+ts(c.ts)+'</span></li>'}).join('')+'</ol>':'<p class="gm">'+(onBase?'No commits.':'None: everything of this branch is already in <code>'+esc(r.base)+'</code>.')+'</p>')+'</section>'}
+function gitUI(){var el=$('gitl');if(!el)return;var rs=GIT.d.repos||[],h='<p class="why">The repositories the sessions of this feature work in. Read with git on this machine; nothing is changed there.</p>'+rs.map(gitCard).join('');
+ if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h}
+ var up=0;rs.forEach(function(r){up+=(r.ahead||0)+(r.dirty?1:0)});var tbn=$('tab-git');if(tbn){var c=tbn.querySelector('.cnt');if(up&&!c){c=document.createElement('span');c.className='cnt';tbn.appendChild(c)}if(c){if(up){c.textContent=up;c.title='Unpushed commits and repositories with uncommitted files'}else c.remove()}}}
+function gitLoad(){if(GIT.busy)return;GIT.busy=true;fetch('/api/git?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){GIT.busy=false;if(j&&j.repos){GIT.d=j;gitUI()}}).catch(function(){GIT.busy=false})}
+function gitShow(){gitUI();gitLoad();if(!GIT.timer)GIT.timer=setInterval(function(){if(curTab==='git'&&document.visibilityState==='visible')gitLoad()},20000)}
+if(HASGIT){gitUI();setTimeout(gitLoad,1200);   // the count on the tab needs the state even while another tab is open
+ if(location.hash==='#git')show('git');
+ $('gitl').addEventListener('click',function(e){var b=e.target.closest('button[data-g]');if(!b||b.disabled)return;var path=b.closest('.gr').dataset.repo,r=(GIT.d.repos||[]).filter(function(x){return x.path===path})[0],s=agent()||chatSes();if(!r||!s)return;
+  var L=gitLinks(r),txt=b.dataset.g==='push'?'Please push the commits of branch '+r.branch+' in '+r.path+' to origin, and tell me when it is done.':'Please open a '+(L.word||'pull request')+' for branch '+r.branch+' of '+r.path+' into '+r.base+', and tell me the link.';
+  b.disabled=true;post({action:'tell',session:s.id,text:txt}).then(function(x){GIT.said[path]=x.ok?'Asked session '+sesName(s)+(b.dataset.g==='push'?' to push.':' to open the '+(L.word||'request')+'.'):'Could not send: '+((x.j&&x.j.error)||'unknown error');gitUI()}).catch(function(){GIT.said[path]='No connection to the server.';gitUI()})})}
 // Where the sessions of this feature work: the folder a session was started in (the agent reaches everything under
 // it), the folder it is in now, the folders added to it, and the others it worked in lately. A card under the stages.
 function dirsOf(s){var d=s.dirs||{};return{root:d.root||'',now:d.now||d.root||'',add:d.add||[],seen:(d.seen||[]).filter(function(x){return x!==d.root&&x!==d.now})}}
