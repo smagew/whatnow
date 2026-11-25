@@ -361,8 +361,15 @@ html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
 .ft .dtl{display:inline-block}.fi>.dtx{flex-basis:100%;order:2;margin:6px 0 4px 30px}
 .dtx ul,.res ul{list-style:disc}.dtx ul li,.res ul li{display:list-item}
 .grf{display:inline-flex;flex-wrap:wrap;gap:4px;margin-left:8px;vertical-align:1px}
-.grc,.gst{all:unset;cursor:pointer;font:600 11.5px ui-monospace,Menlo,monospace;padding:0 7px;border-radius:99px;background:var(--liveb);color:var(--live);white-space:nowrap;line-height:1.6}
-.grc.np{background:var(--warnb);color:#5a4300}.grc:hover,.gst:hover{box-shadow:0 0 0 1px currentColor}
+.gst{all:unset;cursor:pointer;font:600 11.5px ui-monospace,Menlo,monospace;padding:0 7px;border-radius:99px;background:var(--liveb);color:var(--live);white-space:nowrap;line-height:1.6}
+/* the commit of an item: an icon, the short hash, and its state in a word; green when it is in the remote */
+.fi .ft .grf{display:flex;margin:5px 0 1px}
+.grc{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:20px;padding:1px 10px 1px 7px;border-radius:7px;border:1px solid #cfd8d3;background:#f3f6f4;color:var(--mut);white-space:nowrap}
+.grc b{font:600 12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink)}.grc span{font-weight:600}
+.grc.ok{border-color:#a9d8bd;background:#e6f4ec;color:#0f6b40}.grc.np{border-color:#ecd27a;background:var(--warnb);color:#5a4300}.grc:hover,.gst:hover{box-shadow:0 0 0 1px currentColor}
+.tag.sgit{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:1px 9px 1px 7px;border-radius:99px;margin-right:8px;white-space:nowrap;vertical-align:middle}
+.tag.sgit.ok{background:#e6f4ec;color:#0f6b40}.tag.sgit.np{background:var(--warnb);color:#5a4300}.tag.sgit:hover{box-shadow:0 0 0 1px currentColor}.tag.sgit:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
+.rr .rg{flex:none;display:inline-grid;place-items:center;margin-right:6px}.rr .rg.ok{color:#2f9e6a}.rr .rg.np{color:#c98a00}
 .grp{font:600 11.5px ui-monospace,Menlo,monospace;padding:0 7px;border-radius:99px;border:1px dashed #8c9a92;color:var(--mut);white-space:nowrap;line-height:1.6}
 .gst{flex:none;font-family:inherit}
 /* the Git tab: a block per repository */
@@ -489,7 +496,7 @@ function renderRail(){var el=$('stl');if(!el)return;var S=P.stages,a=P.live?agen
     '<span class="ft2"><span>'+s.dn+' of '+s.tot+' done</span>'+(l?'<span'+tipA('Last change '+exact(l.ts),l.t)+'>changed '+ts(l.ts)+'</span>':'')+'</span><span class="act" id="act"></span></span></button>';return}
   // every stage says the same thing here: how many of its items are done. A time that keeps counting said nothing
   // about a stage nobody works on; when the stage last changed is in the tooltip, and a dot marks the last hour.
-  var chip=s.tot?'<small class="cn'+(l&&Date.now()-l.ts<H1?' rc':'')+'"'+(l?tipA(s.dn+' of '+s.tot+' items done','Last change '+exact(l.ts)+': '+l.t):tipA(s.dn+' of '+s.tot+' items done'))+'>'+s.dn+' of '+s.tot+'</small>':'';chip=(msgWait(s)?'<i class="rm"'+tipA(msgWait(s)===1?'A message of yours waits for a reply here':msgWait(s)+' messages of yours wait for a reply here')+'><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></i>':'')+chip;if(chip)chip='<span class="cnw">'+chip+'</span>';
+  var chip=s.tot?'<small class="cn'+(l&&Date.now()-l.ts<H1?' rc':'')+'"'+(l?tipA(s.dn+' of '+s.tot+' items done','Last change '+exact(l.ts)+': '+l.t):tipA(s.dn+' of '+s.tot+' items done'))+'>'+s.dn+' of '+s.tot+'</small>':'';chip=(msgWait(s)?'<i class="rm"'+tipA(msgWait(s)===1?'A message of yours waits for a reply here':msgWait(s)+' messages of yours wait for a reply here')+'><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></i>':'')+stageGitDot(s,i)+chip;if(chip)chip='<span class="cnw">'+chip+'</span>';
   h+='<button class="rr'+(i>CUR?' next':'')+(s.state==='no'?' fut':'')+end+'"'+sel+'><i class="rd '+s.state+'"'+tipA(t[0],t[1])+'>'+(s.state==='ok'?'✓':s.n)+'</i><span class="nm">'+kmark(s)+rich(s.title)+'</span>'+chip+'</button>'});
  if(S.length-tail>4)h+='<button class="rr more next end" data-more="1" aria-expanded="'+!fold+'"><i class="rd no">'+(fold?'…':'–')+'</i><span>'+(fold?'Show '+(S.length-tail-3)+' more stages':'Hide later stages')+'</span></button>';
  el.innerHTML=h;tipGone()}
@@ -551,8 +558,19 @@ function richBlock(t){return String(t).split(/\n\s*\n/).map(function(par){var ls
 // is pushed. An item that is not done and speaks of a commit, a push or a request is marked as planned git work.
 var HASH=/\b[0-9a-f]{7,40}\b/g,GITWORD=/\b(commit|push|merge request|pull request)\b|коммит|запуш|пуш(?![а-я]*к)/i;
 function gitRefsOf(f){var r=(GIT&&GIT.d&&GIT.d.refs)||{},seen={},out=[];((f[1]||'')+' '+(f[2]||'')).replace(HASH,function(h){var c=r[h.slice(0,7)];if(c&&!seen[c.hash]){seen[c.hash]=1;out.push(c)}return h});return out}
+var GITI='<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><circle cx="8" cy="8" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M1.5 8h3.9M10.6 8h3.9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+// The commits a stage names in its items, and what is true of them: all pushed, some not pushed yet. For the
+// stage the work is at, files that are not committed in a repository of the feature count too.
+function stageGit(s,i){if(typeof GIT==='undefined'||!GIT||!HASGIT)return null;var seen={},n=0,np=0;s.facts.forEach(function(f){gitRefsOf(f).forEach(function(c){if(seen[c.hash])return;seen[c.hash]=1;n++;if(c.pushed===false)np++})});
+ var dirty=0;if(i===CUR)(GIT.d.repos||[]).forEach(function(r){dirty+=r.dirty||0});
+ if(!n&&!dirty)return null;
+ var k=dirty||np?'np':'ok',t=n?(np?np+' of '+n+' commit'+(n>1?'s':'')+' not pushed':n+' commit'+(n>1?'s':'')+(n>1?', all pushed':', pushed')):'no commit yet';
+ return{k:k,n:n,np:np,dirty:dirty,t:t+(dirty?(n?', ':'; ')+dirty+' file'+(dirty>1?'s':'')+' not committed':'')}}
+function stageGitTag(s,i){var g=stageGit(s,i);return g?'<button type="button" class="tag sgit '+g.k+'" data-sg="1"'+tipA(g.k==='ok'?'The changes of this stage are committed and pushed':'Not everything of this stage is in the remote yet',g.t+'. Opens the Git tab.')+'>'+GITI+g.t+'</button>':''}
+function stageGitDot(s,i){var g=stageGit(s,i);return g?'<i class="rg '+g.k+'"'+tipA(g.k==='ok'?'Committed and pushed':'Not everything is pushed',g.t)+'>'+GITI+'</i>':''}
 function factGit(f,kind){if(typeof GIT==='undefined'||!GIT||!HASGIT)return '';var cs=gitRefsOf(f);
- if(cs.length)return '<span class="grf">'+cs.map(function(c){return '<button type="button" class="grc'+(c.pushed===false?' np':'')+'" data-gc="'+c.hash+'" title="'+esc((c.subject||'')+'\n'+c.repo+(c.pushed===false?'\nNot pushed yet':c.pushed?'\nPushed':'')+'\nOpens the commit on the Git tab')+'">⎇ '+c.short+(c.pushed===false?' · not pushed':'')+'</button>'}).join('')+'</span>';
+ if(cs.length)return '<span class="grf">'+cs.map(function(c){var st=c.pushed===false?['np','not pushed']:c.pushed?['ok','pushed']:['','committed'];
+  return '<button type="button" class="grc '+st[0]+'" data-gc="'+c.hash+'"'+tipA(c.subject||c.short,c.repo+'. '+(c.pushed===false?'Committed here, not pushed to the remote yet.':c.pushed?'Committed and pushed to the remote.':'Committed; this repository has no remote to push to.')+' Opens the commit on the Git tab.')+'>'+GITI+'<b>'+c.short+'</b><span>'+st[1]+'</span></button>'}).join('')+'</span>';
  return !DONE_K[kind]&&kind!=='n'&&GITWORD.test(f[1])?'<span class="grf"><span class="grp" title="This item is about a commit, a push or a request that is not done yet">⎇ planned</span></span>':''}
 function factLi(s,f,fi){var fid=(s.fids||[])[fi],kind=f[0],live=P.live&&fid,skipped=kind==='n',open=FORM&&FORM.fid===fid;
  var c=CHF[fid],fresh=c&&Date.now()-c.ts<D1,ag=P.live?agent():null,on=ag&&ag.state==='work';
@@ -574,7 +592,7 @@ function renderStage(i){cur=i;if(typeof keep==='function')keep();var s=P.stages[
  if(!s){$('det').innerHTML='<p class="why">No stages yet.</p>';queue();renderOv();return}
  renderRail();
  var tg={ok:['ok','Done'],almost:['ok','Almost done'],part:['part','Partly done'],bad:['bad','Has an open problem'],no:['no','Not started']}[s.state];
- $('det').innerHTML='<h2>'+s.n+'. '+rich(s.title)+'</h2><p class="vv"><span class="tag '+tg[0]+'">'+tg[1]+'</span>'+(KI[s.kind]?'<span class="tag no">'+KI[s.kind][0]+' '+KI[s.kind][1]+'</span>':'')+(s.unplanned?'<span class="tag bad">not in the plan</span>':'')+rich(s.verdict)+'</p>'+fline(s)+(s.result?'<div class="res"><b>How the stage ended</b>'+richBlock(s.result)+'</div>':'')+'<div class="pf"><div><h3>What the stage included</h3>'+(s.plan.length?ul(s.plan.map(function(p){return '<li>'+rich(p)+'</li>'}).join(''),'plan'):'<div class="empty">This stage was not in the plan</div>')+'</div><div><h3>What was done, what was not</h3>'+ul(s.facts.map(function(f,fi){return factLi(s,f,fi)}).join(''),'fact')+'</div></div><div class="nav"><button id="pv"'+(i===0?' disabled':'')+'>← '+(i?'Stage '+P.stages[i-1].n:'')+'</button><button id="nx"'+(i===P.stages.length-1?' disabled':'')+'>'+(i<P.stages.length-1?'Stage '+P.stages[i+1].n:'')+' →</button></div>';
+ $('det').innerHTML='<h2>'+s.n+'. '+rich(s.title)+'</h2><p class="vv"><span class="tag '+tg[0]+'">'+tg[1]+'</span>'+(KI[s.kind]?'<span class="tag no">'+KI[s.kind][0]+' '+KI[s.kind][1]+'</span>':'')+(s.unplanned?'<span class="tag bad">not in the plan</span>':'')+stageGitTag(s,i)+rich(s.verdict)+'</p>'+fline(s)+(s.result?'<div class="res"><b>How the stage ended</b>'+richBlock(s.result)+'</div>':'')+'<div class="pf"><div><h3>What the stage included</h3>'+(s.plan.length?ul(s.plan.map(function(p){return '<li>'+rich(p)+'</li>'}).join(''),'plan'):'<div class="empty">This stage was not in the plan</div>')+'</div><div><h3>What was done, what was not</h3>'+ul(s.facts.map(function(f,fi){return factLi(s,f,fi)}).join(''),'fact')+'</div></div><div class="nav"><button id="pv"'+(i===0?' disabled':'')+'>← '+(i?'Stage '+P.stages[i-1].n:'')+'</button><button id="nx"'+(i===P.stages.length-1?' disabled':'')+'>'+(i<P.stages.length-1?'Stage '+P.stages[i+1].n:'')+' →</button></div>';
  $('pv').onclick=function(){renderStage(cur-1)};$('nx').onclick=function(){renderStage(cur+1)};tick();queue();renderOv();}
 // freshness in the header: when the feature was last updated and what its session does
 function freshBar(){var el=$('fr');if(!el||!P.updatedTs)return;var a=P.live?agent():null,st=a?a.state:'',old=Date.now()-P.updatedTs>H1,n=CH.filter(function(c){return c.ts>=Date.now()-H1}).length;
@@ -608,6 +626,7 @@ function post(body){return fetch('/api/act',{method:'POST',headers:{'Content-Typ
 function onAct(e){var b=e.target.closest('button');if(!b||b.dataset.stage)return;
  if(b.dataset.mm){var on=MSGOPEN[b.dataset.mm]=!MSGOPEN[b.dataset.mm];b.closest('.yq').classList.toggle('all',on);b.textContent=on?'Fold':'Show all';b.setAttribute('aria-expanded',on);return}
  if(b.dataset.dt){OPENF[b.dataset.dt]=!OPENF[b.dataset.dt];renderStage(cur);var nb=document.querySelector('#det button[data-dt="'+b.dataset.dt+'"]');if(nb)nb.focus();return}
+ if(b.dataset.sg){var tg=$('tab-git');if(tg)tg.click();return}
  if(b.dataset.gc){gitGo(b.dataset.gc);return}if(b.dataset.ses==='open'){SES.pick=true;SES.err='';sesBar();window.scrollTo({top:0,behavior:'smooth'});return}var li=b.closest('[data-fid]');
  var back=function(k){FORM=null;softReload()};   // the page takes the new data in place, on the tab it is on
  if(b.dataset.a==='unskip'){var k0=li.dataset.kind||'';post({feature:P.slug,fid:li.dataset.fid,action:'unskip',kind:k0}).then(function(r){if(r.ok)back(k0)});return}
