@@ -1,0 +1,98 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>whatnow: the bar on the left, cleaner</title>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* A demo, not the app: the bar on the left as it is now, and three ways to make it easier to read. The names of
+   the works are made up. Pick a variant at the top; "Now" is today's bar, for comparison. Nothing here is live. */
+*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:#eef1ee;color:#17231d;font:14.5px/1.5 Geologica,system-ui,sans-serif;display:grid;grid-template-rows:auto 1fr}
+.demo{background:#0b1410;color:#dfe9e3;padding:10px 20px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;font-size:13px;z-index:5}
+.demo b{color:#fff;font-weight:600}.demo .g{display:flex;gap:6px}.demo button{all:unset;cursor:pointer;padding:3px 12px;border-radius:99px;border:1px solid #ffffff45;font-weight:600;font-size:12.5px;color:#fff}
+.demo button[aria-pressed=true]{background:#fff;color:#0b1410}.demo button:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}.demo p{flex-basis:100%;margin:0;color:#b9c9c0;max-width:120ch}
+.stage{display:grid;grid-template-columns:auto 1fr;min-height:0}#bar{display:flex;min-height:0}
+.page{padding:26px 30px;overflow:auto}.page h1{margin:0 0 8px;font-size:20px}.page p{max-width:70ch;color:#586860;margin:0 0 10px}.page ul{color:#586860;max-width:70ch;padding-left:18px}.page li{margin:4px 0}
+svg{flex:none}
+
+/* ------------------------------------------------------------------ Now: today's bar, as it is */
+.now{width:256px;background:#0f1b16;color:#cfe3d8;padding:10px 8px 20px;font:13px/1.3 Geologica,system-ui,sans-serif;overflow-y:auto}
+.now .top{display:flex;margin:0 4px 6px 8px;min-height:26px;font-weight:600;color:#fff;font-size:14px;align-items:center}
+.now a{display:block;text-decoration:none;color:#dfe9e3;border-radius:9px}.now .m{display:flex;align-items:center;padding:7px 8px;font-weight:500}.now .m em{margin-left:auto;font-style:normal;font-size:11px;font-weight:700;background:#e8b13a;color:#2b2000;border-radius:99px;padding:0 7px}
+.now hr{border:0;border-top:1px solid #ffffff1f;margin:8px 4px}.now h4{margin:14px 8px 4px;font-size:11.5px;font-weight:600;color:#7f968a}
+.now .nw{display:flex;gap:8px;padding:7px 8px;margin:2px 0 4px;border-radius:9px;border:1px dashed #ffffff45;font-weight:600}
+.now .f{display:grid;grid-template-columns:10px 1fr auto;gap:2px 9px;align-items:baseline;padding:7px 8px;border-left:3px solid transparent}
+.now .f i{width:8px;height:8px;border-radius:50%;box-shadow:inset 0 0 0 2px #8c9a92}.now .f i.work{background:#3fbf86;box-shadow:none}
+.now .f small{grid-column:2/4;font-size:11.5px;color:#8ea398}.now .f.new{border-left-color:#e8b13a;background:#e8b13a1f}.now .f.new small{color:#f3cf7a;font-weight:600}
+.now .f.cur{background:#fff;color:#16241e}.now .f.cur span{-webkit-text-stroke:.4px currentColor}.now .f.cur small{color:#586860}.now .b{padding:7px 8px;color:#9fb3a8;margin-top:6px}
+
+/* ------------------------------------------------------------------ shared by A, B, C */
+.bar{width:264px;background:#101714;color:#e6ece8;padding:10px 8px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:1px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+.bar .top{display:flex;align-items:center;padding:2px 8px 10px;font-weight:600;font-size:14px;color:#fff;letter-spacing:.1px}.bar .top button{all:unset;cursor:pointer;margin-left:auto;color:#7d8c84;display:grid;place-items:center;width:26px;height:26px;border-radius:7px}.bar .top button:hover{background:#ffffff14;color:#fff}
+.bar a,.bar .row{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:8px;color:#d3dcd7;text-decoration:none;cursor:pointer;min-height:34px}
+.bar a:hover{background:#ffffff0d}.bar a svg{color:#8a9990}.bar a:focus-visible{outline:2px solid #7ab8ff;outline-offset:-2px}
+.bar .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .meta{flex:none;font-size:12px;color:#7d8c84;font-variant-numeric:tabular-nums}
+.bar .count{flex:none;font-size:11.5px;font-weight:600;color:#f0c35c;background:#f0c35c1f;border-radius:99px;padding:1px 8px}
+.bar .new{background:#ffffff14;color:#fff}.bar .new svg{color:#fff}
+.bar h4{margin:16px 9px 4px;font-size:12px;font-weight:500;color:#7d8c84;display:flex;align-items:center}
+.bar .dot{flex:none;width:7px;height:7px;border-radius:50%;background:transparent;box-shadow:inset 0 0 0 1.5px #5d6b64;margin:0 4px 0 5px}
+.bar .dot.work{background:#4cc38a;box-shadow:none}.bar .dot.ask{background:#f0c35c;box-shadow:none}.bar .dot.perm{background:#ef7b6c;box-shadow:none}
+.bar a.cur{background:#ffffff17;color:#fff}.bar a.cur .meta{color:#aab7b0}
+.bar .ask .meta{color:#f0c35c}.bar .perm .meta{color:#ef9a8e}
+.bar .foot{margin-top:auto;display:flex;gap:2px;padding-top:10px}.bar .foot button{all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:8px;color:#8a9990;font-size:12px}.bar .foot button:hover{background:#ffffff0d;color:#d3dcd7}
+
+/* A: one line per work, the system font */
+.vA{font:13.5px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif}
+/* B: the font of the pages, two lines per work */
+.vB{font:13.5px/1.35 Geologica,system-ui,sans-serif;font-weight:400}
+.vB a.w{align-items:flex-start;padding:8px 9px}.vB a.w .dot{margin-top:6px}.vB .two{flex:1;min-width:0}.vB .two .t{display:block}.vB .two small{display:block;font-size:12px;color:#7d8c84;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vB .ask .two small{color:#f0c35c}.vB .perm .two small{color:#ef9a8e}.vB a.cur .two small{color:#aab7b0}.vB a.w .meta{margin-top:1px}
+/* C: grouped by the project (the folder) the work is in, the system font */
+.vC{font:13.5px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif}
+.vC .proj{color:#aab7b0}.vC .proj svg{color:#7d8c84}.vC a.w{padding-left:14px}
+</style></head><body>
+<div class="demo"><b>The bar on the left, easier to read</b>
+ <span class="g" id="vs"><button type="button" data-v="now" aria-pressed="false">Now</button><button type="button" data-v="A" aria-pressed="true">A · one line</button><button type="button" data-v="B" aria-pressed="false">B · two lines</button><button type="button" data-v="C" aria-pressed="false">C · by project</button></span>
+ <p id="why"></p></div>
+<div class="stage"><div id="bar"></div>
+ <div class="page"><h1>What changes in every variant</h1>
+  <ul><li><b>Sharp text.</b> Light text on a dark background is drawn heavier by macOS; the new bar turns that off (grayscale smoothing), uses the regular weight, and drops the stroke that made the open row look bold.</li>
+   <li><b>One accent, not three.</b> The open work is a quiet lighter row instead of a white block; a new reply is an amber dot and an amber word instead of a filled amber row.</li>
+   <li><b>Line icons</b> instead of emoji, in the menu and for the state.</li>
+   <li><b>Less text.</b> The long status sentence under every work becomes a dot and one or two words on the right.</li>
+   <li><b>Alerts and Motion</b> move to the bottom as two small buttons.</li></ul>
+  <p>The names of the works here are made up. Pick a variant at the top and compare with "Now".</p></div></div>
+<script>
+var I={plus:'<svg viewBox="0 0 16 16" width="15" height="15"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+ ses:'<svg viewBox="0 0 16 16" width="15" height="15"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5 7l2 1.5L5 10M8.5 10.2h2.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ work:'<svg viewBox="0 0 16 16" width="15" height="15"><path d="M3 4.5h10M3 8h10M3 11.5h6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+ star:'<svg viewBox="0 0 16 16" width="15" height="15"><path d="M8 2.3l1.7 3.6 3.9.5-2.9 2.7.8 3.9L8 11.1 4.5 13l.8-3.9L2.4 6.4l3.9-.5z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+ fold:'<svg viewBox="0 0 16 16" width="15" height="15"><path d="M2 5.2c0-.9.7-1.6 1.6-1.6h2.6l1.4 1.5h4.8c.9 0 1.6.7 1.6 1.6v4.7c0 .9-.7 1.6-1.6 1.6H3.6c-.9 0-1.6-.7-1.6-1.6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+ side:'<svg viewBox="0 0 16 16" width="15" height="15"><rect x="2" y="3" width="12" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6 3v10" stroke="currentColor" stroke-width="1.4"/></svg>',
+ bell:'<svg viewBox="0 0 16 16" width="14" height="14"><path d="M4 11V7.5a4 4 0 018 0V11l1 1.2H3zM6.5 13.5a1.6 1.6 0 003 0" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/></svg>',
+ mot:'<svg viewBox="0 0 16 16" width="14" height="14"><path d="M2 8h3M7 5h7M7 8h7M7 11h7M2 5h1M2 11h2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>'};
+var W=[{n:'Dashboard for sessions in Go',p:'whatnow',st:'work',meta:'now',sub:'working · 2 items for you',cur:1},
+ {n:'Trend radar for AI tooling',p:'info-agent',st:'ask',meta:'reply',sub:'new reply, waits for your answer'},
+ {n:'Publish the MCP server: review and docs',p:'api-mcp',st:'perm',meta:'asks',sub:'asks for your permission'},
+ {n:'Migration of the admin tool to PHP 8.5',p:'admin-tool',st:'',meta:'3h',sub:'waits for your answer · 4 items for you'},
+ {n:'Listing in the connector directory',p:'api-mcp',st:'',meta:'4d',sub:'no open session',other:1},
+ {n:'Second email for two-factor sign-in',p:'admin-tool',st:'',meta:'9d',sub:'no open session',other:1}];
+var WHY={now:'Today\'s bar: the page font at three weights on dark green, a white block for the open work, amber blocks for new replies, a sentence under every name, emoji for the state.',
+ A:'A. One line per work, like the app you showed. The system font (San Francisco on a Mac): made for small interface text, so it stays crisp at 13 px. A dot for the state, one short word or the age on the right. Long names are cut with an ellipsis; the full name is in the tooltip.',
+ B:'B. The same order and icons, but the font of the pages (Geologica) at the regular weight with the smoothing fixed, and two lines per work: the name and a quiet status line. Keeps more information and the look of the product; takes more height.',
+ C:'C. As A, grouped by the project (the folder) the work is in, the way the app you showed groups chats by repository. Good when several works share a repository; adds a level.'};
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function menu(){return '<div class="top">whatnow<button type="button" aria-label="Collapse the bar">'+I.side+'</button></div>'+
+ '<a class="new">'+I.plus+'<span class="t">New work</span></a><a>'+I.ses+'<span class="t">Sessions</span><span class="count">3 wait</span></a><a>'+I.work+'<span class="t">Work</span></a><a>'+I.star+'<span class="t">Favorites</span></a>'}
+function foot(){return '<div class="foot"><button type="button">'+I.bell+'Alerts on</button><button type="button">'+I.mot+'Motion on</button></div>'}
+function row(w,two){var c='w'+(w.cur?' cur':'')+(w.st==='ask'?' ask':w.st==='perm'?' perm':'');
+ return '<a class="'+c+'" title="'+esc(w.n)+'"><i class="dot '+w.st+'"></i>'+(two?'<span class="two"><span class="t">'+esc(w.n)+'</span><small>'+esc(w.sub)+'</small></span>':'<span class="t">'+esc(w.n)+'</span>')+'<span class="meta">'+w.meta+'</span></a>'}
+function draw(v){var el=document.getElementById('bar'),h='';
+ if(v==='now'){h='<div class="now"><div class="top">whatnow</div><a class="m">Sessions<em>3 wait</em></a><a class="m">Work</a><a class="m">Favorites</a><hr><a class="nw"><b>+</b>New work</a><h4>Active now</h4>'+
+   W.filter(function(w){return !w.other}).map(function(w){return '<a class="f'+(w.cur?' cur':'')+(w.st==='ask'||w.st==='perm'?' new':'')+'"><i class="'+(w.st==='work'?'work':'')+'"></i><span>'+esc(w.n)+'</span>'+(w.st==='ask'?'<u style="text-decoration:none">💬</u>':w.st==='perm'?'<u style="text-decoration:none">✋</u>':'<u></u>')+'<small>'+esc(w.sub)+'</small></a>'}).join('')+
+   '<h4>Other</h4>'+W.filter(function(w){return w.other}).map(function(w){return '<a class="f"><i></i><span>'+esc(w.n)+'</span><u></u><small>'+esc(w.sub)+'</small></a>'}).join('')+'<div class="b">Alerts: with sound</div><div class="b">Motion: on</div></div>'}
+ else if(v==='C'){var ps=[];W.forEach(function(w){if(ps.indexOf(w.p)<0)ps.push(w.p)});
+  h='<nav class="bar vC">'+menu()+'<h4>Projects</h4>'+ps.map(function(p){return '<div class="row proj">'+I.fold+'<span class="t">'+p+'</span></div>'+W.filter(function(w){return w.p===p}).map(function(w){return row(w)}).join('')}).join('')+foot()+'</nav>'}
+ else h='<nav class="bar v'+v+'">'+menu()+'<h4>Active now</h4>'+W.filter(function(w){return !w.other}).map(function(w){return row(w,v==='B')}).join('')+'<h4>Other</h4>'+W.filter(function(w){return w.other}).map(function(w){return row(w,v==='B')}).join('')+foot()+'</nav>';
+ el.innerHTML=h;document.getElementById('why').textContent=WHY[v];[].forEach.call(document.getElementById('vs').children,function(b){b.setAttribute('aria-pressed',b.dataset.v===v)})}
+document.getElementById('vs').onclick=function(e){var b=e.target.closest('button');if(b)draw(b.dataset.v)};
+draw(/[#&]v=(now|A|B|C)/.test(location.hash)?RegExp.$1:'A');
+</script></body></html>
