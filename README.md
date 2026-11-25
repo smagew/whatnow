@@ -13,7 +13,7 @@ one place to look, instead of reading long CLI transcripts. It shows progress, n
   a session is working on it right now.
 - **Feature page** (tabs: Progress, What is left, Decisions and questions): what was planned
   and what really happened, stage by stage; what is left and who has to act on it.
-- **Buttons on every item**: *Do it*, *Ask*, *Not needed*. They send your instruction or question into the
+- **Buttons on every item**: *Do it*, *Write*, *Not needed*. They send your instruction or question into the
   Claude Code session that works on the feature (see below).
 
 ## Requirements
@@ -80,17 +80,18 @@ Hooks of an older install (`python3 .../hook.py`) are replaced. A `--nudge` hook
 `docs/hooks-settings.example.json` has a copy.
 
 ## The Sessions tab
-The home page opens on **Sessions**: every open Claude Code session, grouped by project, newest first, whether or not it belongs to a feature. The list comes from `claude agents`, and what each session is about comes from its transcript (how it started, what you asked last, what Claude answered last), so a session shows up even before it has triggered a hook. Per session: **Ask** (sends a message to that session; a closed session is resumed in the background), **Copy resume command**, **Attach to a feature**, and **Hide** for sessions that do not belong on the page (hidden ids are kept in `~/.whatnow/hidden.json`). Click the star on a session or a feature to put it in the **Favorites** tab (kept in `~/.whatnow/favorites.json`); a starred session stays there after it is closed. The **Features** tab is the portfolio of large features.
+The home page opens on **Sessions**: every open Claude Code session, grouped by project, newest first, whether or not it belongs to a feature. The list comes from `claude agents`, and what each session is about comes from its transcript (how it started, what you asked last, what Claude answered last), so a session shows up even before it has triggered a hook. Per session: **Write** (sends a message to that session; a closed session is resumed in the background), **Copy resume command**, **Attach to a feature**, and **Hide** for sessions that do not belong on the page (hidden ids are kept in `~/.whatnow/hidden.json`). Click the star on a session or a feature to put it in the **Favorites** tab (kept in `~/.whatnow/favorites.json`); a starred session stays there after it is closed. The **Features** tab is the portfolio of large features.
 
 ## Buttons on the feature page
 On a feature page opened through the server every item of a stage has actions:
 - **Do it**: a task. The text goes to the session that works on this feature.
-- **Ask**: your question about the item. The answer comes back in the same session.
-- **Not needed**: a decision with a reason. It applies at once: the item is struck through and stops counting as
+- **Write**: your question or remark about the item. The answer comes back in the same session.
+- **Not needed** (red: it drops the item): a decision with a reason. The page asks you to confirm; then it applies
+  at once: the item is struck through and stops counting as
   unfinished. It is stored in `overrides.json` next to `feature.json` (Claude never writes that file, so the
   two cannot overwrite each other). It follows the item's text, not its position. **Restore** undoes it.
 
-**Where *Do it* and *Ask* go.** The message is written to `~/.whatnow/inbox/` and routed:
+**Where *Do it* and *Write* go.** The message is written to `~/.whatnow/inbox/` and routed:
 1. **A session of the feature is open** (confirmed by `claude agents --json`): the message is addressed to it.
    If it is idle, the `--watch` hook wakes it (`asyncRewake`: exit code 2 makes Claude Code start a turn).
    If it is busy, the message arrives when it finishes its answer. Without the watcher it arrives at your next prompt.
@@ -99,7 +100,7 @@ On a feature page opened through the server every item of a stage has actions:
 3. **No session is known:** the message waits for the first session that starts working on the feature.
 
 **Closing an item yourself.** In **What is left** every item that waits for you ("Waits for you", "Needs your look") has
-**✓ Done** and **Not needed**. Either one applies at once: the item moves to "Closed by you" with your note, stops
+**✓ Done** and **Not needed** (this one after a confirmation). Either one applies at once: the item moves to "Closed by you" with your note, stops
 counting as open, and the session of the feature is told, so that it records it in `feature.json` (a fact with your
 word as the evidence, or a decision). **Restore** undoes it.
 
