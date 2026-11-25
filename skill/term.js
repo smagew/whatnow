@@ -16,17 +16,17 @@ var CSS=
 ".wnt .wtt:focus-visible,.wnt .wta:focus-visible,.wnp:focus-visible{outline:3px solid #7ab8ff;outline-offset:-2px}"+
 ".wnt .wts{flex:1}"+
 ".wnt .wta[hidden]{display:none}"+
-".wnt .wta{all:unset;cursor:pointer;color:#cfe3d8;font-size:12.5px;font-weight:600;padding:3px 10px;border-radius:99px;border:1px solid #ffffff3d;white-space:nowrap}.wnt .wta:hover{background:#ffffff1f}"+
+".wnt .wta{all:unset;cursor:pointer;color:#cfe3d8;font-size:12.5px;font-weight:500;padding:3px 10px;border-radius:99px;border:1px solid #ffffff3d;white-space:nowrap}.wnt .wta:hover{background:#ffffff1f}"+
 ".wnt .wtb{flex:1;min-height:0;background:#16241e;padding:8px 4px 6px 12px;position:relative}"+
 ".wnt .wtx{position:absolute;inset:8px 4px 6px 12px}"+
 ".wnt .wtm{max-width:640px;margin:26px auto;padding:0 16px;line-height:1.5;font-size:14px;color:#dfe9e3}.wnt .wtm h3{margin:0 0 8px;font-size:16px;color:#fff}.wnt .wtm p{margin:0 0 10px}"+
 ".wnt .wtm code{background:#ffffff1c;border-radius:6px;padding:2px 8px;font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:#fff}"+
 ".wnt .wtm .wte{color:#ffb4ab}.wnt .wtm small{color:#9fb3a8}"+
-".wnp{all:unset;cursor:pointer;position:fixed;z-index:38;left:calc(var(--sw,0px) + 16px);bottom:16px;background:#0f1b16;color:#fff;font:600 12.5px Geologica,system-ui,sans-serif;padding:7px 14px;border-radius:99px;box-shadow:0 6px 20px #0005}"+
+".wnp{all:unset;cursor:pointer;position:fixed;z-index:38;left:calc(var(--sw,0px) + 16px);bottom:16px;background:#0f1b16;color:#fff;font:500 12.5px Geologica,system-ui,sans-serif;padding:7px 14px;border-radius:99px;box-shadow:0 6px 20px #0005}"+
 ".wnp[hidden]{display:none}.wnp i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2f9e6a;margin-right:8px}"+
 "body.tm .cw:not(.wide){bottom:calc(var(--th) + 16px)}body.tm .cw.wide{bottom:var(--th)}"+
 "button[data-term].on{background:#2f9e6a!important;border-color:#2f9e6a!important;color:#fff!important}"+
-"button[data-term] .tgi{font:700 11px ui-monospace,SFMono-Regular,Menlo,monospace;margin-right:6px;letter-spacing:-.5px;opacity:.8}";
+"button[data-term] .tgi{font:600 11px ui-monospace,SFMono-Regular,Menlo,monospace;margin-right:6px;letter-spacing:-.5px;opacity:.8}";
 var st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
 // SCOPE: the feature of this page, '' on the home page. What is open and which tab is shown is kept per scope.
 var SCOPE=(function(){var m=/^\/f\/([^/]+)/.exec(location.pathname);return m?decodeURIComponent(m[1]):''})();
