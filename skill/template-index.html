@@ -103,7 +103,7 @@ header{padding-bottom:0}
 body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes wnshow{to{visibility:visible}}
 </style>
 <script>window.IDX_DATA=/*__DATA__*/null;</script></head><body>
-<header><div class="hd"><span class="conn" id="connbox" hidden><span class="cdot pulse" id="cdot"></span><span id="conn"></span></span><h1>Work with Claude</h1><p class="sub" id="sub"></p><div class="tabs" role="tablist" id="tabs" hidden><button role="tab" id="tS" aria-selected="false">Sessions<span class="n" id="nS"></span></button><button role="tab" id="tF" aria-selected="true">Features<span class="n" id="nF"></span></button><button role="tab" id="tV" aria-selected="false">Favorites<span class="n" id="nV"></span></button></div></div></header>
+<header><div class="hd"><span class="conn" id="connbox" hidden><span class="cdot pulse" id="cdot"></span><span id="conn"></span></span><h1>Work with Claude</h1><p class="sub" id="sub"></p><div class="tabs" role="tablist" id="tabs" hidden><button role="tab" id="tS" aria-selected="false">Sessions<span class="n" id="nS"></span></button><button role="tab" id="tF" aria-selected="true">Work<span class="n" id="nF"></span></button><button role="tab" id="tV" aria-selected="false">Favorites<span class="n" id="nV"></span></button></div></div></header>
 <main>
 <div id="mock"></div><div id="broken"></div>
 <div id="pS" hidden><div class="fl" id="fl"></div><div id="sess"></div></div>
@@ -133,9 +133,9 @@ function paint(D){
  var tracked={};F.forEach(function(f){f.projects.forEach(function(p){tracked[p]=1})});
  var sess=(D.sessions||[]).filter(function(s){return !s.hidden&&s.state!=='closed'&&(tracked[s.project]||s.feature)});   // projects that features belong to, or sessions linked to a feature
  var active=F.filter(function(f){return !f.done}),finished=F.filter(function(f){return f.done});
- if(!D.live)$('sub').textContent='Updated '+D.today+'. Features in progress: '+active.length+(finished.length?', finished: '+finished.length:'')+'.';
+ if(!D.live)$('sub').textContent='Updated '+D.today+'. Work in progress: '+active.length+(finished.length?', finished: '+finished.length:'')+'.';
  $('broken').innerHTML=D.broken.length?'<div class="broken"><b>Could not read:</b> '+D.broken.map(function(b){return esc(b.id)+' ('+esc(b.error)+')'}).join('; ')+'</div>':'';
- if(!F.length){$('list').innerHTML='<div class="welcome"><b>No features yet</b>Start a large piece of work with the whatnow skill and it will show up here.</div>';$('free').innerHTML='';$('done').innerHTML='';$('legend').hidden=true;return}
+ if(!F.length){$('list').innerHTML='<div class="welcome"><b>No work yet</b>Start a large piece of work with the whatnow skill and it will show up here.</div>';$('free').innerHTML='';$('done').innerHTML='';$('legend').hidden=true;return}
  active.sort(function(a,b){return (b.h-a.h)||(((b.m||b.stale)?1:0)-((a.m||a.stale)?1:0))||a.pct-b.pct});
  var fcard=function(f){
   var mine=sess.filter(function(s){return s.feature===f.id}).sort(function(a,b){return rank[a.state]-rank[b.state]||b.t-a.t});
@@ -179,11 +179,11 @@ function sessCard(s,D){var open=SF.form&&SF.form.id===s.id,att=SF.attach===s.id,
  var feats=(D.features||[]).filter(function(f){return !f.done});
  var pill=bare&&st==='wait'?['idle','open']:[st,{work:'working',bg:'background task running',wait:'waiting for you',closed:'closed'}[st]];
  var extra='<button type="button" data-a="copy">'+(SF.copied===s.id?'Copied':'Copy resume command')+'</button>'+
-  (s.feature||s.state==='closed'?'':'<button type="button" data-a="track" title="Ask this session to put its work on the dashboard as a feature with phases"'+(SF.sent[s.id]?' disabled':'')+'>'+(SF.sent[s.id]?'Requested':'Track as a feature')+'</button>')+(s.feature?'':(att?'<select id="fsel" aria-label="Feature"><option value="">Choose a feature…</option>'+feats.map(function(f){return '<option value="'+esc(f.id)+'">'+esc(f.name)+'</option>'}).join('')+'</select><button type="button" data-a="attach-go">Attach</button><button type="button" data-a="attach-x">Cancel</button>':(feats.length?'<button type="button" data-a="attach">Attach to a feature</button>':'')))+
+  (s.feature||s.state==='closed'?'':'<button type="button" data-a="track" title="Ask this session to put what it does on the dashboard: a page with its plan and progress"'+(SF.sent[s.id]?' disabled':'')+'>'+(SF.sent[s.id]?'Requested':'Track as work')+'</button>')+(s.feature?'':(att?'<select id="fsel" aria-label="Work"><option value="">Choose the work…</option>'+feats.map(function(f){return '<option value="'+esc(f.id)+'">'+esc(f.name)+'</option>'}).join('')+'</select><button type="button" data-a="attach-go">Attach</button><button type="button" data-a="attach-x">Cancel</button>':(feats.length?'<button type="button" data-a="attach">Attach to work</button>':'')))+
   '<button type="button" data-a="'+(s.hidden?'unhide':'hide')+'">'+(s.hidden?'Show again':'Hide')+'</button>';
  var acts='<div class="acts"><button type="button" class="pri" data-a="ask">Write</button>'+(window.WN_TERM?'<button type="button" data-term="'+esc(s.id)+'">Terminal</button>':'')+'<button type="button" data-a="more" aria-expanded="'+(!!more)+'">'+(more?'Less':'More')+'</button>'+(more?extra:'')+'</div>';
  var h='<li class="s '+pill[0]+(bare?' bare':'')+(s.hidden?' hid':'')+'" data-id="'+esc(s.id)+'"><div class="t1">'+starBtn('s:'+s.id)+'<span class="nm2">'+esc(s.name||s.project||s.id.slice(0,8))+'</span><span class="st '+pill[0]+'">'+pill[1]+'</span>'+
-  (s.feature?'<a class="ftg" href="/f/'+esc(s.feature)+'/">feature: '+esc((D.features.filter(function(f){return f.id===s.feature})[0]||{name:s.feature}).name)+'</a>':'')+
+  (s.feature?'<a class="ftg" href="/f/'+esc(s.feature)+'/">work: '+esc((D.features.filter(function(f){return f.id===s.feature})[0]||{name:s.feature}).name)+'</a>':'')+
   '<span class="ago2">'+(s.use?'<span title="The process of the session and everything started under it. CPU is in percent of one core.">'+useTxt(s.use)+'</span> · ':'')+(s.quiet?'no activity seen':'last activity <span class="ago" data-t="'+s.t+'">'+agoM(s.t)+'</span>')+'</span>'+(bare?acts:'')+'</div>'+
   (s.first?'<p><b>Started with</b>'+esc(s.first)+'</p>':'')+(s.lastU&&s.lastU!==s.first?'<p><b>You last asked</b>'+esc(s.lastU)+'</p>':'')+(s.lastA?'<p class="a"><b>Claude last said</b>'+esc(s.lastA)+'</p>':'')+
   (bare?'':acts)+
@@ -197,7 +197,7 @@ function paintS(D){if(!D.live)return;var all=D.sessions||[];var vis=all.filter(f
  var keys=Object.keys(by).sort(function(a,b){return top(a)-top(b)||late(b)-late(a)});
  var nh=all.filter(function(s){return s.hidden&&s.state!=='closed'}).length,waitN=all.filter(function(s){return !s.hidden&&s.state!=='closed'&&rankS(s)===0}).length,work=all.filter(function(s){return !s.hidden&&(s.state==='work'||s.state==='bg')}).length,nv=all.filter(function(s){return s.state!=='closed'}).length-all.filter(function(s){return s.hidden&&s.state!=='closed'}).length;
  $('nS').textContent=nv;$('nF').textContent=D.features.filter(function(f){return !f.done}).length;
- $('fl').innerHTML=[['all','All'],['wait','Waiting for you'],['busy','Working now'],['feat','On a feature']].map(function(f){return '<button type="button" data-f="'+f[0]+'" aria-pressed="'+(SF.f===f[0])+'">'+f[1]+'</button>'}).join('')+'<span class="sp"></span>'+(nh?'<button type="button" data-f="hidden" aria-pressed="'+SF.showHidden+'">Hidden: '+nh+'</button>':'')+'<span class="hint">Grouped by project, what waits for you first</span>';
+ $('fl').innerHTML=[['all','All'],['wait','Waiting for you'],['busy','Working now'],['feat','Linked to work']].map(function(f){return '<button type="button" data-f="'+f[0]+'" aria-pressed="'+(SF.f===f[0])+'">'+f[1]+'</button>'}).join('')+'<span class="sp"></span>'+(nh?'<button type="button" data-f="hidden" aria-pressed="'+SF.showHidden+'">Hidden: '+nh+'</button>':'')+'<span class="hint">Grouped by project, what waits for you first</span>';
  var ta=document.activeElement&&document.activeElement.id==='stext';
  $('sess').innerHTML=keys.map(function(k){var it=by[k].sort(function(a,b){return rankS(a)-rankS(b)||b.t-a.t});return '<h2 class="sg">'+esc(k)+' <small>'+it.length+' session'+(it.length>1?'s':'')+'</small></h2><ol class="ss">'+it.map(function(s){return sessCard(s,D)}).join('')+'</ol>'}).join('')||'<div class="welcome"><b>No sessions</b>Open sessions of Claude Code show up here.</div>';
  if(ta){var x=$('stext');if(x){x.focus();x.setSelectionRange(x.value.length,x.value.length)}}
@@ -217,7 +217,7 @@ $('sess').addEventListener('click',function(e){var b=e.target.closest('button');
  if(a==='track'){post({action:'track',session:id}).then(function(r){if(!r.ok)SF.err[id]=(r.j&&r.j.error)||'could not send';else SF.sent[id]=r.j.entry;paintS(window.IDX_DATA)}).catch(function(){SF.err[id]='no connection to the server';paintS(window.IDX_DATA)});return}
  if(a==='attach'){SF.attach=id;paintS(D);return}
  if(a==='attach-x'){SF.attach=null;paintS(D);return}
- if(a==='attach-go'){var f=($('fsel')||{}).value;if(!f){SF.err[id]='Choose a feature first';paintS(D);return}
+ if(a==='attach-go'){var f=($('fsel')||{}).value;if(!f){SF.err[id]='Choose the work first';paintS(D);return}
   post({action:'attach',feature:f,session:id}).then(function(r){if(!r.ok)SF.err[id]=(r.j&&r.j.error)||'could not attach';SF.attach=null;pollNow()}).catch(function(){SF.err[id]='no connection to the server';paintS(D)});return}
  if(a==='hide'||a==='unhide'){post({action:a,session:id}).then(function(){pollNow()});return}
  if(a==='send'&&SF.form&&!SF.form.busy){var txt=($('stext').value||'').trim();if(!txt){SF.err[id]='Write the message first';paintS(D);return}
@@ -232,9 +232,9 @@ function paintFav(D,fcard){if(!D.live)return;var fav=D.favorites||[];
  var ss=(D.sessions||[]).filter(function(s){return fav.indexOf('s:'+s.id)>=0}).sort(function(a,b){return b.t-a.t});
  $('nV').textContent=fs.length+ss.length;
  var h='';
- if(fs.length)h+='<h2 class="fvh">Features</h2><ol class="list">'+fs.map(fcard).join('')+'</ol>';
+ if(fs.length)h+='<h2 class="fvh">Work</h2><ol class="list">'+fs.map(fcard).join('')+'</ol>';
  if(ss.length)h+='<h2 class="fvh">Sessions</h2><ol class="ss">'+ss.map(function(s){return sessCard(s,D)}).join('')+'</ol>';
- $('fav').innerHTML=h||'<div class="welcome"><b>Nothing here yet</b>Click the star on a session or a feature to keep it here.</div>'}
+ $('fav').innerHTML=h||'<div class="welcome"><b>Nothing here yet</b>Click the star on a session or on a piece of work to keep it here.</div>'}
 document.addEventListener('click',function(e){var b=e.target.closest('.star');if(!b)return;e.preventDefault();e.stopPropagation();var k=b.dataset.fav,on=!isFav(k);
  var d=window.IDX_DATA;d.favorites=(d.favorites||[]).filter(function(x){return x!==k});if(on)d.favorites.push(k);paint(d);
  post({action:on?'fav':'unfav',kind:k[0]==='s'?'session':'feature',id:k.slice(2)}).then(function(r){if(!r.ok)pollNow()}).catch(function(){pollNow()})},true);

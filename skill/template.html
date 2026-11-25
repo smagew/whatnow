@@ -115,17 +115,6 @@ body{--sw:0px}
 .fmw{position:relative;display:inline-flex;flex:none;margin-left:auto}.ses{flex:none;max-width:60%}.ses button.sadd,.meta .qb{flex:none}.fmw[hidden]{display:none}.fmb{all:unset;cursor:pointer;color:#cfe3d8;width:24px;height:22px;text-align:center;border-radius:8px;font-size:16px;line-height:18px}.fmb:hover{background:#ffffff1f;color:#fff}.fmb:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}
 .fmn{position:absolute;z-index:30;top:calc(100% + 6px);right:0;background:var(--paper);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(22,36,30,.28);padding:4px}.fmn[hidden]{display:none}
 .fmn button{all:unset;cursor:pointer;display:block;padding:7px 12px;border-radius:7px;color:var(--ink);font-size:13px;font-weight:600;white-space:nowrap}.fmn button:hover,.fmn button:focus-visible{background:#eef3f0}.fmn small{display:block;font-weight:400;color:var(--mut);font-size:11.5px}
-.nfw{position:fixed;inset:0;z-index:80;background:rgba(15,27,22,.5);display:grid;place-items:center;padding:20px}.nfw[hidden]{display:none}
-.nf{background:var(--paper);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:min(620px,100%);max-height:calc(100vh - 40px);overflow-y:auto;padding:22px 24px 20px;font-size:13.5px;line-height:1.5}
-.nf h2{margin:0 0 6px;font-size:18px}.nf .nfm{margin:0 0 10px;color:var(--mut)}.nf .nfm b{color:var(--ink);font-weight:600}
-.nfl{list-style:none;margin:0 0 14px;padding:10px 12px;background:#f5f8f6;border-radius:10px;display:grid;gap:6px}.nfl li{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:baseline}.nfl li>span{color:var(--mut);font-size:12.5px}
-.nfl li>div{min-width:0;line-height:1.7}.nfl code{background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 7px;font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}.nfl small{color:var(--mut)}
-.nf .nfb{display:block;font-weight:600;margin-bottom:4px}.nf textarea{width:100%;min-height:92px;border:1px solid #c3cec7;border-radius:9px;padding:9px 11px;font:inherit;resize:vertical;background:#fff}.nf textarea:focus-visible{outline:3px solid #2a8cff;outline-offset:1px}
-.nfp{border:0;margin:14px 0 0;padding:0;display:grid;gap:8px}.nfp legend{font-weight:600;padding:0;margin-bottom:6px}
-.nfp label{display:grid;grid-template-columns:18px 1fr;gap:10px;align-items:start;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}.nfp label.on{border-color:var(--live);background:var(--liveb2)}
-.nfp input{margin:3px 0 0}.nfp b{font-weight:600}.nfp em{font-style:normal;font-size:11.5px;font-weight:600;color:#0f6b40;background:#e6f4ec;border-radius:99px;padding:1px 8px;margin-left:4px}.nfp small{display:block;color:var(--mut);margin-top:2px;font-size:12.5px}
-.nf .row{display:flex;gap:10px;align-items:center;margin-top:16px}.nf .go{all:unset;cursor:pointer;background:var(--side);color:#fff;font-weight:600;padding:8px 18px;border-radius:10px}.nf .go[disabled]{opacity:.55;cursor:default}
-.nf .cx{all:unset;cursor:pointer;color:var(--mut);padding:8px 8px}.nf .go:focus-visible,.nf .cx:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}.nf .nferr{color:var(--bad);margin:12px 0 0}.nf .nfok{margin:8px 0 0}
 .ses button.sadd{width:22px;height:22px;padding:0;text-align:center;font-size:15px;line-height:21px}
 .rps{display:flex;gap:6px;align-items:center;min-width:0;flex:0 1 auto;overflow:hidden}.rps>button[data-rp]{flex:0 1 auto;min-width:54px;overflow:hidden}.rps>button b,.rps>button span{overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0}.rps>button b{flex-shrink:.4}.rps>button svg,.rps>button i{flex:none}.rps button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#cfe3d8;background:#ffffff14;border-radius:99px;padding:2px 10px 2px 8px;white-space:nowrap}
 .rps button b{color:#fff;font-weight:600}.rps button i{width:6px;height:6px;border-radius:50%;background:#e8b13a}.rps button:hover{background:#ffffff26}.rps button:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}.rps small{color:#9fb3a8;font-size:12px}
@@ -405,12 +394,11 @@ html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
 .dcard h4{margin:0 0 6px;font-size:13px;color:var(--ink)}.dcard .dp{display:block;margin-top:6px}.dcard .dn{margin-top:12px}.dcard code{white-space:normal;word-break:break-all}.dcard b{color:var(--ink);font-weight:600}
 </style>
 <script>window.PANEL=/*__DATA__*/null;</script></head><body>
-<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="rps" id="rps"></span><span class="qb" id="qb"></span><span class="fmw" id="fmw" hidden><button type="button" class="fmb" id="fmb" aria-haspopup="menu" aria-expanded="false" aria-label="More for this feature" title="More">⋮</button><span class="fmn" id="fmn" role="menu" hidden><button type="button" role="menuitem" id="fmnew">New feature with the same access<small>A clean session: same folders and permissions, empty memory</small></button></span></span></div></div></div>
+<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="rps" id="rps"></span><span class="qb" id="qb"></span><span class="fmw" id="fmw" hidden><button type="button" class="fmb" id="fmb" aria-haspopup="menu" aria-expanded="false" aria-label="More for this work" title="More">⋮</button><span class="fmn" id="fmn" role="menu" hidden><button type="button" role="menuitem" id="fmnew">New work with the same access<small>A clean session: same folders and permissions, empty memory</small></button></span></span></div></div></div>
 <div class="tbr"><div class="tabs" role="tablist" id="tabs"></div><span class="frw"><span class="frg"><span id="fr"></span><button type="button" id="rq" hidden>↻ Request status</button></span></span></div></header>
 <div class="syw"><div class="sy" id="sy" role="status" hidden></div></div>
 <div class="chw"><div class="chn" id="chn" role="status" hidden></div></div>
 <main id="main"></main>
-<div class="nfw" id="nfw" hidden><div class="nf" role="dialog" aria-modal="true" aria-labelledby="nfh" id="nf"></div></div>
 <aside class="cw" id="cw" aria-label="The session: messages and terminal" hidden><div class="cwu" id="cwu" role="status" tabindex="0" hidden></div><div class="cl1 cwp" id="cwp" role="button" tabindex="0"></div>
 <div class="cwb" id="cwb" hidden><i class="cwr t" data-r="t"></i><i class="cwr l" data-r="l"></i><i class="cwr c" data-r="c"></i><div class="cwh"><span id="cwsw"><i class="lma" aria-hidden="true">C</i></span><span id="cwt"></span><button type="button" class="ib" id="cwm" hidden aria-haspopup="menu" aria-expanded="false" aria-label="More" title="More"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="3" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="13" cy="8" r="1.5" fill="currentColor"/></svg></button><button type="button" class="ib" id="cwsd"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 2.5v11M13 8H5.5M8.5 5l-3 3 3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" class="ib" id="cwd"></button><button type="button" class="ib" id="cwx" aria-label="Fold" title="Fold to a line in the corner. Nothing is closed: a terminal stays connected."><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="cwmn" id="cwmn" role="menu" hidden><button type="button" role="menuitem" id="cwdc">Disconnect the terminal<small>The session keeps running in the background</small></button></div></div>
 <div class="cwl" id="cwl" aria-live="polite"></div>
@@ -473,7 +461,7 @@ function show(k){curTab=k;tb.forEach(function(b){var on=b.id==='tab-'+k;b.setAtt
 tb.forEach(function(b,i){b.addEventListener('click',function(){show(b.id.slice(4))});b.addEventListener('keydown',function(e){var n=e.key==='ArrowRight'?i+1:e.key==='ArrowLeft'?i-1:null;if(n===null)return;n=(n+tb.length)%tb.length;tb[n].focus();show(tb[n].id.slice(4))})});
 // stage detail
 var cur=0,CUR=Math.max(0,P.stages.map(function(s){return s.n}).indexOf(P.cur)),MORE=false;
-// the session that says the most about this feature right now: working, else waiting, else open
+// the session that says the most about this work right now: working, else waiting, else open
 function agent(){var b=(typeof SES==='object'&&SES&&SES.bound)||[];for(var k=['work','bg','wait','idle'],i=0;i<4;i++)for(var j=0;j<b.length;j++)if(b[j].state===k[i])return b[j];return null}
 function lastIn(n){var a=CHS[n]||[];return a.length?a[a.length-1]:null}
 function recent(n,span){var t=Date.now()-span;return (CHS[n]||[]).filter(function(c){return c.ts>=t}).length}
@@ -491,7 +479,7 @@ function renderRail(){var el=$('stl');if(!el)return;var S=P.stages,a=P.live?agen
   var sel=' role="tab" data-i="'+i+'" aria-selected="'+(i===cur)+'"',end=S.length-tail<=4&&i===S.length-1?' end':'',t=stageTip(s),l=lastIn(s.n);
   if(i===CUR){var wf=null;s.facts.forEach(function(f){if(f[0]==='w')wf=f});
    h+='<button class="rr cur'+end+'"'+sel+'><i class="rd cu'+(st==='work'?' pl':'')+'"'+tipA('Stage '+s.n+': '+t[0],t[1])+'>'+s.n+'</i><span class="cc">'+
-    '<span class="here'+(st==='work'||st==='bg'?'':st==='wait'?' wait':' idle')+'"'+(a?tipA('Session '+sesName(a),'It is '+STX[a.state]+'. Last activity '+age(a.t)+'.'):tipA('The work is at this stage','No session of this feature is open right now.'))+'>'+(st==='work'?'agent is here':st==='bg'?'background task running':st==='wait'?'agent waits for you':'current stage')+'</span>'+
+    '<span class="here'+(st==='work'||st==='bg'?'':st==='wait'?' wait':' idle')+'"'+(a?tipA('Session '+sesName(a),'It is '+STX[a.state]+'. Last activity '+age(a.t)+'.'):tipA('The work is at this stage','No session of this work is open right now.'))+'>'+(st==='work'?'agent is here':st==='bg'?'background task running':st==='wait'?'agent waits for you':'current stage')+'</span>'+
     '<span class="tt">'+kmark(s)+rich(s.title)+'</span>'+(wf?'<span class="nw"><i class="ico w'+(st==='work'?' on':'')+'"></i><span>'+rich(wf[1])+'</span></span>':'')+segs(s)+
     '<span class="ft2"><span>'+s.dn+' of '+s.tot+' done</span>'+(l?'<span'+tipA('Last change '+exact(l.ts),l.t)+'>changed '+ts(l.ts)+'</span>':'')+'</span><span class="act" id="act"></span></span></button>';return}
   // every stage says the same thing here: how many of its items are done. A time that keeps counting said nothing
@@ -503,10 +491,10 @@ function renderRail(){var el=$('stl');if(!el)return;var S=P.stages,a=P.live?agen
 
 var FORM=null,INBOX={},ROUTE=null,BUSY=false;
 function routeText(r){if(!r)return ['b','Finding where to send this…'];
- if(r.route==='active'&&r.asleep)return ['b','Session'+(r.name?' <b>'+esc(r.name)+'</b>':'')+' is open, but it has been idle for over an hour, so the page cannot wake it. Type anything in that session (even &quot;ok&quot;) and it takes this at once. Another session of this feature that becomes free takes it too.'];
+ if(r.route==='active'&&r.asleep)return ['b','Session'+(r.name?' <b>'+esc(r.name)+'</b>':'')+' is open, but it has been idle for over an hour, so the page cannot wake it. Type anything in that session (even &quot;ok&quot;) and it takes this at once. Another session of this work that becomes free takes it too.'];
  if(r.route==='active')return ['a','Open session:'+(r.name?' <b>'+esc(r.name)+'</b>':'')+(r.project?' ('+esc(r.project)+')':'')+'. If it is waiting for input, the message wakes it; if it is busy, the message arrives as soon as it is free.'];
- if(r.route==='bg')return ['b','No session is open. A closed session of this feature will be resumed in the background with its previous context and receive the message. To watch it: <code>claude attach</code>.'];
- return ['b','No session is linked to this feature yet, so nobody will receive this. <button type="button" class="lnk" data-ses="open">Choose a session</button> and it goes there right away. Or send it anyway: it waits for the first session that starts working on this feature.']}
+ if(r.route==='bg')return ['b','No session is open. A closed session of this work will be resumed in the background with its previous context and receive the message. To watch it: <code>claude attach</code>.'];
+ return ['b','No session is linked to this work yet, so nobody will receive this. <button type="button" class="lnk" data-ses="open">Choose a session</button> and it goes there right away. Or send it anyway: it waits for the first session that starts working on this work.']}
 // The state of a message under its item. When the state changes (sent, delivered, answered) the line fades in
 // instead of being swapped at once, and while the session works on it three small bars move in front of it.
 var STSEEN={},STAT={},PAGE0=Date.now();
@@ -528,8 +516,8 @@ function statusLine0(e){if(!e)return '';var st=e.state,when=hm(e.ts),who=e.sessi
  if(st==='done')return '<div class="sent done">Done'+(e.note?': '+esc(e.note):'')+'</div>';
  if(st==='failed')return '<div class="sent failed">Not delivered: '+esc(e.error||'error')+'</div>';
  if(st==='delivered')return '<div class="sent">'+(e.route==='bg'?'Sent at '+when+'. The session is running in the background, waiting for the reply. To watch it: <code>claude attach</code>.':'Delivered at '+hm(e.deliveredAt||e.ts)+(who?' to session '+esc(who):'')+', waiting for the reply.')+'</div>';
- if(e.asleep)return '<div class="sent">Sent at '+when+', not delivered yet: '+(who?'session '+esc(who)+' has been idle for over an hour, so the page cannot wake it':'no session of this feature can take it right now')+'. Type anything in a session of this feature (even &quot;ok&quot;) and it takes this at once, or attach a session that is working.</div>';
- return '<div class="sent">Sent at '+when+'. '+(e.route==='active'?'Waiting to be delivered'+(who?' to session '+esc(who):'')+'.':'Waiting for a session on this feature.')+'</div>'}
+ if(e.asleep)return '<div class="sent">Sent at '+when+', not delivered yet: '+(who?'session '+esc(who)+' has been idle for over an hour, so the page cannot wake it':'no session of this work can take it right now')+'. Type anything in a session of this work (even &quot;ok&quot;) and it takes this at once, or attach a session that is working.</div>';
+ return '<div class="sent">Sent at '+when+'. '+(e.route==='active'?'Waiting to be delivered'+(who?' to session '+esc(who):'')+'.':'Waiting for a session on this work.')+'</div>'}
 function formHtml(){var bl=FORM.kind==='blocker',rt=FORM.a==='done'?['a','Applies immediately: the item leaves the open list, and the session is told that you did it, to record it.']:FORM.a==='skip'?['b',bl?'Nothing is changed yet. When you confirm, the item leaves the open list and the session is told that it is not needed. You can restore it afterwards.':'Nothing is changed yet. When you confirm, the item stops counting as unfinished and your reason stays in the dashboard. You can restore it afterwards.']:routeText(ROUTE),
   ph={do:'What exactly to do, if you want to specify (optional)',ask:'Write to Claude about this item',skip:'Why this is not needed (the reason is kept in the dashboard)',done:'What you did, if you want to say (optional)'}[FORM.a],
   lab={do:'Send to the session',ask:'Send',skip:'Yes, not needed',done:'Mark as done'}[FORM.a];
@@ -748,8 +736,8 @@ var SES={bound:[],sessions:[],pick:false,err:''};
 function ago2(ts){var m=Math.round((Date.now()-ts)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago'}
 function sesName(s){return s.name||s.project||s.id.slice(0,8)}
 function sesBar(){var b=$('ses');if(!b||!P.live)return;
- var h=SES.bound.length?'<span>Session:</span>'+SES.bound.slice(0,3).map(function(s){return '<b>'+esc(sesName(s))+'</b><span class="st '+s.state+'">'+STX[s.state]+'</span>'}).join(' ')+'<button type="button" class="sadd" data-ses="pick" aria-label="'+(SES.pick?'Close the list of sessions':'Attach another session')+'"'+(SES.pick?'':tipA('Attach another session','A feature can have several sessions: pick one more from the list, and its work and messages show here too.'))+'>'+(SES.pick?'×':'+')+'</button>'
-  :'<span>No session is linked to this feature yet.</span><button type="button" data-ses="pick">'+(SES.pick?'Close':'Attach a session')+'</button>';
+ var h=SES.bound.length?'<span>Session:</span>'+SES.bound.slice(0,3).map(function(s){return '<b>'+esc(sesName(s))+'</b><span class="st '+s.state+'">'+STX[s.state]+'</span>'}).join(' ')+'<button type="button" class="sadd" data-ses="pick" aria-label="'+(SES.pick?'Close the list of sessions':'Attach another session')+'"'+(SES.pick?'':tipA('Attach another session','One piece of work can have several sessions: pick one more from the list, and what it does and says shows here too.'))+'>'+(SES.pick?'×':'+')+'</button>'
+  :'<span>No session is linked to this work yet.</span><button type="button" data-ses="pick">'+(SES.pick?'Close':'Attach a session')+'</button>';
  if(SES.pick){h+='<div class="pick">'+(SES.err?'<div class="rt err"><span>'+esc(SES.err)+'</span></div>':'')+(SES.sessions.length?'<ul>'+SES.sessions.map(function(s){return '<li><button type="button" data-ses="'+esc(s.id)+'"><b>'+esc(sesName(s))+'</b><span class="st '+s.state+'">'+STX[s.state]+'</span><small>'+esc(s.project)+(s.what?' · '+esc(s.what):'')+' · '+ago2(s.t)+(s.other?' · now on: '+esc(s.other):'')+'</small></button></li>'}).join('')+'</ul>':'<small>No sessions seen yet. Install the hooks and work in Claude Code; sessions appear here.</small>')+'</div>'}
  if(b._h!==h){b._h=h;b.innerHTML=h}repoLine()}   // rewritten only when it changed: the polls come every three seconds
 // Where the work goes, from git itself: every repository of the feature with the branch it is on now. The line
@@ -875,7 +863,7 @@ function chatDraw(){var l=$('cwl'),low=l.scrollHeight-l.scrollTop-l.clientHeight
   if(m.who==='a')return '<div class="cb a">'+md(m.text)+'</div><div class="ct">'+exact(m.t)+'</div>';
   var st=m.who==='me'?meStatus(m,i):null;
   return '<div class="cb u">'+md(m.text)+'</div>'+(st?'<div class="cs '+st[0]+'"><i></i><span>'+esc(st[1])+'</span></div>':'<div class="ct r">in the terminal, '+exact(m.t)+'</div>')}).join('')
-  :'<p class="cwe">Nothing here yet. Write a message and it goes to the session of this feature.</p>';
+  :'<p class="cwe">Nothing here yet. Write a message and it goes to the session of this work.</p>';
  if(low)l.scrollTop=l.scrollHeight}
 function pollChat(){if(!CHAT.sid)return;var sid=CHAT.sid;fetch('/api/chat?session='+encodeURIComponent(sid),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){
  if(sid!==CHAT.sid)return;var k=JSON.stringify(j.items||[]);if(k===CHAT.key)return;CHAT.key=k;CHAT.items=j.items||[];chatDraw();lastMsg()}).catch(function(){})}
@@ -926,18 +914,18 @@ function gitCard(r){var L=gitLinks(r),onBase=r.branch&&r.branch===r.base,chips=[
   if(r.asked===false)req='<span class="gm">Could not reach the remote, so the '+(L.word||'request')+' of the branch is not known.</span>';
   else if(r.request)req='<a class="gq" href="'+esc(L.req+r.request.n)+'" target="_blank" rel="noopener">'+(L.word==='pull request'?'Pull request':'Merge request')+' '+L.mark+r.request.n+' ↗</a>'+(r.request.merged?'<span class="tag ok">merged</span>':'<span class="tag part">not merged</span>');
   else if(onBase)req='<span class="gm">Works on the main branch (<code>'+esc(r.base)+'</code>): no '+(L.word||'request')+'.</span>';
-  else if(L.word)req='<span class="gm">No '+L.word+' for this branch yet.</span>'+(r.onRemote?' <a href="'+esc(L.make)+'" target="_blank" rel="noopener">Create one ↗</a>':'')+(P.live?'<button type="button" data-g="req"'+(s?'':' disabled title="No session of this feature is known"')+'>Ask the session to open it</button>':'');
+  else if(L.word)req='<span class="gm">No '+L.word+' for this branch yet.</span>'+(r.onRemote?' <a href="'+esc(L.make)+'" target="_blank" rel="noopener">Create one ↗</a>':'')+(P.live?'<button type="button" data-g="req"'+(s?'':' disabled title="No session of this work is known"')+'>Ask the session to open it</button>':'');
   else req='<span class="gm">The kind of this server is not known, so its requests cannot be found. Set it in <code>~/.whatnow/config.json</code>: <code>{"gitHosts": {"'+esc(r.host)+'": "gitlab"}}</code></span>'}
  else if(r.remote)req='<span class="gm">Asking the remote…</span>';
- var push=P.live&&r.remote&&(r.ahead||r.noUpstream)?'<button type="button" data-g="push"'+(s?'':' disabled title="No session of this feature is known"')+'>Ask the session to push</button>':'';
- var oth=(r.others||[]).length?'<p class="go" role="note">Also in this repository right now: '+r.others.map(function(o){return '<b>'+esc(o.name)+'</b>'+(o.feature?' (feature '+esc(o.feature)+')':'')}).join(', ')+'. Two sessions in one folder change the same files and the same branch.</p>':'';
+ var push=P.live&&r.remote&&(r.ahead||r.noUpstream)?'<button type="button" data-g="push"'+(s?'':' disabled title="No session of this work is known"')+'>Ask the session to push</button>':'';
+ var oth=(r.others||[]).length?'<p class="go" role="note">Also in this repository right now: '+r.others.map(function(o){return '<b>'+esc(o.name)+'</b>'+(o.feature?' (work '+esc(o.feature)+')':'')}).join(', ')+'. Two sessions in one folder change the same files and the same branch.</p>':'';
  var cm=r.commits||[],head=onBase||!r.base?'Latest commits':'Commits of this branch that <code>'+esc(r.base)+'</code> does not have';
  // a commit the plan names: a link to the stage it belongs to; older commits the plan names are listed after the others
  var IX=planIndex(),have={};cm.forEach(function(c){have[c.hash]=1});
  var refs=(GIT.d.refs||{}),old=Object.keys(refs).map(function(k){return refs[k]}).filter(function(c){return c.repo===r.path&&!have[c.hash]}).sort(function(a,b){return b.ts-a.ts});
  function row(c){var st=IX[c.short]||[],seen={};return '<li data-c="'+c.hash+'">'+(L.commit?'<a href="'+esc(L.commit+c.hash)+'" target="_blank" rel="noopener"><code>'+c.short+'</code></a>':'<code>'+c.short+'</code>')+'<span class="gs">'+esc(c.subject||'')+'</span>'+
    st.filter(function(x){if(seen[x.n])return false;seen[x.n]=1;return true}).map(function(x){return '<button type="button" class="gst" data-ps="'+x.si+'" data-pf="'+esc(x.fid||'')+'" title="The step of the plan that names this commit">stage '+x.n+'</button>'}).join('')+
-   (c.pushed===false?'<span class="tag part" title="The remote does not have this commit yet">not pushed</span>':'')+(c.mine?'<span class="tag live" title="Made by a session of this feature">this feature</span>':'')+'<span class="ga">'+(c.author?esc(c.author)+' · ':'')+ts(c.ts)+'</span></li>'}
+   (c.pushed===false?'<span class="tag part" title="The remote does not have this commit yet">not pushed</span>':'')+(c.mine?'<span class="tag live" title="Made by a session of this work">this work</span>':'')+'<span class="ga">'+(c.author?esc(c.author)+' · ':'')+ts(c.ts)+'</span></li>'}
  return '<section class="gr" data-repo="'+esc(r.path)+'"><div class="grh"><h3>'+esc(r.name)+(r.worktree?' <span class="tag no">worktree '+esc(r.worktree)+'</span>':'')+'</h3><code class="gb" title="Branch">'+esc(r.branch||('detached at '+r.detached))+'</code><span class="gp">'+esc(r.path)+'</span><span class="gx"></span>'+(r.web?'<a href="'+esc(r.web)+'" target="_blank" rel="noopener">Open'+(L.site?' on '+L.site:'')+' ↗</a>':'')+(L.list?'<a href="'+esc(L.list)+'" target="_blank" rel="noopener">All '+L.word+'s ↗</a>':'')+'</div>'+
   '<div class="gc">'+chips.map(function(c){return '<span class="gch '+c[0]+'" title="'+esc(c[2])+'">'+c[1]+'</span>'}).join('')+push+'</div>'+(req?'<div class="grq">'+req+'</div>':'')+oth+(GIT.said[r.path]?'<p class="gsaid">'+esc(GIT.said[r.path])+'</p>':'')+
   '<h4>'+head+(cm.length?' <small>'+cm.length+(cm.length>=15?', the latest':'')+'</small>':'')+'</h4>'+(cm.length?'<ol class="gcl">'+cm.map(row).join('')+'</ol>'+(old.length?'<h4>Earlier commits the plan names <small>'+old.length+'</small></h4><ol class="gcl">'+old.map(row).join('')+'</ol>':''):old.length?'<ol class="gcl">'+old.map(row).join('')+'</ol>':'<p class="gm">'+(onBase?'No commits.':'None: everything of this branch is already in <code>'+esc(r.base)+'</code>.')+'</p>')+'</section>'}
@@ -947,7 +935,7 @@ function planIndex(){var ix={};P.stages.forEach(function(s,si){s.facts.forEach(f
 function glowAt(el){if(!el)return;el.classList.remove('chg');void el.offsetWidth;el.style.animationDelay='0s';el.classList.add('chg');if(el.scrollIntoView)el.scrollIntoView({block:'center',behavior:'smooth'})}
 function gitGo(hash){show('git');setTimeout(function(){glowAt(document.querySelector('#gitl li[data-c="'+hash+'"]'))},80)}
 function planGo(si,fid){show('work');renderStage(si);setTimeout(function(){glowAt(document.querySelector('#det li[data-fid="'+fid+'"]'))},80)}
-function gitUI(){var el=$('gitl');if(!el)return;var rs=GIT.d.repos||[],h='<p class="why">The repositories the sessions of this feature work in. Read with git on this machine; nothing is changed there.</p>'+rs.map(gitCard).join('');
+function gitUI(){var el=$('gitl');if(!el)return;var rs=GIT.d.repos||[],h='<p class="why">The repositories the sessions of this work are in. Read with git on this machine; nothing is changed there.</p>'+rs.map(gitCard).join('');
  if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h}
  var up=0;rs.forEach(function(r){up+=(r.ahead||0)+(r.dirty?1:0)});var tbn=$('tab-git');if(tbn){var c=tbn.querySelector('.cnt');if(up&&!c){c=document.createElement('span');c.className='cnt';tbn.appendChild(c)}if(c){if(up){c.textContent=up;c.title='Unpushed commits and repositories with uncommitted files'}else c.remove()}}}
 function gitLoad(){if(GIT.busy)return;GIT.busy=true;fetch('/api/git?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){GIT.busy=false;if(j&&j.repos){var before=JSON.stringify(GIT.d.refs||{});GIT.d=j;repoLine();gitUI();if(JSON.stringify(j.refs||{})!==before&&!FORM)renderStage(cur)}}).catch(function(){GIT.busy=false})}
@@ -984,12 +972,12 @@ function accCard(s){var D=axData(s),dr=function(k,sum,body,open){return '<detail
   dr('Rules',D.R.allow.length+' allowed · '+D.R.ask.length+' ask · '+D.R.deny.length+' never',(D.R.deny.length?'<p><b>Never</b></p>'+axLines(D.R.deny,99,'bad'):'')+(D.R.ask.length?'<p><b>Asks first</b></p>'+axLines(D.R.ask,99):'')+(D.R.allow.length?'<p><b>Allowed without asking</b></p>'+axLines(D.R.allow,99):'')+(D.R.from.length?'<p><b>From</b></p>'+axLines(D.R.from,99):'<p class="axe">No allow, ask or deny rules in the settings files that apply.</p>'))+
   (D.known?dr('Outside services',D.on.length+' in use · '+D.off.length+' offered',(D.on.length?'<ul class="axu">'+D.on.map(function(x){return '<li><b>'+esc(axNice(x.name))+'</b> <small>'+x.tools+' tools</small></li>'}).join('')+'</ul>':'<p class="axe">None in use.</p>')+(D.off.length?'<p><b>Offered, not signed in</b></p><p class="axw">'+D.off.map(function(x){return esc(axNice(x.name))}).join(' · ')+'</p>':''))+
    dr('Instruction files',pl(D.files.length,'file'),D.files.length?axLines(D.files.map(function(f){return f.path}),99):'<p class="axe">None seen in the transcript.</p>')+dr('Tools it has used',String(D.tools.length),D.tools.length?'<p class="axw">'+D.tools.map(esc).join(' · ')+'</p>':'<p class="axe">None yet.</p>'):'')+'</section>'}
-function accUI(){var el=$('accl');if(!el||!ACC.d)return;var ss=ACC.d.sessions||[],h='<p class="why">What each session of this feature may do and reach, as Claude Code wrote it into the session and as the settings files say. Nothing is changed from here.</p>'+(ss.length?ss.map(accCard).join(''):'<p class="gm">No session of this feature is known.</p>');
+function accUI(){var el=$('accl');if(!el||!ACC.d)return;var ss=ACC.d.sessions||[],h='<p class="why">What each session of this work may do and reach, as Claude Code wrote it into the session and as the settings files say. Nothing is changed from here.</p>'+(ss.length?ss.map(accCard).join(''):'<p class="gm">No session of this work is known.</p>');
  if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h}}
 function accLoad(){if(ACC.busy)return;ACC.busy=true;fetch('/api/access?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){ACC.busy=false;if(j&&j.sessions){ACC.d=j;accUI()}}).catch(function(){ACC.busy=false})}
 function accShow(){accUI();accLoad();if(!ACC.timer)ACC.timer=setInterval(function(){if(curTab==='acc'&&document.visibilityState==='visible')accLoad()},20000)}
 if(HASACC&&location.hash==='#acc')show('acc');
-// Where the sessions of this feature work: the folder a session was started in (the agent reaches everything under
+// Where the sessions of this work work: the folder a session was started in (the agent reaches everything under
 // it), the folder it is in now, the folders added to it, and the others it worked in lately. A card under the stages.
 function dirsOf(s){var d=s.dirs||{};return{root:d.root||'',now:d.now||d.root||'',add:d.add||[],seen:(d.seen||[]).filter(function(x){return x!==d.root&&x!==d.now})}}
 function useTxt(u){if(!u)return '';var c=u.cpu>=10?Math.round(u.cpu):u.cpu,m=u.ram>=1024?(u.ram/1024).toFixed(1)+' GB':u.ram+' MB';return 'CPU '+c+'% · memory '+m}
@@ -1015,43 +1003,16 @@ function actLine(){var el=$('act');if(!el)return;var a=agent(),t=actText(a);if(!
 var renderRail0=renderRail;renderRail=function(){renderRail0();dirsUI();actLine()};
 function gotSes(j){SES.bound=j.bound||[];SES.sessions=j.sessions||[];sesBar();dirsUI();actLine();lastMsg();var a=agent(),k=a?a.id+a.state:'';if(k!==SES.key){SES.key=k;if(FORM)renderRail();else renderStage(cur)}if(!TC||!$('fr').contains(TC))freshBar()}
 function loadSes(){if(INIT.ses){var j=INIT.ses;INIT.ses=null;gotSes(j);return}fetch('/api/sessions?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(gotSes).catch(function(){})}
-// A new feature with the access of this one: a clean session in the same folders with the same permission mode.
-// The form asks for the task only (the session names its feature from it), shows what is copied, and, for a git
-// repository, asks where the new session works: in a copy of its own or in the same folder.
-var NF={plan:null,place:'worktree',busy:false,err:'',done:null};
-function nfClose(){$('nfw').hidden=true;NF.done=null;var b=$('fmb');if(b)b.focus()}
-function nfDraw(){var p=NF.plan,el=$('nf'),h='<h2 id="nfh">New feature with the same access</h2>';
- if(NF.done){el.innerHTML=h+'<p class="nfok"><b>Started: '+esc(NF.done.name)+'.</b> It is in the bar on the left under "Starting" and becomes a feature of its own when it has written its plan. Its session is in the Sessions list.</p><div class="row"><button type="button" class="go" data-nf="close">Close</button></div>';el.querySelector('button').focus();return}
- if(!p){el.innerHTML=h+(NF.err?'<p class="nferr">'+esc(NF.err)+'</p><div class="row"><button type="button" class="cx" data-nf="close">Close</button></div>':'<p class="nfm">Reading the access of this feature…</p>');return}
- var md=MODES[p.mode]||null,was=($('nft')||{}).value;
- h+='<p class="nfm">A new Claude session with an empty memory: it knows nothing of what was said here. It gets the same access as <b>'+esc(p.name||'the session of this feature')+'</b>:</p>'+
-  '<ul class="nfl"><li><span>Works in</span><div><code>'+esc(p.rootShown)+'</code></div></li>'+(p.dirsShown.length?'<li><span>Also reaches</span><div>'+p.dirsShown.map(function(d){return '<code>'+esc(d)+'</code>'}).join(' ')+'</div></li>':'')+
-  (p.mode?'<li><span>Permissions</span><div><b class="axp '+(md?md[0]:'')+'">'+esc(p.mode)+'</b>'+(md?' <small>'+md[1]+'</small>':'')+'</div></li>':'')+
-  '<li><span>And</span><div><small>the rules, outside services and instruction files of that folder, as in the Access tab.</small></div></li></ul>'+
-  '<label class="nfb" for="nft">What should it do?</label><textarea id="nft" placeholder="Describe the task. The new feature gets its name from it.">'+esc(was===undefined?draft('n:'+P.slug):was)+'</textarea>';
- if(p.git)h+='<fieldset class="nfp"><legend>Where does it work?</legend>'+
-  '<label class="'+(NF.place==='worktree'?'on':'')+'"><input type="radio" name="nfp" value="worktree"'+(NF.place==='worktree'?' checked':'')+'><span><b>In its own copy of the code</b> <em>safer</em><small>Claude Code makes a second working copy of this repository, on a new branch. This session and the new one cannot overwrite each other\'s files. The new work reaches the main code when its branch is merged.</small></span></label>'+
-  '<label class="'+(NF.place==='same'?'on':'')+'"><input type="radio" name="nfp" value="same"'+(NF.place==='same'?' checked':'')+'><span><b>In the same folder</b><small>Both sessions change the same files in '+esc(p.rootShown)+'. Fine when this session is finished, or the new work is in other files; otherwise they get in each other\'s way.</small></span></label></fieldset>';
- h+=(NF.err?'<p class="nferr">'+esc(NF.err)+'</p>':'')+'<div class="row"><button type="button" class="go" data-nf="go"'+(NF.busy?' disabled':'')+'>'+(NF.busy?'Starting…':'Start the session')+'</button><button type="button" class="cx" data-nf="close">Cancel</button></div>';
- el.innerHTML=h;var t=$('nft');if(t&&was===undefined){t.focus();t.setSelectionRange(t.value.length,t.value.length)}}
-window.wnNewFeature=function(){nfOpen()};
-function nfOpen(){NF={plan:null,place:'worktree',busy:false,err:'',done:null};$('nfw').hidden=false;nfDraw();
- fetch('/api/spawn?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(r){if(!r.ok){NF.err=r.j.error||'could not read the access';nfDraw();return}NF.plan=r.j;if(!r.j.git)NF.place='same';nfDraw()}).catch(function(){NF.err='no connection to the server';nfDraw()})}
+// The menu of the feature. Its item opens the "New work" form of the bar (side.js) with this one chosen as the
+// source of the access.
+window.wnNewFeature=function(){if(window.wnNewWork)window.wnNewWork({from:P.slug})};
 if($('fmw')&&P.live){$('fmw').hidden=false;
  var fmShut=function(){var m=$('fmn');if(!m.hidden){m.hidden=true;$('fmb').setAttribute('aria-expanded','false')}};
  $('fmb').onclick=function(e){e.stopPropagation();var m=$('fmn');m.hidden=!m.hidden;$('fmb').setAttribute('aria-expanded',!m.hidden);if(!m.hidden)$('fmnew').focus()};
  document.addEventListener('click',function(e){if(!e.target.closest('#fmn'))fmShut()});
- $('fmnew').onclick=function(){fmShut();nfOpen()};
- // the same menu in the bar on the left, for a feature that is not open, leads here
- if(location.hash==='#new'){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}setTimeout(nfOpen,0)}
- $('nfw').addEventListener('click',function(e){if(e.target===$('nfw')&&!NF.busy){nfClose();return}var b=e.target.closest('[data-nf]');if(!b)return;
-  if(b.dataset.nf==='close'){if(!NF.busy)nfClose();return}
-  var txt=($('nft').value||'').trim();if(!txt){NF.err='Write the task first.';nfDraw();$('nft').focus();return}
-  NF.busy=true;NF.err='';nfDraw();
-  post({action:'spawn',feature:P.slug,text:txt,place:NF.place}).then(function(r){NF.busy=false;if(!r.ok){NF.err=(r.j&&r.j.error)||'could not start the session';nfDraw();return}draft('n:'+P.slug,'');NF.done=r.j;nfDraw()}).catch(function(){NF.busy=false;NF.err='no connection to the server';nfDraw()})});
- $('nfw').addEventListener('change',function(e){if(e.target.name==='nfp'){NF.place=e.target.value;nfDraw()}});
- $('nfw').addEventListener('input',function(e){if(e.target.id==='nft')draft('n:'+P.slug,e.target.value)});
- $('nfw').addEventListener('keydown',function(e){if(e.key==='Escape'&&!NF.busy)nfClose()})}
+ $('fmnew').onclick=function(){fmShut();window.wnNewFeature()};
+ // the same menu in the bar, for one that is not open, leads here
+ if(location.hash==='#new'){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}setTimeout(window.wnNewFeature,0)}}
 if($('rps'))$('rps').addEventListener('click',function(e){if(e.target.closest('[data-rp]')&&$('tab-git'))$('tab-git').click()});
 if($('ses'))$('ses').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.dataset.term)return;var v=b.dataset.ses;
  if(v==='pick'){SES.pick=!SES.pick;SES.err='';sesBar();return}
@@ -1061,9 +1022,9 @@ if(P.live){loadSes();setInterval(loadSes,3000)}
 if(P.live&&location.protocol!=='file:'){if(!window.wnSide){var sd=document.createElement('script');sd.src='/side.js';document.body.appendChild(sd)}}
 var VER=P.ver,SYNC={behind:null,pending:false,busy:false,err:''};
 function syBar(){var b=$('sy');if(!b||!P.live)return;
- var rq=$('rq');if(rq){rq.hidden=false;rq.disabled=!!(SYNC.pending||SYNC.busy);var rt=SYNC.pending?'Status requested…':'↻ Request status';if(rq.textContent!==rt)rq.textContent=rt;rq.title=SYNC.pending?'Waiting for the session to answer':'Ask the session of this feature to bring this page up to date now'}
- var h='';if(SYNC.pending)h=SYNC.pending==='asleep'?'Status requested, but not delivered yet: '+(SYNC.asleep?'session <b>'+esc(SYNC.asleep)+'</b> has been idle for over an hour, so the page cannot wake it':'no session of this feature can take it right now')+'. Type anything in a session of this feature (even &quot;ok&quot;) and it takes the request at once, or attach a session that is working.':SYNC.pending==='none'?'Status requested, but no session is linked to this feature: the request waits for the first session that starts working on it.':SYNC.pending==='bg'?'Status requested: the closed session was resumed in the background to bring this page up to date.':'Status requested: waiting for the session to bring this page up to date.';
- else if(SYNC.behind)h='This page may be behind: <b>'+esc(SYNC.behind.name)+'</b> finished a turn '+(SYNC.behind.min<1?'right after':SYNC.behind.min+' min after')+' the last update of this feature. <button type="button" data-sy="1"'+(SYNC.busy?' disabled':'')+'>Ask it to sync</button>';
+ var rq=$('rq');if(rq){rq.hidden=false;rq.disabled=!!(SYNC.pending||SYNC.busy);var rt=SYNC.pending?'Status requested…':'↻ Request status';if(rq.textContent!==rt)rq.textContent=rt;rq.title=SYNC.pending?'Waiting for the session to answer':'Ask the session of this work to bring this page up to date now'}
+ var h='';if(SYNC.pending)h=SYNC.pending==='asleep'?'Status requested, but not delivered yet: '+(SYNC.asleep?'session <b>'+esc(SYNC.asleep)+'</b> has been idle for over an hour, so the page cannot wake it':'no session of this work can take it right now')+'. Type anything in a session of this work (even &quot;ok&quot;) and it takes the request at once, or attach a session that is working.':SYNC.pending==='none'?'Status requested, but no session is linked to this work: the request waits for the first session that starts working on it.':SYNC.pending==='bg'?'Status requested: the closed session was resumed in the background to bring this page up to date.':'Status requested: waiting for the session to bring this page up to date.';
+ else if(SYNC.behind)h='This page may be behind: <b>'+esc(SYNC.behind.name)+'</b> finished a turn '+(SYNC.behind.min<1?'right after':SYNC.behind.min+' min after')+' the last update of this work. <button type="button" data-sy="1"'+(SYNC.busy?' disabled':'')+'>Ask it to sync</button>';
  if(SYNC.pending)h+=' <button type="button" data-unsy="1"'+(SYNC.busy?' disabled':'')+'>Cancel request</button>';
  if(SYNC.err)h+=' <span>'+esc(SYNC.err)+'</span>';
  b.hidden=!h;b.innerHTML=h}

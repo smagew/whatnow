@@ -13,10 +13,12 @@ package main
 
 import (
 	"context"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -136,25 +138,88 @@ func spawnPrompt(task string) string {
 		"Write the content in the language of the task. Then do the work and keep the dashboard in step with it."
 }
 
-// spawnFeature starts the session. place is "same" (the folder of the feature) or "worktree" (a separate working
-// copy of the repository, made by Claude Code, so the two sessions do not change the same files).
+// folderPlan is spawnPlan for a folder the user names: there is no session to copy from, so the permission
+// mode is the one the user chose ("" for the default of Claude Code).
+func folderPlan(dir, mode string) (int, map[string]any) {
+	dir = expandUser(strings.TrimSpace(dir))
+	if dir == "" {
+		return 400, map[string]any{"error": "choose a folder"}
+	}
+	if !filepath.IsAbs(dir) {
+		return 400, map[string]any{"error": "give the full path of the folder, from / or ~"}
+	}
+	dir = filepath.Clean(dir)
+	if !isDir(dir) {
+		return 404, map[string]any{"error": "there is no such folder: " + tilde(dir)}
+	}
+	if mode != "" && !modeRe.MatchString(mode) {
+		return 400, map[string]any{"error": "bad permission mode"}
+	}
+	_, isGit := git(dir, gitFast, "rev-parse", "--git-dir")
+	return 200, map[string]any{"root": dir, "rootShown": tilde(dir), "dirs": []any{}, "dirsShown": []any{}, "mode": mode, "git": isGit,
+		"name": filepath.Base(dir)}
+}
+
+var notTrusted = regexp.MustCompile(`(?i)not trusted`)
+
+// workSlug is a free slug for a piece of work the dashboard itself opens (no task yet): from the name of its folder.
+func workSlug(name string) string {
+	base := strings.Trim(regexp.MustCompile(`[^A-Za-z0-9._-]+`).ReplaceAllString(strings.ToLower(name), "-"), "-.")
+	if base == "" {
+		base = "work"
+	}
+	slug := base
+	for i := 2; isDir(filepath.Join(featuresDir(), slug)); i++ {
+		slug = base + "-" + strconv.Itoa(i)
+	}
+	return slug
+}
+
+// emptyWork writes the page of a piece of work that has no task yet: one stage that says so. The session that
+// gets the task rewrites it (the hook reminds a session of the feature it keeps).
+func emptyWork(root string) (string, error) {
+	name := filepath.Base(root)
+	slug := workSlug(name)
+	dir := filepath.Join(featuresDir(), slug)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", err
+	}
+	d := map[string]any{"title": "New work in " + name, "sub": "", "summary": "Opened from the dashboard. It has no task yet.",
+		"projects": []any{name}, "updated": time.Now().Format("2006-01-02"),
+		"stages": []any{map[string]any{"n": 1, "title": "Waiting for the task", "kind": "plan", "verdict": "Not started",
+			"plan":  []any{"Give the session its task: write to it in the window of the session"},
+			"facts": []any{[]any{"q", "The session is started and waits. When it has the task, it writes the plan here and gives this work its name."}}}},
+		"decisions": []any{}, "questions": []any{}, "blockers": []any{}, "nextSteps": []any{"Write the task to the session"}}
+	return slug, atomicWriteJSON(filepath.Join(dir, "feature.json"), d)
+}
+
+// spawnFeature starts a session with the access of an existing piece of work (see spawnPlan).
 func spawnFeature(slug, task, place string) (int, any) {
-	task = strings.TrimSpace(task)
-	if task == "" {
-		return 400, map[string]any{"error": "write the task first"}
-	}
-	if len([]rune(task)) > 8000 {
-		return 400, map[string]any{"error": "the task is too long (8000 characters max)"}
-	}
 	code, p := spawnPlan(slug)
 	if code != 200 {
 		return code, p
+	}
+	return startWork(p, slug, task, place)
+}
+
+// startWork starts the session of a new piece of work. place is "same" (the folder itself) or "worktree" (a
+// separate working copy of the repository, made by Claude Code, so two sessions do not change the same files).
+// With a task, the session is told to make its own page and name it from the task. Without one it starts idle,
+// and the dashboard opens an empty page for it, named after the folder.
+func startWork(p map[string]any, from, task, place string) (int, any) {
+	task = strings.TrimSpace(task)
+	if len([]rune(task)) > 8000 {
+		return 400, map[string]any{"error": "the task is too long (8000 characters max)"}
 	}
 	claude := claudeBin()
 	if claude == "" {
 		return 500, map[string]any{"error": "claude not found: set claudeBin in config.json"}
 	}
+	root := str(p, "root")
 	name := spawnName(task)
+	if task == "" {
+		name = filepath.Base(root)
+	}
 	args := []string{"--bg", "-n", name}
 	if place == "worktree" {
 		if p["git"] != true {
@@ -168,11 +233,13 @@ func spawnFeature(slug, task, place string) (int, any) {
 	if m := str(p, "mode"); m != "" {
 		args = append(args, "--permission-mode", m)
 	}
-	args = append(args, spawnPrompt(task))
+	if task != "" {
+		args = append(args, spawnPrompt(task))
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, claude, args...)
-	cmd.Dir, cmd.Env, cmd.Stdin = str(p, "root"), childEnv(claude), nil
+	cmd.Dir, cmd.Env, cmd.Stdin = root, childEnv(claude), nil
 	out, err := cmd.CombinedOutput()
 	m := bgID.FindSubmatch(out)
 	if m == nil {
@@ -180,24 +247,47 @@ func spawnFeature(slug, task, place string) (int, any) {
 		if msg == "" && err != nil {
 			msg = err.Error()
 		}
+		if notTrusted.MatchString(msg) {
+			// Claude Code works only in a folder the user has trusted, and asks for that in its own window.
+			// The dashboard does not answer that question for the user.
+			return 409, map[string]any{"trust": tilde(root), "error": "Claude Code has not been allowed to work in this folder yet. Open a terminal, run `claude` in " +
+				tilde(root) + " once and accept its question about trusting the folder; then press Start again."}
+		}
 		return 500, map[string]any{"error": "Claude Code did not start the session: " + msg}
 	}
 	short := string(m[1])
 	sid := ""
-	// The full id is in the list of agents a moment later. It is not waited for: the bar finds it by the short one.
-	for id, a := range readAgents() {
-		if str(a, "id") == short {
-			sid = id
+	tries := 1
+	if task == "" {
+		tries = 6 // the empty page is linked to the session, so its full id is waited for (a few seconds at most)
+	}
+	for i := 0; i < tries && sid == ""; i++ {
+		if i > 0 {
+			time.Sleep(400 * time.Millisecond)
+		}
+		for id, a := range readAgents() {
+			if str(a, "id") == short {
+				sid = id
+			}
 		}
 	}
-	rec := map[string]any{"id": short, "session": sid, "name": name, "task": runes(task, 300), "from": slug, "ts": nowMs(),
-		"place": place, "root": p["root"], "dirs": p["dirs"], "mode": p["mode"]}
+	slug := ""
+	if task == "" {
+		if made, err := emptyWork(root); err == nil {
+			slug = made
+			if sid != "" {
+				_ = bind(sid, slug)
+			}
+		}
+	}
+	rec := map[string]any{"id": short, "session": sid, "name": name, "task": runes(task, 300), "from": from, "ts": nowMs(),
+		"place": place, "root": p["root"], "dirs": p["dirs"], "mode": p["mode"], "feature": slug}
 	l := append(readSpawned(), rec)
 	if len(l) > 50 {
 		l = l[len(l)-50:]
 	}
 	_ = atomicWriteJSON(spawnedPath(), l)
-	return 200, map[string]any{"ok": true, "id": short, "session": sid, "name": name}
+	return 200, map[string]any{"ok": true, "id": short, "session": sid, "name": name, "feature": slug}
 }
 
 // spawnedNow are the started sessions that have no feature yet, for the bar.
@@ -208,7 +298,7 @@ func spawnedNow() []any {
 	var agents agentMap
 	for _, r := range readSpawned() {
 		sid := str(r, "session")
-		if now-num(r["ts"]) > spawnKeep || (sid != "" && str(bound, sid) != "") {
+		if now-num(r["ts"]) > spawnKeep || (sid != "" && str(bound, sid) != "") || str(r, "feature") != "" {
 			continue
 		}
 		if agents == nil {

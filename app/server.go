@@ -739,6 +739,14 @@ func act(body map[string]any) (int, any) {
 	case "spawn":
 		place, _ := body["place"].(string)
 		slug, _ := body["feature"].(string)
+		if dir, _ := body["dir"].(string); dir != "" { // a new piece of work in a folder the user named
+			mode, _ := body["mode"].(string)
+			code, p := folderPlan(dir, mode)
+			if code != 200 {
+				return code, p
+			}
+			return startWork(p, "", text, place)
+		}
 		return spawnFeature(slug, text, place)
 	case "fav", "unfav":
 		return favorite(body)
@@ -1083,6 +1091,9 @@ func send(w http.ResponseWriter, code int, body []byte, ctype string) {
 	_, _ = w.Write(body)
 }
 
+// pickDir shows the system dialog for choosing a folder; set by the app window when it starts.
+var pickDir func() (string, error)
+
 func sendJSON(w http.ResponseWriter, code int, v any) {
 	send(w, code, encodeJSON(v), "application/json; charset=utf-8")
 }
@@ -1174,8 +1185,11 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	case "/demo/motion", "/demo/talk", "/demo/ask", "/demo/reply": // examples of the interface to choose from (skill/demo)
 		send(w, 200, []byte(page("demo"+strings.TrimPrefix(path, "/demo")+".html")), "text/html; charset=utf-8")
-	case "/api/spawn": // what a new session started from this feature would get
-		if s, ok := slugArg(); ok {
+	case "/api/spawn": // what a new session would get: started from a feature, or in a folder
+		if dir := q.Get("dir"); dir != "" {
+			code, v := folderPlan(dir, "")
+			sendJSON(w, code, v)
+		} else if s, ok := slugArg(); ok {
 			code, v := spawnPlan(s)
 			sendJSON(w, code, v)
 		}
@@ -1274,6 +1288,17 @@ func (h handler) post(w http.ResponseWriter, r *http.Request) {
 		case "alerts":
 			code, obj := setAlertMode(str(body, "mode"))
 			sendJSON(w, code, obj)
+		case "pickdir": // the system dialog for choosing a folder (the app window has one, a browser tab does not)
+			if pickDir == nil {
+				sendJSON(w, 501, map[string]any{"error": "no folder dialog here"})
+				return
+			}
+			dir, err := pickDir()
+			if err != nil {
+				sendJSON(w, 500, map[string]any{"error": err.Error()})
+				return
+			}
+			sendJSON(w, 200, map[string]any{"dir": dir})
 		default:
 			sendJSON(w, 400, map[string]any{"error": "bad op"})
 		}

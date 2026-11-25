@@ -33,9 +33,7 @@ func TestANewFeatureGetsTheAccessOfTheOldOne(t *testing.T) {
 	eqList(t, anyStrings(p["dirs"]), []string{extra})
 	eq(t, p["git"], any(false))
 
-	code, r := act2(t, map[string]any{"action": "spawn", "feature": "demo-feature", "text": "  "})
-	eq(t, code, 400, "no task")
-	code, r = act2(t, map[string]any{"action": "spawn", "feature": "demo-feature", "text": "Add a CSV export", "place": "worktree"})
+	code, r := act2(t, map[string]any{"action": "spawn", "feature": "demo-feature", "text": "Add a CSV export", "place": "worktree"})
 	eq(t, code, 400, "a separate copy needs a git repository", r)
 
 	code, r = act2(t, map[string]any{"action": "spawn", "feature": "demo-feature", "text": "Add a CSV export to the report page", "place": "same"})

@@ -15,6 +15,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"whatnow"
 )
@@ -67,6 +68,11 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 238, G: 241, B: 238, A: 255}, // the page background (--bg),
 		AssetServer:      &assetserver.Options{Handler: handler{local: true}},
 		OnShutdown:       func(context.Context) { termCloseAll() }, // attach processes end, the sessions go on
+		OnStartup: func(ctx context.Context) {
+			pickDir = func() (string, error) {
+				return runtime.OpenDirectoryDialog(ctx, runtime.OpenDialogOptions{Title: "Choose the folder of the new work", CanCreateDirectories: true})
+			}
+		},
 
 		Mac: &mac.Options{
 			About: &mac.AboutInfo{Title: "whatnow", Message: "Claude Code sessions and features at a glance"},

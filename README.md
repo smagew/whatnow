@@ -122,15 +122,21 @@ A session that keeps a
 dashboard is reminded at every prompt to write new work into the plan before it starts (`"remind": false` in
 `~/.whatnow/config.json` turns the reminder off), so a request you make shows up at once.
 
-**New feature with the same access.** The three dots at the right end of the header of a feature page, and of every feature in the bar, have **New feature with the same
-access**: a clean Claude Code session (it knows nothing of the old conversation) started in the background in the
-folder the feature was started in, with the same added folders and the same permission mode; the rules, MCP servers
-and instruction files of that folder come with the folder. The form shows what is copied and asks for the task only:
-the session puts its work on the dashboard as a feature of its own and names it from the task. For a git repository
-you choose where it works: in its own copy of the code (a worktree on a new branch, made by Claude Code, so the two
-sessions cannot overwrite each other's files) or in the same folder. Until the feature exists, the bar shows the
-session under *Starting*. What a session was started with is kept in `~/.whatnow/spawned.json`. An added folder
-has to be one Claude Code trusts already; if it is not, Claude Code says so and nothing is started.
+**New work.** *Work* is what the pages call one thing you and Claude are doing: a feature, a migration, a review.
+(In files, addresses and commands it is still `feature`: `feature.json`, `/f/<slug>/`.) **+ New work** in the bar
+starts one: a new Claude Code session in the background.
+- *In a folder*: the folder you name (the app window has a dialog for choosing it) and the permission mode you pick.
+- *Like existing work*: the folder that work was started in, its added folders and its permission mode; the rules, MCP
+  servers and instruction files of the folder come with the folder. The same form opens from the three dots of a
+  piece of work, in its header and in the bar.
+
+The task is optional. With a task the session puts its work on the dashboard itself and names it from the task; until
+then the bar shows it under *Starting*. Without a task the session starts and waits, and the dashboard opens an empty
+page for it, named after the folder, where you write to the session. For a git repository you choose where the
+session works: in its own copy of the code (a worktree on a new branch, made by Claude Code, so two sessions cannot
+overwrite each other's files) or in the folder itself. Claude Code works only in a folder you have trusted: for a new
+one it refuses, and the form tells you to run `claude` there once and accept its question (the dashboard does not
+answer that for you). What a session was started with is kept in `~/.whatnow/spawned.json`.
 
 **Alerts (app window).** When a session answers, or asks for a permission, while the app window is not in front,
 the system shows a notification with the name of the feature and the first words of the answer, and plays a sound.
