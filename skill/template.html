@@ -390,8 +390,6 @@ html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
 .axo>div{padding:0 0 12px 192px;font-size:13px}.axo>div p{margin:8px 0 0}.axo>div p:first-child{margin-top:0}
 @media(max-width:760px){.axo>summary b{width:auto}.axo>div{padding-left:0}}
 /* the folders the sessions of the feature work in: a card under the stages */
-.dcard{margin:18px 0 4px 2px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:12px;font-size:13px;color:var(--mut);line-height:1.5}
-.dcard h4{margin:0 0 6px;font-size:13px;color:var(--ink)}.dcard .dp{display:block;margin-top:6px}.dcard .dn{margin-top:12px}.dcard code{white-space:normal;word-break:break-all}.dcard b{color:var(--ink);font-weight:600}
 </style>
 <script>window.PANEL=/*__DATA__*/null;</script></head><body>
 <header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="rps" id="rps"></span><span class="qb" id="qb"></span><span class="fmw" id="fmw" hidden><button type="button" class="fmb" id="fmb" aria-haspopup="menu" aria-expanded="false" aria-label="More for this work" title="More">⋮</button><span class="fmn" id="fmn" role="menu" hidden><button type="button" role="menuitem" id="fmnew">New work with the same access<small>A clean session: same folders and permissions, empty memory</small></button></span></span></div></div></div>
@@ -966,7 +964,7 @@ function axLines(l,max,cls){if(!l.length)return '';var row=function(x){return '<
 function axData(s){var rl=s.rules||[],R={allow:[],ask:[],deny:[],dirs:[],from:[]};rl.forEach(function(r){['allow','ask','deny','dirs'].forEach(function(k){R[k]=R[k].concat(r[k]||[])});R.from.push(r.source+': '+r.file)});
  var mcp=s.mcp||[],d=s.dirs||{};return{R:R,on:mcp.filter(function(x){return x.tools>2}),off:mcp.filter(function(x){return x.tools<=2}),files:s.files||[],tools:s.tools||[],
   now:d.now||d.root||'',root:d.root||'',add:d.add||[],seen:(d.seen||[]).filter(function(x){return x!==d.root&&x!==d.now}),m:MODES[s.mode]||['',''],known:!!s.mcp}}
-function axHead(s){return '<div class="grh"><h3>'+esc(s.name||s.id.slice(0,8))+'</h3><span class="tag '+(s.open?'ok':'no')+'">'+(s.open?(STX[s.state]||'open'):'closed')+'</span>'+(s.model?'<span class="gp">model '+esc(s.model)+'</span>':'')+'</div>'}
+function axHead(s){return '<div class="grh"><h3>'+esc(s.name||s.id.slice(0,8))+'</h3><span class="tag '+(s.open?'ok':'no')+'">'+(s.open?(STX[s.state]||'open'):'closed')+'</span>'+(s.model?'<span class="gp">model '+esc(s.model)+'</span>':'')+(function(){var b=(SES.bound||[]).filter(function(x){return x.id===s.id})[0];return b&&b.use?'<span class="gp"'+tipA('What the session takes right now','Its process and everything started under it (commands, MCP servers). CPU is in percent of one core.')+'>'+useTxt(b.use)+'</span>':''})()+'</div>'}
 function axFolders(D){return '<ul class="axu"><li><b>Works in</b> <code>'+esc(D.now||'not known')+'</code></li>'+(D.root&&D.root!==D.now?'<li><b>Started in</b> <code>'+esc(D.root)+'</code> <small>and everything under it</small></li>':D.now?'<li><small>started here; reaches everything under it</small></li>':'')+D.add.concat(D.R.dirs).map(function(x){return '<li><b>Added</b> <code>'+esc(x)+'</code></li>'}).join('')+'</ul>'+(D.seen.length?'<details class="axd"><summary>'+D.seen.length+' more it worked in lately</summary>'+axLines(D.seen,99)+'</details>':'')}
 function accCard(s){var D=axData(s),dr=function(k,sum,body,open){return '<details class="axo"'+(open?' open':'')+'><summary><b>'+k+'</b><span>'+sum+'</span></summary><div>'+body+'</div></details>'},pl=function(n,w){return n+' '+w+(n===1?'':'s')};
  return '<section class="gr ax3">'+axHead(s)+'<p class="axq"><b class="axp '+D.m[0]+'">'+esc(s.mode||'mode not known')+'</b> in <code>'+esc(D.root||D.now||'?')+'</code>'+(D.R.allow.length+D.R.ask.length+D.R.deny.length?', '+pl(D.R.allow.length+D.R.ask.length+D.R.deny.length,'rule'):', no rules')+(D.known?', '+pl(D.on.length,'outside service')+' in use':'')+'.</p>'+
@@ -982,18 +980,10 @@ function accShow(){accUI();accLoad();if(!ACC.timer)ACC.timer=setInterval(functio
 if(HASACC&&location.hash==='#acc')show('acc');
 // Where the sessions of this work work: the folder a session was started in (the agent reaches everything under
 // it), the folder it is in now, the folders added to it, and the others it worked in lately. A card under the stages.
-function dirsOf(s){var d=s.dirs||{};return{root:d.root||'',now:d.now||d.root||'',add:d.add||[],seen:(d.seen||[]).filter(function(x){return x!==d.root&&x!==d.now})}}
 function useTxt(u){if(!u)return '';var c=u.cpu>=10?Math.round(u.cpu):u.cpu,m=u.ram>=1024?(u.ram/1024).toFixed(1)+' GB':u.ram+' MB';return 'CPU '+c+'% · memory '+m}
-function dirsLine(s){var d=dirsOf(s),codes=function(l){return l.map(function(x){return '<code>'+esc(x)+'</code>'}).join(' ')},h='<span class="dp"><b>Works in</b> <code>'+esc(d.now)+'</code>'+(d.root&&d.root!==d.now?'':' <small>(started here, reaches everything under it)</small>')+'</span>';
- if(d.root&&d.root!==d.now)h+='<span class="dp"><b>Started in</b> <code>'+esc(d.root)+'</code> <small>(reaches everything under it)</small></span>';
- if(d.add.length)h+='<span class="dp"><b>Added</b> '+codes(d.add)+'</span>';
- if(d.seen.length)h+='<span class="dp"><b>Also worked in</b> '+codes(d.seen)+'</span>';
- if(s.use)h+='<span class="dp" title="The process of the session and everything started under it (commands, MCP servers). CPU is in percent of one core."><b>Uses now</b> '+useTxt(s.use)+(s.use.procs>1?' <small>('+s.use.procs+' processes)</small>':'')+'</span>';
- return h}
-function dirsUI(){if(!P.live)return;var stl=$('stl'),b=SES.bound.filter(function(s){return s.dirs&&(s.dirs.now||s.dirs.root)});if(!stl)return;var c=stl.querySelector('.dcard');
- if(!b.length){if(c)c.remove();return}
- var h='<h4>'+(b.some(function(s){return s.use})?'Folders and resources':'Folders')+'</h4>'+b.map(function(s){return (b.length>1?'<span class="dp dn"><b>'+esc(sesName(s))+'</b></span>':'')+dirsLine(s)}).join('');
- if(!c){c=document.createElement('div');c.className='dcard';stl.appendChild(c)}if(c.dataset.h!==h){c.dataset.h=h;c.innerHTML=h}}
+// The card "Folders and resources" under the list of stages is gone: the folders are on the Access tab, and what
+// the session takes right now is in its head there and in the list of sessions.
+function dirsUI(){}
 // Under the current stage, while its session works: three small bars and what the agent does now, as the hook
 // last saw it ("editing git.go", "running go test"). The plan may not change for minutes; this line says the
 // work is alive. The text fades when it changes; nothing else moves.

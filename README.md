@@ -195,10 +195,10 @@ The terminal is full access to your machine, so it is never served on the 127.0.
 it. On Windows it runs in a pseudo console (ConPTY, Windows 10 1809 and newer); that part is covered by a test on a
 Windows build machine and has not been tried in the app window by a person yet.
 
-**Folders and resources.** Under the stages a feature page shows, for every session of the feature, the folder it
-works in, the folder it was started in (the agent reaches everything under it), the folders added to it (`--add-dir`,
-`/add-dir`) and the others it worked in lately; these come from the environment snapshots Claude Code writes into the
-transcript. For an open session it also shows the CPU (percent of one core) and memory its process takes together with
+**Folders and resources.** The Access tab shows, for every session, the folder it works in, the folder it was
+started in (the agent reaches everything under it), the folders added to it (`--add-dir`, `/add-dir`) and the others
+it worked in lately; these come from the environment snapshots Claude Code writes into the transcript. For an open
+session its head there also shows the CPU (percent of one core) and memory its process takes together with
 everything started under it; the Sessions list shows the same. Not read on Windows yet.
 
 **How a step ended.** An item of a stage can carry a detail, and a stage a result (see `skill/SCHEMA.md`): what was
