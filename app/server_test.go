@@ -530,6 +530,36 @@ func TestChatShowsTheConversationAndWhatWasSentFromThePage(t *testing.T) {
 	eq(t, fmt.Sprint(items[4]["state"], items[4]["id"]), fmt.Sprint("new", entryOf(t, r)["id"]))
 }
 
+// A message typed while Claude works is written by Claude Code as a queued attachment, not as a user row: the
+// chat shows it too, so an answer is never left without its question.
+func TestChatShowsWhatTheUserTypedWhileClaudeWorked(t *testing.T) {
+	e := withSessionsTab(t)
+	stamp := func(n int) string { return fmt.Sprintf("2026-01-02T03:05:%02d.000Z", n) }
+	queued := func(a map[string]any, n int) map[string]any {
+		a["type"] = "queued_command"
+		return map[string]any{"type": "attachment", "attachment": a, "timestamp": stamp(n)}
+	}
+	human := map[string]any{"kind": "human"}
+	e.appendTranscript(
+		transcriptRow("user", "start the long work", stamp(1)),
+		transcriptRow("assistant", []any{map[string]any{"type": "tool_use", "name": "Bash"}}, stamp(2)),
+		queued(map[string]any{"commandMode": "prompt", "origin": human, "prompt": "and check the header too"}, 3),
+		queued(map[string]any{"commandMode": "task-notification", "origin": map[string]any{"kind": "task-notification"}, "prompt": "<task-notification>done</task-notification>"}, 4),
+		queued(map[string]any{"commandMode": "prompt", "isMeta": true, "origin": map[string]any{"body": "x"}, "prompt": "<cross-session-message>hello from another session</cross-session-message>"}, 5),
+		queued(map[string]any{"commandMode": "prompt", "origin": human, "prompt": []any{map[string]any{"type": "image"}, map[string]any{"type": "text", "text": "look at this picture"}}}, 6),
+		transcriptRow("user", "look at this picture", stamp(7)), // the same message, written a second time
+		transcriptRow("assistant", "Both done.", stamp(8)))
+	items := chat("77777777-aaaa")["items"].([]map[string]any)
+	var got []string
+	for _, i := range items {
+		got = append(got, fmt.Sprint(i["who"], ": ", i["text"]))
+	}
+	if len(got) < 4 {
+		t.Fatalf("items: %v", got)
+	}
+	eqList(t, got[len(got)-4:], []string{"u: start the long work", "u: and check the header too", "u: look at this picture", "a: Both done."})
+}
+
 func TestHideAndUnhide(t *testing.T) {
 	withSessionsTab(t)
 	code, _ := act2(t, map[string]any{"action": "hide", "session": "77777777-aaaa"})

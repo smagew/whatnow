@@ -13,8 +13,11 @@ import (
 // The pseudo-terminal of this system really runs a program: its output is read, a line typed into it arrives.
 func TestAProgramRunsInThePseudoTerminal(t *testing.T) {
 	cmd := exec.Command("/bin/sh", "-c", "echo hello-pty; read x; echo got-$x")
+	typed, answer := "key\r", "got-key"
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command(filepath.Join(os.Getenv("SystemRoot"), "System32", "cmd.exe"), "/d", "/q", "/v:on", "/c", "echo hello-pty& set /p x=& echo got-!x!")
+		// an interactive cmd.exe: it reads its commands from the console, like claude reads its keys
+		cmd = exec.Command(filepath.Join(os.Getenv("SystemRoot"), "System32", "cmd.exe"), "/d", "/q", "/k", "echo hello-pty")
+		typed, answer = "echo got-%OS%\r", "got-Windows_NT"
 	}
 	tty, resize, err := startPty(cmd, 80, 24)
 	if err != nil {
@@ -34,7 +37,7 @@ func TestAProgramRunsInThePseudoTerminal(t *testing.T) {
 				said = true
 				out <- "hello"
 			}
-			if strings.Contains(string(all), "got-key") {
+			if strings.Contains(string(all), answer) {
 				out <- "got"
 				return
 			}
@@ -56,7 +59,7 @@ func TestAProgramRunsInThePseudoTerminal(t *testing.T) {
 		}
 	}
 	wait("hello")
-	if _, err := tty.Write([]byte("key\r")); err != nil {
+	if _, err := tty.Write([]byte(typed)); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 	wait("got")

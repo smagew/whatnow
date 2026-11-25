@@ -105,6 +105,20 @@ func msgText(m map[string]any) string {
 	return ""
 }
 
+// queuedText: a message the user typed while Claude was working. Claude Code does not write it as a user row: it
+// is an attachment of type queued_command (so are task notifications and messages of other sessions, which are
+// not the user's words and are left out).
+func queuedText(row map[string]any) string {
+	a, _ := row["attachment"].(map[string]any)
+	if a == nil || a["type"] != "queued_command" || a["commandMode"] != "prompt" || truthy(a["isMeta"]) {
+		return ""
+	}
+	if o, _ := a["origin"].(map[string]any); o == nil || o["kind"] != "human" {
+		return ""
+	}
+	return msgText(map[string]any{"content": a["prompt"]})
+}
+
 func realUser(t string) bool {
 	if len([]rune(t)) <= 3 {
 		return false
@@ -302,6 +316,8 @@ func transcriptInfo(sid string) *transcript {
 			info.LastA, info.Said, info.SaidT = t, full(raw), stamp(row, info.Mtime)
 		} else if m["role"] == "user" && realUser(t) && info.LastU == "" {
 			info.LastU = t
+		} else if q := clean(queuedText(row)); realUser(q) && info.LastU == "" {
+			info.LastU = q
 		}
 	}
 	// The recent conversation, for the chat window: what the user typed and what Claude answered. A text that
@@ -311,6 +327,16 @@ func transcriptInfo(sid string) *transcript {
 	var at int64
 	var note *chatLine
 	locked := true
+	// said adds what the user wrote. Claude Code sometimes writes a message typed during a turn twice, as a queued
+	// one and as a user row: the second copy is left out.
+	said := func(text string) {
+		for i := len(chat) - 1; i >= 0 && i >= len(chat)-12; i-- {
+			if chat[i].who == "u" && chat[i].text == text && at-chat[i].t < 30*60*1000 {
+				return
+			}
+		}
+		chat = append(chat, chatLine{"u", text, at})
+	}
 	for _, line := range lines {
 		row, m := rowOf(line)
 		if row == nil {
@@ -318,6 +344,12 @@ func transcriptInfo(sid string) *transcript {
 		}
 		if row["type"] == "attachment" {
 			info.noteEnv(row)
+			if q := queuedText(row); realUser(clean(q)) {
+				if s := stamp(row, at); s > at {
+					at = s
+				}
+				said(runes(full(q), 2000))
+			}
 			continue
 		}
 		role, _ := m["role"].(string)
@@ -350,7 +382,7 @@ func transcriptInfo(sid string) *transcript {
 		} else if !types["tool_result"] {
 			locked = true // the turn ended: what Claude said last in it is its answer
 			if realUser(t) && !strings.Contains(t, "[whatnow]") {
-				chat = append(chat, chatLine{"u", runes(full(raw), 2000), at})
+				said(runes(full(raw), 2000))
 			}
 		}
 	}
