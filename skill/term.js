@@ -83,7 +83,7 @@ function say(html){msg.hidden=!html;xt.hidden=!!html;msg.innerHTML=html||''}
 // nothing goes back to the program: old output holds questions to the terminal, and their answers would be typed in.
 function show(t,isNew){var replay=!isNew,quiet=replay;S.cur=t.id;S.open=true;WAIT=null;save();say('');layout();var run=++RUN;
  lib().then(function(){if(run!==RUN)return;if(X){X.dispose();X=null}xt.innerHTML='';
-  X=new Terminal({fontFamily:'ui-monospace,SFMono-Regular,Menlo,monospace',fontSize:13,cursorBlink:true,scrollback:5000,allowProposedApi:true,linkHandler:{activate:function(e,uri){link(uri)}},
+  X=new Terminal({fontFamily:'ui-monospace,SFMono-Regular,Menlo,monospace',fontSize:13,cursorBlink:false /* a blinking cursor makes the browser restyle on every frame, all the time the terminal is open */,scrollback:5000,allowProposedApi:true,linkHandler:{activate:function(e,uri){link(uri)}},
    theme:{background:'#16241e',foreground:'#e6efe9',cursor:'#e6efe9',selectionBackground:'#3b7be066'}});
   FIT=new FitAddon.FitAddon();X.loadAddon(FIT);X.loadAddon(new WebLinksAddon.WebLinksAddon(function(e,uri){link(uri)}));X.open(xt);try{FIT.fit()}catch(e){}
   var q=Promise.resolve();                       // keys go out one request after another, in the order typed
