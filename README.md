@@ -132,6 +132,13 @@ sessions cannot overwrite each other's files) or in the same folder. Until the f
 session under *Starting*. What a session was started with is kept in `~/.whatnow/spawned.json`. An added folder
 has to be one Claude Code trusts already; if it is not, Claude Code says so and nothing is started.
 
+**Alerts (app window).** When a session answers, or asks for a permission, while the app window is not in front,
+the system shows a notification with the name of the feature and the first words of the answer, and plays a sound.
+The bar has the switch: *with sound*, *silent*, *off* (`alerts` in `config.json`). A reply you have not read in the
+window of its session is marked in the bar (a speech mark, "new reply"), also for the feature you are on. On macOS
+the notification is shown through `osascript`, so the system lists it under Script Editor; on Linux through
+`notify-send`; on Windows there are no alerts yet.
+
 **Request status.** The header of a feature page has a **↻ Request status** button next to "Updated ... ago". It asks the
 feature's session (same routing as above) to compare `feature.json` with what it really did and bring the page up to
 date. Only one such request is open at a time; the page reloads itself when the file changes.

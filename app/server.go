@@ -1041,7 +1041,7 @@ func featuresList() map[string]any {
 		}
 		return strings.ToLower(fmt.Sprint(a["name"])) < strings.ToLower(fmt.Sprint(b["name"]))
 	})
-	return map[string]any{"features": out, "waiting": waiting, "favorites": len(favs), "starting": spawnedNow()}
+	return map[string]any{"features": out, "waiting": waiting, "favorites": len(favs), "starting": spawnedNow(), "alerts": alertMode()}
 }
 
 // ------------------------------------------------------------------ http
@@ -1247,7 +1247,8 @@ func openLink(raw string) (int, any) {
 // preflight, which this server never allows).
 func (h handler) post(w http.ResponseWriter, r *http.Request) {
 	isTerm := r.URL.Path == "/api/term" && h.local // the terminal: the app window only
-	if r.URL.Path != "/api/act" && !isTerm {
+	isApp := r.URL.Path == "/api/app" && h.local   // what the app window tells the app about itself
+	if r.URL.Path != "/api/act" && !isTerm && !isApp {
 		text(w, 404, "not found")
 		return
 	}
@@ -1263,6 +1264,19 @@ func (h handler) post(w http.ResponseWriter, r *http.Request) {
 	body, ok := parseJSON(b).(map[string]any)
 	if !ok {
 		sendJSON(w, 400, map[string]any{"error": "bad json"})
+		return
+	}
+	if isApp {
+		switch str(body, "op") {
+		case "focus": // the window says whether it is in front (for the alerts)
+			appFocus(num(body["on"]) == 1)
+			sendJSON(w, 200, map[string]any{"ok": true})
+		case "alerts":
+			code, obj := setAlertMode(str(body, "mode"))
+			sendJSON(w, code, obj)
+		default:
+			sendJSON(w, 400, map[string]any{"error": "bad op"})
+		}
 		return
 	}
 	if isTerm {

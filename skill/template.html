@@ -766,7 +766,8 @@ function boxMove(e){if(CHAT.box.wide||e.button||e.target.closest('button,[data-s
  function up(){h.removeEventListener('pointermove',mv);h.removeEventListener('pointerup',up);h.removeEventListener('pointercancel',up);if(!on)return;c.classList.remove('mvg');
   var o=CHAT.box,mid=left+r.width/2,l=mid<sw+(innerWidth-sw)/2;o.ax=l?'l':'r';o.x=Math.round(l?left-sw:innerWidth-left-r.width);boxSave();boxPlace();noteTop()}
  h.addEventListener('pointermove',mv);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up)}
-try{CHAT.seen=+localStorage.getItem('wn-seen-'+P.slug)||0}catch(e){}
+// what was read in this window. It had the key of the snapshot of the plan (wn-seen-…), and the two overwrote each other
+try{CHAT.seen=+localStorage.getItem('wn-read-'+P.slug)||0}catch(e){}
 // Markdown of a message, as Claude writes it: tables, lists, code blocks, quotes, headings, links, bold, code.
 // The text is escaped first, so nothing in a message becomes markup of its own; a link is http(s) only.
 function mdi(s){var codes=[];s=s.replace(/`([^`\n]+)`/g,function(_,c){codes.push(c);return '\u0001'+(codes.length-1)+'\u0001'});
@@ -799,7 +800,7 @@ function meStatus(m,i){if(m.state==='failed')return ['bad','Not delivered: '+(m.
  if(m.state==='done')return ['ok','Answered'+(m.note?': '+m.note:'')];
  if(m.state==='delivered')return answered(i)?['ok','Delivered at '+hm(m.deliveredAt||m.t)]:['dl',m.route==='bg'?'The closed session was resumed in the background to answer this':'Delivered at '+hm(m.deliveredAt||m.t)+', Claude is answering'];
  return ['',m.asleep?'Not delivered yet: the session has been idle for over an hour, so the page cannot wake it. Type anything in that session (even "ok") and it takes this at once.':'Sent at '+hm(m.t)+', waiting to be delivered']}
-function seen(t){if(t>CHAT.seen){CHAT.seen=t;try{localStorage.setItem('wn-seen-'+P.slug,t)}catch(e){}}}
+function seen(t){if(t>CHAT.seen){CHAT.seen=t;try{localStorage.setItem('wn-read-'+P.slug,t)}catch(e){}if(window.wnSide)window.wnSide.refresh()}}
 // One window for a session, two views of it: Messages (what was said, without the process) and Terminal (the
 // session itself, live). They share the window, its place and its size, so the terminal folds into a line like the
 // chat does. The switch stands where the mark of the window is, also on the folded line. The terminal exists in
