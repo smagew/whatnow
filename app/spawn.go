@@ -131,11 +131,25 @@ func spawnName(task string) string {
 	return name
 }
 
-func spawnPrompt(task string) string {
-	return task + "\n\n---\nThis is a new piece of work, started from the whatnow dashboard. Before you start it, put it on the dashboard " +
-		"as a feature of its own: read ~/.claude/skills/whatnow/SKILL.md and SCHEMA.md, write a feature.json with a short slug and a " +
-		"title that says what this work is (from the task above), the plan as stages, then run " + cliPath + " render --index. " +
-		"Write the content in the language of the task. Then do the work and keep the dashboard in step with it."
+func spawnPrompt(task, slug string) string {
+	file := filepath.Join(featuresDir(), slug, "feature.json")
+	return task + "\n\n---\nThis is a new piece of work, started from the whatnow dashboard, which has opened a page for it already: " + file +
+		" (slug \"" + slug + "\"). Before you start the work, read ~/.claude/skills/whatnow/SKILL.md and SCHEMA.md and rewrite that file with the " +
+		"Write tool: a title that says what this work is (from the task above) and the plan as stages. Keep the file where it is; you are " +
+		"allowed to edit it and to run " + cliPath + " without asking. Write the content in the language of the task. Then do the work and " +
+		"keep the page in step with it."
+}
+
+// spawnAllow is what a session of a new piece of work may do without asking, besides its permission mode: edit
+// its own page and run the commands of the dashboard. Its page is outside the folder it works in, so without this
+// every mode but "auto" would stop and ask, in a terminal that may not be open anywhere.
+func spawnAllow(slug string) []string {
+	dir := filepath.Join(featuresDir(), slug)
+	exe := expandUser(cliPath)
+	skill := filepath.Dir(exe) // the instructions of the dashboard (SKILL.md, SCHEMA.md, the examples): read only
+	return []string{"Edit(/" + dir + "/**)", "Read(/" + dir + "/**)", "Read(/" + skill + "/**)",
+		"Bash(" + cliPath + " render:*)", "Bash(" + cliPath + " inbox:*)",
+		"Bash(" + exe + " render:*)", "Bash(" + exe + " inbox:*)"}
 }
 
 // folderPlan is spawnPlan for a folder the user names: there is no session to copy from, so the permission
@@ -175,21 +189,35 @@ func workSlug(name string) string {
 	return slug
 }
 
-// emptyWork writes the page of a piece of work that has no task yet: one stage that says so. The session that
-// gets the task rewrites it (the hook reminds a session of the feature it keeps).
-func emptyWork(root string) (string, error) {
+// openWork writes the first page of a new piece of work, before its session exists: named after the task (its
+// first words) or, when there is none, after the folder. The session rewrites it with the plan.
+//
+// The dashboard opens the page itself, and not the session, for a reason seen on the first real use: the page is
+// in ~/.whatnow, outside the folder the session works in, so Claude Code asked for a permission to create it, in
+// a terminal nobody was looking at, and the new work sat under "Starting" for ten minutes.
+func openWork(root, task string) (string, error) {
 	name := filepath.Base(root)
-	slug := workSlug(name)
+	title, slug := "New work in "+name, workSlug(name)
+	stage := map[string]any{"n": 1, "title": "Waiting for the task", "kind": "plan", "verdict": "Not started",
+		"plan":  []any{"Give the session its task: write to it in the window of the session"},
+		"facts": []any{[]any{"q", "The session is started and waits. When it has the task, it writes the plan here and gives this work its name."}}}
+	summary, next := "Opened from the dashboard. It has no task yet.", "Write the task to the session"
+	if task != "" {
+		title = spawnName(task)
+		if ascii := workSlug(title); ascii != "work" && len(ascii) >= 6 {
+			slug = ascii
+		}
+		summary, next = runes(task, 600), "The session writes the plan"
+		stage = map[string]any{"n": 1, "title": "Plan", "kind": "plan", "verdict": "Not started",
+			"plan":  []any{"The session reads the task and writes the plan of this work here"},
+			"facts": []any{[]any{"w", "The session has the task and is writing the plan"}}}
+	}
 	dir := filepath.Join(featuresDir(), slug)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}
-	d := map[string]any{"title": "New work in " + name, "sub": "", "summary": "Opened from the dashboard. It has no task yet.",
-		"projects": []any{name}, "updated": time.Now().Format("2006-01-02"),
-		"stages": []any{map[string]any{"n": 1, "title": "Waiting for the task", "kind": "plan", "verdict": "Not started",
-			"plan":  []any{"Give the session its task: write to it in the window of the session"},
-			"facts": []any{[]any{"q", "The session is started and waits. When it has the task, it writes the plan here and gives this work its name."}}}},
-		"decisions": []any{}, "questions": []any{}, "blockers": []any{}, "nextSteps": []any{"Write the task to the session"}}
+	d := map[string]any{"title": title, "sub": "", "summary": summary, "projects": []any{name}, "updated": time.Now().Format("2006-01-02"),
+		"stages": []any{stage}, "decisions": []any{}, "questions": []any{}, "blockers": []any{}, "nextSteps": []any{next}}
 	return slug, atomicWriteJSON(filepath.Join(dir, "feature.json"), d)
 }
 
@@ -233,8 +261,14 @@ func startWork(p map[string]any, from, task, place string) (int, any) {
 	if m := str(p, "mode"); m != "" {
 		args = append(args, "--permission-mode", m)
 	}
+	slug, err := openWork(root, task)
+	if err != nil {
+		return 500, map[string]any{"error": "could not open the page of the new work: " + err.Error()}
+	}
+	args = append(args, "--allowedTools")
+	args = append(args, spawnAllow(slug)...)
 	if task != "" {
-		args = append(args, spawnPrompt(task))
+		args = append(args, "--", spawnPrompt(task, slug)) // "--": the list of tools above takes every word after it
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
@@ -243,6 +277,7 @@ func startWork(p map[string]any, from, task, place string) (int, any) {
 	out, err := cmd.CombinedOutput()
 	m := bgID.FindSubmatch(out)
 	if m == nil {
+		_ = os.RemoveAll(filepath.Join(featuresDir(), slug)) // no session: no page of it either
 		msg := runes(strings.TrimSpace(string(out)), 400)
 		if msg == "" && err != nil {
 			msg = err.Error()
@@ -257,11 +292,7 @@ func startWork(p map[string]any, from, task, place string) (int, any) {
 	}
 	short := string(m[1])
 	sid := ""
-	tries := 1
-	if task == "" {
-		tries = 6 // the empty page is linked to the session, so its full id is waited for (a few seconds at most)
-	}
-	for i := 0; i < tries && sid == ""; i++ {
+	for i := 0; i < 6 && sid == ""; i++ { // the page is linked to the session, so its full id is waited for (a few seconds at most)
 		if i > 0 {
 			time.Sleep(400 * time.Millisecond)
 		}
@@ -271,14 +302,8 @@ func startWork(p map[string]any, from, task, place string) (int, any) {
 			}
 		}
 	}
-	slug := ""
-	if task == "" {
-		if made, err := emptyWork(root); err == nil {
-			slug = made
-			if sid != "" {
-				_ = bind(sid, slug)
-			}
-		}
+	if sid != "" {
+		_ = bind(sid, slug)
 	}
 	rec := map[string]any{"id": short, "session": sid, "name": name, "task": runes(task, 300), "from": from, "ts": nowMs(),
 		"place": place, "root": p["root"], "dirs": p["dirs"], "mode": p["mode"], "feature": slug}
@@ -317,7 +342,11 @@ func spawnedNow() []any {
 		if sid != "" && agents != nil && agents[sid] == nil && now-num(r["ts"]) > 60000 {
 			continue // it is gone (stopped, removed) and made no feature
 		}
-		out = append(out, map[string]any{"session": sid, "name": r["name"], "task": r["task"], "from": r["from"], "ts": r["ts"]})
+		row := map[string]any{"session": sid, "name": r["name"], "task": r["task"], "from": r["from"], "ts": r["ts"]}
+		if ses := findSession(sid); ses != nil { // what it does, so that "it asks for a permission" is not missed
+			row["state"], row["what"] = ses.State, ses.What
+		}
+		out = append(out, row)
 	}
 	return out
 }

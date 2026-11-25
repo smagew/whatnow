@@ -59,10 +59,19 @@ func TestANewFeatureGetsTheAccessOfTheOldOne(t *testing.T) {
 		t.Errorf("started in %s, want %s", cwd, root)
 	}
 
-	// until the session has made its feature, the bar shows it as starting
-	st := featuresList()["starting"].([]any)
-	eq(t, len(st), 1)
-	eq(t, st[0].(map[string]any)["name"], any("Add a CSV export to the report page"))
+	// The dashboard has opened the page itself, named after the task, and the session may edit it and run the
+	// commands of the dashboard without asking: the page is outside the folder the session works in.
+	slug, _ := r["feature"].(string)
+	eq(t, slug, "add-a-csv-export-to-the-report-page")
+	page := filepath.Join(e.feats, slug, "feature.json")
+	if _, err := panelHTML(page, "/", true); err != nil {
+		t.Fatalf("the first page is not a valid one: %v", err)
+	}
+	contains(t, joined, "--allowedTools|Edit(/"+filepath.Join(e.feats, slug)+"/**)", "it may edit its page")
+	contains(t, joined, "Bash(~/.claude/skills/whatnow/whatnow render:*)", "it may run the dashboard's command")
+	contains(t, joined, "|--|Add a CSV export to the report page", "the prompt comes after --")
+	contains(t, joined, page, "the prompt names the page")
+	eq(t, len(featuresList()["starting"].([]any)), 0, "it has a page: it is not under Starting")
 
 	code, _ = spawnPlan("no-such-feature")
 	eq(t, code, 404)

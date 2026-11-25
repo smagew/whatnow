@@ -130,9 +130,13 @@ starts one: a new Claude Code session in the background.
   servers and instruction files of the folder come with the folder. The same form opens from the three dots of a
   piece of work, in its header and in the bar.
 
-The task is optional. With a task the session puts its work on the dashboard itself and names it from the task; until
-then the bar shows it under *Starting*. Without a task the session starts and waits, and the dashboard opens an empty
-page for it, named after the folder, where you write to the session. For a git repository you choose where the
+The dashboard opens the page of the new work itself, at once, and links the session to it: named after the task (its
+first words) or, when you give none, after the folder. With a task the session rewrites the page with its plan;
+without one it starts and waits for you to write to it there. The page is in `~/.whatnow`, outside the folder the
+session works in, so the session is started with a permission to read the instructions of the dashboard, to edit
+that one page and to run the dashboard's commands (`--allowedTools`); without it Claude Code would stop and ask, in a
+terminal nobody may be looking at. Everything else follows the permission mode: in a mode that asks, the session
+still stops for its other questions, and the bar and the alerts say so. For a git repository you choose where the
 session works: in its own copy of the code (a worktree on a new branch, made by Claude Code, so two sessions cannot
 overwrite each other's files) or in the folder itself. Claude Code works only in a folder you have trusted: for a new
 one it refuses, and the form tells you to run `claude` there once and accept its question (the dashboard does not

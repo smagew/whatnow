@@ -24,7 +24,13 @@ func TestNewWorkInAFolder(t *testing.T) {
 	code, r = act2(t, map[string]any{"action": "spawn", "dir": dir, "mode": "acceptEdits", "text": "", "place": "same"})
 	eq(t, code, 200, r)
 	args := strings.Split(strings.TrimSpace(string(mustRead(t, filepath.Join(e.fake, "spawn.args")))), "\n")
-	eqList(t, args, []string{"--bg", "-n", "My Project", "--permission-mode", "acceptEdits"}, "no prompt when there is no task")
+	eqList(t, args[:5], []string{"--bg", "-n", "My Project", "--permission-mode", "acceptEdits"}, "the folder's name, the chosen mode")
+	eq(t, args[5], "--allowedTools")
+	for _, a := range args {
+		if a == "--" {
+			t.Errorf("there is no task, yet a prompt was passed: %v", args)
+		}
+	}
 	if a, _ := filepath.EvalSymlinks(strings.TrimSpace(string(mustRead(t, filepath.Join(e.fake, "spawn.cwd"))))); a != mustEval(t, dir) {
 		t.Errorf("started in %s", a)
 	}
@@ -44,12 +50,14 @@ func TestNewWorkInAFolder(t *testing.T) {
 	// with a task the session makes its page itself
 	code, r = act2(t, map[string]any{"action": "spawn", "dir": dir, "text": "Write the importer"})
 	eq(t, code, 200, r)
-	eq(t, r["feature"], any(""))
+	eq(t, r["feature"], any("write-the-importer"))
 	joined := strings.Join(strings.Split(strings.TrimSpace(string(mustRead(t, filepath.Join(e.fake, "spawn.args")))), "\n"), "|")
 	contains(t, joined, "Write the importer", "the task")
 	if strings.Contains(joined, "--permission-mode") {
 		t.Errorf("no mode was chosen, yet one was passed: %s", joined)
 	}
+	pages := func() int { l, _ := os.ReadDir(e.feats); return len(l) }
+	before := pages()
 
 	// a folder Claude Code does not trust yet: said plainly, nothing is answered for the user
 	e.fakeSet("spawn.out", "Workspace not trusted. Run `claude` in "+dir+" once and accept the trust prompt, then retry.")
@@ -59,4 +67,5 @@ func TestNewWorkInAFolder(t *testing.T) {
 	if r["trust"] == nil {
 		t.Error("the answer does not name the folder to trust")
 	}
+	eq(t, pages(), before, "no session was started, so no page is left behind")
 }
