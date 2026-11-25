@@ -144,6 +144,10 @@ window.wnTerm={open:open,has:has,show:showSes,detach:detach,leave:leave,fit:fit,
  waiting:function(){return !!WAIT},live:function(){return !!X},stop:function(){WAIT=null;say('')},cur:function(){return ALL.filter(function(t){return t.id===S.cur})[0]||null}};
 if(window.WN_EMBED){EMB=window.WN_EMBED;xt=EMB.xt;msg=EMB.msg;msg.addEventListener('click',act);dock.hidden=true;pill.hidden=true;
  if(window.ResizeObserver)new ResizeObserver(function(){fit()}).observe(xt)}
+// The wheel over the terminal never scrolls the page. xterm lets the event through when its own screen has
+// nothing to scroll in that direction, and Claude Code draws a full screen with no scrollback, so the page behind
+// scrolled instead. (On the terminal element only: such a listener on the page would slow down its scrolling.)
+xt.addEventListener('wheel',function(e){if(e.cancelable)e.preventDefault()},{passive:false});
 // a page opened while terminals run (another feature, the home page): connect to them again
 fetch('/api/term/list',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){ALL=(j.terms||[]).filter(function(t){return !t.done});TERMS=mine();
  if(EMB){layout();if(EMB.ready)EMB.ready(window.wnTerm);return}
