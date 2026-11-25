@@ -1026,8 +1026,12 @@ func featuresList() map[string]any {
 		f := x.(map[string]any)
 		id := fmt.Sprint(f["id"])
 		a := ask[id]
+		project := "" // the first project the plan names: the bar can group the work by it
+		if l, _ := f["projects"].([]any); len(l) > 0 {
+			project = fmt.Sprint(l[0])
+		}
 		out = append(out, map[string]any{"id": id, "name": f["name"], "done": f["done"], "waiting": f["waiting"], "fav": fav["f:"+id],
-			"state": best[id], "ask": a.kind, "saidT": a.t})
+			"state": best[id], "ask": a.kind, "saidT": a.t, "project": project, "days": f["days"]})
 	}
 	group := func(f map[string]any) int {
 		switch {
