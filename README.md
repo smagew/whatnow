@@ -157,6 +157,13 @@ A working session reads a message when its turn ends, so *Stop now* also stops t
 Esc in their terminal does, after a confirmation that says what this cuts off; a session open in your own terminal
 cannot be stopped from here and gets the message when its turn ends.
 
+**Screenshots for Claude (app window, macOS).** The camera in the title of the session window takes a part of the
+screen (the system selection, as Cmd+Shift+4; Space picks a window). The picture is kept with the work in
+`~/.whatnow/shots/<work>/` and shown in a row above the message field; a picked one (blue ring) goes with your next
+message as its path, and Claude opens it itself. A new screenshot is picked at once; in the terminal view its path is
+typed into the prompt of the session. Double click shows it large, × deletes it. macOS asks once to allow whatnow to
+record the screen. Only the app window can take or see the screenshots.
+
 **Alerts (app window).** When a session answers, or asks for a permission, while the app window is not in front,
 the system shows a notification with the name of the feature and the first words of the answer, and plays a sound.
 The bar has the switch: *with sound*, *silent*, *off* (`alerts` in `config.json`). A reply you have not read in the

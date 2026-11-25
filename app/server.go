@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -1173,6 +1174,30 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if s, ok := slugArg(); ok {
 			sendJSON(w, 200, versionInfo(s))
 		}
+	case "/api/shots", "/shot": // the screenshots of a piece of work: the app window only
+		if !h.local {
+			text(w, 404, "not found")
+			return
+		}
+		slug := q.Get("feature")
+		if path == "/api/shots" {
+			sendJSON(w, 200, map[string]any{"shots": listShots(slug), "supported": runtime.GOOS == "darwin"})
+			return
+		}
+		p := shotFile(slug, q.Get("name"))
+		if p == "" {
+			text(w, 404, "not found")
+			return
+		}
+		b, err := os.ReadFile(p)
+		if err != nil {
+			text(w, 404, "not found")
+			return
+		}
+		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Cache-Control", "private, max-age=31536000, immutable")
+		w.WriteHeader(200)
+		_, _ = w.Write(b)
 	case "/api/targets": // the open sessions, for the "Message sessions" form
 		sendJSON(w, 200, targets())
 	case "/api/sessions":
@@ -1310,6 +1335,22 @@ func (h handler) post(w http.ResponseWriter, r *http.Request) {
 		case "alerts":
 			code, obj := setAlertMode(str(body, "mode"))
 			sendJSON(w, code, obj)
+		case "shot": // a screenshot for the agent: the system selection of a part of the screen
+			name, err := takeShot(str(body, "feature"))
+			if err != nil {
+				sendJSON(w, 500, map[string]any{"error": err.Error()})
+				return
+			}
+			res := map[string]any{"name": name}
+			if name != "" {
+				res["path"] = filepath.Join(shotsDir(str(body, "feature")), name)
+			}
+			sendJSON(w, 200, res)
+		case "shotdel":
+			if p := shotFile(str(body, "feature"), str(body, "name")); p != "" {
+				_ = os.Remove(p)
+			}
+			sendJSON(w, 200, map[string]any{"ok": true})
 		case "pickdir": // the system dialog for choosing a folder (the app window has one, a browser tab does not)
 			if pickDir == nil {
 				sendJSON(w, 501, map[string]any{"error": "no folder dialog here"})
