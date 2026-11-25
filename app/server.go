@@ -740,6 +740,8 @@ func act(body map[string]any) (int, any) {
 	switch action {
 	case "track":
 		return tellSession(sid, trackText)
+	case "broadcast": // one message to several sessions; "interrupt" first stops the background ones (after a confirmation on the page)
+		return broadcast(body)
 	case "spawn":
 		place, _ := body["place"].(string)
 		slug, _ := body["feature"].(string)
@@ -1171,6 +1173,8 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if s, ok := slugArg(); ok {
 			sendJSON(w, 200, versionInfo(s))
 		}
+	case "/api/targets": // the open sessions, for the "Message sessions" form
+		sendJSON(w, 200, targets())
 	case "/api/sessions":
 		if s, ok := slugArg(); ok {
 			sendJSON(w, 200, pickList(s))

@@ -48,7 +48,33 @@ func wakeSession(sid string) bool {
 	return true
 }
 
-func wakeType(sid string) bool {
+func wakeType(sid string) bool { return typeInto(sid, true, wakeLine, "\r") }
+
+// interruptSession stops what a background session is doing right now, as Esc in its terminal does, then wakes it
+// so that the message that waits for it (sent just before) is delivered at once. Esc also closes a question the
+// session asked: that is a stop too.
+func interruptSession(sid string) bool {
+	if !termSupported || !sidRe.MatchString(sid) {
+		return false
+	}
+	if a := activeSessions()[sid]; a == nil || a["kind"] != "background" {
+		return false
+	}
+	go func() {
+		if typeInto(sid, false, "\x1b") {
+			time.Sleep(2 * time.Second)
+			woke.mu.Lock()
+			woke.at[sid] = time.Now()
+			woke.mu.Unlock()
+			typeInto(sid, true, wakeLine, "\r")
+		}
+	}()
+	return true
+}
+
+// typeInto writes keys into the terminal of a background session, attaching to it for a moment when the window
+// does not show it. careful: nothing is typed when the screen asks a question (Enter there would be an answer).
+func typeInto(sid string, careful bool, keys ...string) bool {
 	t := termFor(latest(sid))
 	own := t == nil
 	if own {
@@ -88,13 +114,16 @@ func wakeType(sid string) bool {
 	screen := ansiRe.ReplaceAllString(string(buf), " ")
 	done := t.done
 	t.mu.Unlock()
-	if done || askRe.MatchString(strings.Join(strings.Fields(screen), " ")) {
+	if done || (careful && askRe.MatchString(strings.Join(strings.Fields(screen), " "))) {
 		return false // the session asks something: the user answers that, not a typed line
 	}
-	if code, _ := termWrite(t.ID, wakeLine); code != 200 {
-		return false
+	for i, k := range keys {
+		if i > 0 {
+			time.Sleep(200 * time.Millisecond)
+		}
+		if code, _ := termWrite(t.ID, k); code != 200 {
+			return false
+		}
 	}
-	time.Sleep(200 * time.Millisecond)
-	code, _ := termWrite(t.ID, "\r")
-	return code == 200
+	return true
 }

@@ -149,6 +149,14 @@ overwrite each other's files) or in the folder itself. Claude Code works only in
 one it refuses, and the form tells you to run `claude` there once and accept its question (the dashboard does not
 answer that for you). What a session was started with is kept in `~/.whatnow/spawned.json`.
 
+**Message sessions.** At the bottom of the bar: one message to several sessions at once. Who gets it: *Active*
+(working now or active in the last hour), *All open*, the sessions of chosen work, or chosen sessions; the form names
+them before you send. Ready-made messages fill the field (Stop now, Save the status and stop, I am going to sleep,
+Status report, Update the dashboard, Hold outward actions, Wrap up, Good morning) and can be changed before sending.
+A working session reads a message when its turn ends, so *Stop now* also stops the background sessions at once, as
+Esc in their terminal does, after a confirmation that says what this cuts off; a session open in your own terminal
+cannot be stopped from here and gets the message when its turn ends.
+
 **Alerts (app window).** When a session answers, or asks for a permission, while the app window is not in front,
 the system shows a notification with the name of the feature and the first words of the answer, and plays a sound.
 The bar has the switch: *with sound*, *silent*, *off* (`alerts` in `config.json`). A reply you have not read in the
