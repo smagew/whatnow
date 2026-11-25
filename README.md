@@ -144,14 +144,15 @@ from one to the other; the switch is on the folded line too.
 - *Terminal* (app window only): the session itself, live (xterm.js on a pseudo-terminal that runs `claude attach`).
   The folded line then shows the name of the session and the last line of its terminal.
 
-Drag the top or left edge of the window to resize it (double click an edge to reset); **Full width** stretches it
-along the bottom of the screen. The size is remembered, the view is remembered for every feature, and a
+Drag the top or left edge of the window to resize it (double click an edge to reset). The arrows in its corner stretch
+it along the bottom of the screen and back; the chevron folds it to a line (nothing is closed by that). The size is remembered, the view is remembered for every feature, and a
 terminal view that was open is opened again when you come back, also after the app was closed.
 
 **Terminal (app window only).** Every session has a **Terminal** button. On the page of a feature it opens the window
 of the session in the terminal view; on the home page it opens a dock at the bottom of the window with all the
 terminals as tabs (the top edge resizes it, **Hide** keeps it connected). A terminal stays connected while you are on
-other pages and in the other view. **Disconnect** closes it; the session goes on
+other pages and in the other view. **Disconnect the terminal** (behind the three dots, so that it is not hit by
+accident) closes it; the session goes on
 either way. A session can be shown when it runs in the background:
 - it already does (`claude --bg`): the terminal attaches at once;
 - it is closed: it is continued in the background under the same id (`claude --resume <id> --bg`), then attached;

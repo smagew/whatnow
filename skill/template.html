@@ -210,6 +210,10 @@ body{--sw:0px}
 .cwh small{color:var(--mut);font-size:12px}
 .cwh button{all:unset;cursor:pointer;margin-left:auto;color:var(--mut);font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:8px}
 .cwh button+button{margin-left:0}
+.cwh{position:relative}.cwh button.ib{display:grid;place-items:center;width:30px;height:30px;padding:0;border-radius:8px}.cwh button.ib:hover{background:#0000000d;color:var(--ink)}.cwh button:focus-visible{outline:3px solid #2a8cff;outline-offset:1px}
+.cwmn{position:absolute;z-index:5;top:calc(100% - 4px);right:70px;background:var(--paper);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(22,36,30,.22);padding:4px}.cwmn[hidden]{display:none}
+.cwh .cwmn button{display:block;margin:0;padding:7px 12px;border-radius:7px;color:var(--bad);font-size:13px;white-space:nowrap}.cwh .cwmn button:hover{background:var(--badb);color:var(--bad)}.cwmn small{display:block;font-weight:400;color:var(--mut);font-size:11.5px}
+.cwb.t .cwmn{background:#0f1b16;border-color:#2c4136}.cwb.t .cwh .cwmn button{color:#ffb4ab}.cwb.t .cwh .cwmn button:hover{background:#ffffff14;color:#ffb4ab}
 /* The window of the session has two views. The switch: two marks, C for the messages and >_ for the terminal, and a
    thumb that slides to the one that is on. In the terminal view the title and the folded line turn dark, like it. */
 .cwh button[hidden]{display:none}#cwt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#cwsw{flex:none;display:flex}
@@ -233,7 +237,8 @@ html.mo-off .swB::before,html.mo-off .swB i{transition:none}
 .cwr:hover,.cwr.on{background:var(--livel)}.cwr.c:hover,.cwr.c.on{border-radius:16px 0 8px 0}
 .cw.wide{left:var(--sw);right:0;bottom:0}
 .cw.wide .cwb{width:auto!important;max-width:none;min-width:0;border-radius:0;border-width:1px 0 0;box-shadow:0 -6px 24px rgba(22,36,30,.16)}
-.cw.wide .cwb>:not(.cwr){padding-left:max(16px,calc((100vw - var(--sw) - 1180px)/2));padding-right:max(16px,calc((100vw - var(--sw) - 1180px)/2))}
+.cw.wide .cwb>:not(.cwr):not(.cwh){padding-left:max(16px,calc((100vw - var(--sw) - 1180px)/2));padding-right:max(16px,calc((100vw - var(--sw) - 1180px)/2))}
+.cw.wide .cwh{padding-left:16px;padding-right:12px}.cw.wide .cwmn{right:76px}
 .cw.wide .cwr.l,.cw.wide .cwr.c{display:none}.cw.wide .cwr.t{left:0}
 .cw.wide .cb{max-width:min(88%,820px)}
 .cwh button:hover{background:var(--nob)}.cwh button:focus-visible{outline:3px solid #2a8cff}
@@ -357,7 +362,7 @@ html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
 <div class="chw"><div class="chn" id="chn" role="status" hidden></div></div>
 <main id="main"></main>
 <aside class="cw" id="cw" aria-label="The session: messages and terminal" hidden><div class="cl1 cwp" id="cwp" role="button" tabindex="0"></div>
-<div class="cwb" id="cwb" hidden><i class="cwr t" data-r="t"></i><i class="cwr l" data-r="l"></i><i class="cwr c" data-r="c"></i><div class="cwh"><span id="cwsw"><i class="lma" aria-hidden="true">C</i></span><span id="cwt"></span><button type="button" id="cwdc" hidden title="Leave the terminal. The session keeps running in the background.">Disconnect</button><button type="button" id="cwd"></button><button type="button" id="cwx">Close</button></div>
+<div class="cwb" id="cwb" hidden><i class="cwr t" data-r="t"></i><i class="cwr l" data-r="l"></i><i class="cwr c" data-r="c"></i><div class="cwh"><span id="cwsw"><i class="lma" aria-hidden="true">C</i></span><span id="cwt"></span><button type="button" class="ib" id="cwm" hidden aria-haspopup="menu" aria-expanded="false" aria-label="More" title="More"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="3" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="13" cy="8" r="1.5" fill="currentColor"/></svg></button><button type="button" class="ib" id="cwd"></button><button type="button" class="ib" id="cwx" aria-label="Fold" title="Fold to a line in the corner. Nothing is closed: a terminal stays connected."><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="cwmn" id="cwmn" role="menu" hidden><button type="button" role="menuitem" id="cwdc">Disconnect the terminal<small>The session keeps running in the background</small></button></div></div>
 <div class="cwl" id="cwl" aria-live="polite"></div>
 <div class="cwtm" id="cwtm" hidden><div class="cwtx" id="cwtx"></div><div class="cwtg" id="cwtg" hidden></div></div>
 <form class="cwf" id="cwf"><textarea id="cwi" rows="1" placeholder="Write to Claude…" aria-label="Message to Claude"></textarea><button type="submit" id="cws" disabled>Send</button></form>
@@ -676,7 +681,7 @@ try{CHAT.box=JSON.parse(localStorage.getItem('wn-chat')||'{}')||{}}catch(e){}
 function boxSave(){try{localStorage.setItem('wn-chat',JSON.stringify(CHAT.box))}catch(e){}}
 function boxApply(){var b=$('cwb'),o=CHAT.box,wide=!!o.wide&&CHAT.open;$('cw').classList.toggle('wide',wide);
  b.style.width=!wide&&o.w?o.w+'px':'';b.style.height=wide?(o.hw?o.hw+'px':'min(46vh,460px)'):(o.h?o.h+'px':'');
- var d=$('cwd');d.textContent=o.wide?'Compact':'Full width';d.title=o.wide?'Back to a window in the corner':'Stretch along the bottom of the screen';
+ var d=$('cwd');d.innerHTML=o.wide?'<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M13 6.5H9.5V3M9.5 6.5 14 2M3 9.5h3.5V13M6.5 9.5 2 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>':'<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';d.title=o.wide?'Back to a window in the corner':'Stretch along the bottom of the screen';d.setAttribute('aria-label',o.wide?'Compact window':'Full width');
  document.body.style.paddingBottom=wide?b.offsetHeight+20+'px':''}
 function boxDrag(e){var k=e.target.dataset.r;if(!k)return;e.preventDefault();var h=e.target,b=$('cwb'),r=b.getBoundingClientRect(),x0=e.clientX,y0=e.clientY,o=CHAT.box;
  h.classList.add('on');h.setPointerCapture(e.pointerId);
@@ -706,15 +711,16 @@ function tswitch(){if(!TOK)return '<i class="lma" aria-hidden="true">C</i>';var 
 function tsid(){return TASK||CHAT.sid}
 // put the view that is chosen into the window; the terminal is attached only while it is on screen
 function modeApply(user){var term=tmode()==='term',b=$('cwb');if(!b)return;b.classList.toggle('t',term);$('cwp').classList.toggle('t',term);$('cwsw').innerHTML=tswitch();
- $('cwl').hidden=term;$('cwf').hidden=term;$('cwn').hidden=term;$('cwtm').hidden=!term;$('cwdc').hidden=!(term&&TAPI&&TAPI.cur());
+ $('cwl').hidden=term;$('cwf').hidden=term;$('cwn').hidden=term;$('cwtm').hidden=!term;$('cwm').hidden=!(term&&TAPI&&TAPI.cur());if($('cwm').hidden)menuShut();
  if(!TAPI||!tsid())return;
  if(term&&CHAT.open){var cur=TAPI.cur();if(cur&&cur.session===tsid()&&$('cwtx').firstChild){TAPI.fit();return}
   // opened by the user: attach, and say what is missing if it cannot be; opened by the page itself after a restart:
   // attach only a session that runs, and offer a button otherwise (a session the user ended is not brought back)
   TAPI.show(tsid(),!user).then(function(j){if(tmode()!=='term'||!CHAT.open)return;if(j&&!j.term&&!user){var g=$('cwtg');g.hidden=false;$('cwtx').hidden=true;
-    g.innerHTML='<p>The terminal of this session is not connected.</p><p><button type="button" class="wta" data-tc="1">Connect</button></p>'}$('cwdc').hidden=!TAPI.cur()})}
+    g.innerHTML='<p>The terminal of this session is not connected.</p><p><button type="button" class="wta" data-tc="1">Connect</button></p>'}$('cwm').hidden=!TAPI.cur()})}
  else if(!term||!CHAT.open)TAPI.detach()}
 // the terminal view that was open is opened again when the page (or the app) is opened next time
+function menuShut(){var m=$('cwmn');if(m&&!m.hidden){m.hidden=true;$('cwm').setAttribute('aria-expanded','false')}}
 function keepOpen(){var o=CHAT.box.opens=CHAT.box.opens||{};if(CHAT.open&&tmode()==='term')o[P.slug]=1;else delete o[P.slug];boxSave()}
 function setMode(m,user){CHAT.box.modes=CHAT.box.modes||{};CHAT.box.modes[P.slug]=m;keepOpen();CHAT.lkey='';lastMsg();modeApply(user)}
 function lastMsg(){var el=$('lm'),cw=$('cw');if(!el||!P.live)return;var s=chatSes();
@@ -750,12 +756,16 @@ if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);
  // the switch between the two views, on the folded line and in the title of the window
  $('cw').addEventListener('click',function(e){var s=e.target.closest('[data-sw]');if(!s)return;e.stopPropagation();setMode(tmode()==='term'?'chat':'term',true);var n=$(CHAT.open?'cwsw':'cwp').querySelector('[data-sw]');if(n)n.focus()},true);
  $('cw').addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.closest&&e.target.closest('[data-sw]')){e.preventDefault();e.target.closest('[data-sw]').click()}else if(e.key==='Enter'&&e.target===$('cwp'))chatOpen(true)});
- $('cwdc').onclick=function(){if(TAPI)TAPI.leave();TASK='';setMode('chat',true)};
+ $('cwdc').onclick=function(){menuShut();if(TAPI)TAPI.leave();TASK='';setMode('chat',true)};
+ // Disconnect is rare and must not be hit by accident: it is behind the dots, one more click away
+ $('cwm').onclick=function(e){e.stopPropagation();var m=$('cwmn');m.hidden=!m.hidden;$('cwm').setAttribute('aria-expanded',!m.hidden);if(!m.hidden)$('cwdc').focus()};
+ document.addEventListener('click',function(e){if(!e.target.closest('#cwmn'))menuShut()});
+ $('cwmn').addEventListener('keydown',function(e){if(e.key==='Escape'){e.stopPropagation();menuShut();$('cwm').focus()}});
  $('cwtg').addEventListener('click',function(e){if(e.target.closest('[data-tc]')&&TAPI){$('cwtg').hidden=true;$('cwtx').hidden=false;TAPI.show(tsid(),false)}
   // Cancel or Close of a terminal that did not open: back to the messages, not to an empty dark pane
   else if(e.target.closest('[data-x="stop"]'))setTimeout(function(){if(TAPI&&!TAPI.live()){TASK='';setMode('chat',true)}},0)});
  // the terminal module gets the place for its view from here, and tells when it is ready
- if(TOK)window.WN_EMBED={xt:$('cwtx'),msg:$('cwtg'),state:function(){var d=$('cwdc');if(d)d.hidden=!(tmode()==='term'&&TAPI&&TAPI.cur())},ready:function(api){TAPI=api;if((CHAT.box.opens||{})[P.slug]&&tmode()==='term'&&!CHAT.open&&chatSes())chatOpen(true,true);else modeApply(false)},
+ if(TOK)window.WN_EMBED={xt:$('cwtx'),msg:$('cwtg'),state:function(){var d=$('cwm');if(d)d.hidden=!(tmode()==='term'&&TAPI&&TAPI.cur())},ready:function(api){TAPI=api;if((CHAT.box.opens||{})[P.slug]&&tmode()==='term'&&!CHAT.open&&chatSes())chatOpen(true,true);else modeApply(false)},
   request:function(sid){TASK=sid;CHAT.box.modes=CHAT.box.modes||{};CHAT.box.modes[P.slug]='term';boxSave();chatOpen(true)}};
  $('cwp').onclick=function(){chatOpen(true)};$('cwx').onclick=function(){chatOpen(false)};$('cwi').addEventListener('input',chatFit);
  $('cwi').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!$('cws').disabled)$('cwf').requestSubmit()}else if(e.key==='Escape')chatOpen(false)});
