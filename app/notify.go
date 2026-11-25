@@ -67,7 +67,7 @@ func appFocus(on bool) {
 // alertCheck looks at the sessions once. A reply is news when the turn has ended (the session waits or is idle)
 // with a text newer than the one known; what Claude says while it still works is not.
 func alertCheck(first bool) {
-	type note struct{ title, text string }
+	type note struct{ title, text, slug string }
 	var notes []note
 	names := map[string]string{}
 	for _, x := range collect(featuresDir())["features"].([]any) {
@@ -95,7 +95,7 @@ func alertCheck(first bool) {
 		alerts.perm[s.ID] = asks
 		alerts.mu.Unlock()
 		if asks && !was && !first {
-			notes = append(notes, note{who, "Claude asks for your permission."})
+			notes = append(notes, note{who, "Claude asks for your permission.", s.feature()})
 		}
 		if s.State != "wait" && s.State != "idle" {
 			continue
@@ -111,27 +111,30 @@ func alertCheck(first bool) {
 		if first || info.SaidT <= known || (!seen && nowMs()-info.SaidT > 60000) {
 			continue // known already, or a session met for the first time with an old reply
 		}
-		notes = append(notes, note{who, runes(info.LastA, 160)})
+		notes = append(notes, note{who, runes(info.LastA, 160), s.feature()})
 	}
 	mode := alertMode()
 	if focused || mode == "off" {
 		return
 	}
 	for _, n := range notes {
-		alertShow(n.title, n.text, mode == "sound")
+		alertShow(n.title, n.text, n.slug, mode == "sound")
 	}
 }
 
 var alertRun = func(name string, args ...string) { _ = exec.Command(name, args...).Start() } // replaced in the tests
 
 // alertShow hands one notification to the system.
-func alertShow(title, text string, sound bool) {
+func alertShow(title, text, slug string, sound bool) {
 	alerts.mu.Lock()
 	alerts.sent = append(alerts.sent, title+": "+text)
 	if len(alerts.sent) > 20 {
 		alerts.sent = alerts.sent[len(alerts.sent)-20:]
 	}
 	alerts.mu.Unlock()
+	if nativeNotify("whatnow", title, text, slug, sound) { // from whatnow.app itself: a click opens the work
+		return
+	}
 	switch runtime.GOOS {
 	case "darwin":
 		q := func(s string) string { // an AppleScript string

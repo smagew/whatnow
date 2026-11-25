@@ -69,6 +69,7 @@ func main() {
 		AssetServer:      &assetserver.Options{Handler: handler{local: true}},
 		OnShutdown:       func(context.Context) { termCloseAll() }, // attach processes end, the sessions go on
 		OnStartup: func(ctx context.Context) {
+			nativeNotifyInit(ctx)
 			pickDir = func() (string, error) {
 				return runtime.OpenDirectoryDialog(ctx, runtime.OpenDialogOptions{Title: "Choose the folder of the new work", CanCreateDirectories: true})
 			}
