@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "marquee",
+        "value": "*",
+        "files": [
+          "skill/demo/motion.html"
+        ],
+        "createdAt": "2026-11-25T23:24:41.776Z",
+        "reason": "assistant: skill/demo/motion.html is a demo page of motion variants, served at /demo/motion for choosing an animation; not product UI"
+      }
+    ]
+  }
+}
