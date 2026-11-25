@@ -15,6 +15,12 @@ var CSS="body{--sw:0px}body.sb{--sw:256px;padding-left:var(--sw)}body.sb.sm{--sw
 ".wns a.wf span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}"+
 ".wns a.wf small{grid-column:2/4;font-size:11.5px;color:#8ea398;font-weight:400}.wns a.wf[aria-current] small{color:#586860}"+
 ".wns a.wdn:not([aria-current]){opacity:.55}"+
+/* the menu of a feature: three vertical dots at the right edge of its row, shown when the row is pointed at */
+".wns .wr{position:relative}.wns .wr a.wf{padding-right:24px}.wns .wk{all:unset;cursor:pointer;position:absolute;right:3px;top:5px;width:20px;height:24px;text-align:center;border-radius:6px;color:#9fb3a8;font-size:16px;line-height:24px;opacity:0}"+
+".wns .wr:hover .wk,.wns .wk:focus-visible,.wns .wk[aria-expanded=true]{opacity:1}.wns .wk:hover,.wns .wk[aria-expanded=true]{background:#ffffff26;color:#fff}.wns .wk:focus-visible{outline:3px solid #7ab8ff}"+
+".wns .wr a[aria-current]~.wk{color:#586860}.wns .wr a[aria-current]~.wk:hover,.wns .wr a[aria-current]~.wk[aria-expanded=true]{background:#0000001a;color:#17231d}"+
+".wkm{position:fixed;z-index:90;background:#fff;border:1px solid #d7dfda;border-radius:10px;box-shadow:0 8px 24px rgba(22,36,30,.28);padding:4px}.wkm button{all:unset;cursor:pointer;display:block;padding:7px 12px;border-radius:7px;color:#17231d;font:600 13px/1.4 inherit;white-space:nowrap}"+
+".wkm button:hover,.wkm button:focus-visible{background:#eef3f0}.wkm small{display:block;font-weight:400;color:#586860;font-size:11.5px}body.sm .wns .wk{display:none}"+
 ".wns i{width:8px;height:8px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 2px #8c9a92;display:inline-block}"+
 ".wns i.work{background:#3fbf86;box-shadow:none}.wns i.bg{background:#7fb0ff;box-shadow:none}.wns i.wait{background:#e8b13a;box-shadow:none}"+
 ".wns em{font-style:normal;font-size:11px;font-weight:700;background:#e8b13a;color:#2b2000;border-radius:999px;padding:0 7px;white-space:nowrap}"+
@@ -33,7 +39,7 @@ var CSS="body{--sw:0px}body.sb{--sw:256px;padding-left:var(--sw)}body.sb.sm{--sw
 "body.sm .wns hr{margin:8px 6px}.wns hr{border:0;border-top:1px solid #ffffff1f;margin:8px}"+
 /* narrow screen: a row of chips above the page */
 "@media(max-width:860px){body.sb,body.sb.sm{--sw:0px}.wns{position:static;width:auto;display:flex;gap:6px;align-items:center;overflow-x:auto;padding:8px 12px;box-shadow:none}"+
-".wns .wtop,.wns h4,.wns hr,.wns a small{display:none!important}.wns a.wm,.wns a.wf{display:inline-flex!important;flex:none;gap:7px;align-items:center;padding:4px 12px!important;border-radius:999px;background:#ffffff14;white-space:nowrap;border-left:0;margin:0!important}"+
+".wns .wtop,.wns h4,.wns hr,.wns a small,.wns .wk{display:none!important}.wns .wr{display:contents}.wns a.wm,.wns a.wf{display:inline-flex!important;flex:none;gap:7px;align-items:center;padding:4px 12px!important;border-radius:999px;background:#ffffff14;white-space:nowrap;border-left:0;margin:0!important}"+
 ".wns a::after{display:none}.wns a span{display:inline!important;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wns a.wf i,.wns a.wf u{position:static!important}.wns a[aria-current]{background:#fff}}";
 var st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
 var el=document.createElement('nav');el.className='wns';el.setAttribute('aria-label','Sessions and features');document.body.insertBefore(el,document.body.firstChild);
@@ -67,11 +73,11 @@ function draw(){if(!data)return;visit();var cur=here(),tab=cur?'':(window.WN_TAB
   return it.length?'<h4>'+g+'</h4>'+it.map(function(x){var mine=x.id===cur,ask=x.ask||'',fresh=!!ask&&x.saidT>seen(x.id);if(fresh)asks++;
    var sub=ask==='permission'?'asks for your permission':ask?(fresh?'new reply, waits for your answer':'waits for your answer'):x.state?STX[x.state]:'no open session';
    var tip=x.name+'\n'+(ask==='permission'?'Claude asks for a permission in the terminal.':ask?'Claude wrote something and waits for your answer.':x.state?'Its session: '+STX[x.state]+'.':'No open session.')+(x.waiting?'\n'+x.waiting+' open item'+(x.waiting>1?'s':'')+' only you can do.':'')+(x.done?'\nReady to release.':'');
-   return '<a class="wf'+(x.done?' wdn':'')+(ask?' wask':'')+(fresh?' wnew':'')+'" href="/f/'+encodeURIComponent(x.id)+'/" data-ab="'+esc(abbr(x.name))+'"'+(mine?' aria-current="page"':'')+' title="'+esc(tip)+'"><i class="'+x.state+'"></i><span>'+esc(x.name)+'</span>'+(ask?'<u aria-hidden="true">'+(ask==='permission'?'✋':'💬')+'</u>':'')+
-    '<small>'+sub+(x.waiting?' · '+x.waiting+' item'+(x.waiting>1?'s':'')+' for you':'')+'</small></a>'}).join(''):''}).join('');
+   return '<div class="wr"><a class="wf'+(x.done?' wdn':'')+(ask?' wask':'')+(fresh?' wnew':'')+'" href="/f/'+encodeURIComponent(x.id)+'/" data-ab="'+esc(abbr(x.name))+'"'+(mine?' aria-current="page"':'')+' title="'+esc(tip)+'"><i class="'+x.state+'"></i><span>'+esc(x.name)+'</span>'+(ask?'<u aria-hidden="true">'+(ask==='permission'?'✋':'💬')+'</u>':'')+
+    '<small>'+sub+(x.waiting?' · '+x.waiting+' item'+(x.waiting>1?'s':'')+' for you':'')+'</small></a><button type="button" class="wk" data-k="'+esc(x.id)+'" aria-haspopup="menu" aria-expanded="false" aria-label="More for '+esc(x.name)+'" title="More">⋮</button></div>'}).join(''):''}).join('');
  if(window.WN_TERM&&data.alerts)h+='<button type="button" class="wmo" data-al="1" data-ab="'+{sound:'🔔',banner:'🔕',off:'✕'}[data.alerts]+'" title="'+ALH[data.alerts]+'"><span>'+ALT[data.alerts]+'</span></button>';
  h+='<button type="button" class="wmo" data-mo="1" data-ab="'+{on:'◉',sys:'◐',off:'○'}[mo]+'" title="'+MOH[mo]+'"><span>'+MOT[mo]+'</span></button>';
- var k=h+small;if(k!==key){key=k;el.innerHTML=h;
+ var k=h+small;if(k!==key){kmShut();key=k;el.innerHTML=h;
   el.querySelector('.wtop button').onclick=function(){small=!small;try{localStorage.setItem('wn-side',small?'sm':'')}catch(e){}draw();el.querySelector('.wtop button').focus()};
   if(first){first=false;var c=el.querySelector('a.wf[aria-current]');if(c&&c.scrollIntoView)c.scrollIntoView({block:'nearest',inline:'center'})}}
  document.title=(asks?'('+asks+') ':'')+title;
@@ -84,7 +90,16 @@ function tpost(b){return fetch('/api/app',{method:'POST',headers:{'Content-Type'
 var FOC=null;function focusSay(){if(!window.WN_TERM)return;var on=document.visibilityState==='visible'&&document.hasFocus()?1:0;if(on===FOC&&Date.now()-focusSay.t<20000)return;FOC=on;focusSay.t=Date.now();tpost({op:'focus',on:on}).catch(function(){})}
 ['focus','blur','pageshow'].forEach(function(n){window.addEventListener(n,function(){setTimeout(focusSay,0)})});document.addEventListener('visibilitychange',focusSay);
 // on the home page Sessions and Features switch its tab without loading it again
-el.addEventListener('click',function(e){var ab=e.target.closest('button[data-al]');if(ab&&data){var nm=AL[(AL.indexOf(data.alerts)+1)%AL.length];data.alerts=nm;draw();var nb2=el.querySelector('button[data-al]');if(nb2)nb2.focus();tpost({op:'alerts',mode:nm}).catch(function(){});return}
+// the menu of a feature in the bar
+var KM=null;function kmShut(){if(KM){KM.m.remove();var b=el.querySelector('.wk[aria-expanded=true]');if(b)b.setAttribute('aria-expanded','false');KM=null}}
+function kmOpen(b){kmShut();var id=b.dataset.k,m=document.createElement('div'),r=b.getBoundingClientRect();m.className='wkm';m.setAttribute('role','menu');
+ m.innerHTML='<button type="button" role="menuitem">New feature with the same access<small>A clean session: same folders and permissions, empty memory</small></button>';
+ document.body.appendChild(m);m.style.left=Math.max(8,Math.min(r.left,innerWidth-m.offsetWidth-8))+'px';m.style.top=Math.min(r.bottom+4,innerHeight-m.offsetHeight-8)+'px';b.setAttribute('aria-expanded','true');KM={m:m,id:id};
+ m.firstChild.onclick=function(){kmShut();if(id===here()&&typeof window.wnNewFeature==='function')window.wnNewFeature();else location.href='/f/'+encodeURIComponent(id)+'/#new'};m.firstChild.focus();
+ m.addEventListener('keydown',function(e){if(e.key==='Escape'){kmShut();b.focus()}})}
+document.addEventListener('click',function(e){if(KM&&!e.target.closest('.wkm')&&!e.target.closest('.wk'))kmShut()});window.addEventListener('scroll',kmShut,true);
+el.addEventListener('click',function(e){var kb=e.target.closest('button.wk');if(kb){e.preventDefault();if(KM&&KM.id===kb.dataset.k)kmShut();else kmOpen(kb);return}
+ var ab=e.target.closest('button[data-al]');if(ab&&data){var nm=AL[(AL.indexOf(data.alerts)+1)%AL.length];data.alerts=nm;draw();var nb2=el.querySelector('button[data-al]');if(nb2)nb2.focus();tpost({op:'alerts',mode:nm}).catch(function(){});return}
  var mb=e.target.closest('button[data-mo]');if(mb){mo=MO[(MO.indexOf(mo)+1)%MO.length];try{localStorage.setItem('wn-motion',mo)}catch(x){}moSet();draw();var nb=el.querySelector('button[data-mo]');if(nb)nb.focus();return}
  var a=e.target.closest('a[data-tab]');if(a&&location.pathname==='/'&&typeof window.wnShowTab==='function'){e.preventDefault();window.wnShowTab(a.dataset.tab)}});
 window.wnSide={refresh:draw};

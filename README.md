@@ -122,7 +122,7 @@ A session that keeps a
 dashboard is reminded at every prompt to write new work into the plan before it starts (`"remind": false` in
 `~/.whatnow/config.json` turns the reminder off), so a request you make shows up at once.
 
-**New feature with the same access.** The three dots in the header of a feature page have **New feature with the same
+**New feature with the same access.** The three dots at the right end of the header of a feature page, and of every feature in the bar, have **New feature with the same
 access**: a clean Claude Code session (it knows nothing of the old conversation) started in the background in the
 folder the feature was started in, with the same added folders and the same permission mode; the rules, MCP servers
 and instruction files of that folder come with the folder. The form shows what is copied and asks for the task only:
