@@ -25,6 +25,8 @@ var CSS="body{--sw:0px}body.sb{--sw:256px;padding-left:var(--sw)}body.sb.sm{--sw
 ".wns a.wnew u::after{content:'';position:absolute;right:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#e0452f;box-shadow:0 0 0 2px #0f1b16}"+
 "body.sm .wns{padding:10px 6px}body.sm .wns h4,body.sm .wns .wtop b,body.sm .wns a small,body.sm .wns a span,body.sm .wns a.wm em{display:none}"+
 "body.sm .wns .wtop{margin:0 0 6px;justify-content:center}body.sm .wns .wtop button{margin:0}"+
+".wns .wmo{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;margin-top:18px;padding:7px 8px;border-radius:8px;color:#9fb3a8;font-size:12px}.wns .wmo:hover{background:#ffffff14;color:#fff}.wns .wmo:focus-visible{outline:3px solid #7ab8ff;outline-offset:-2px}"+
+"body.sm .wns .wmo{text-align:center;padding:8px 0}body.sm .wns .wmo span{display:none}body.sm .wns .wmo::before{content:attr(data-ab);font-size:14px}"+
 "body.sm .wns a.wm,body.sm .wns a.wf{display:grid;grid-template-columns:1fr;justify-items:center;padding:8px 0;position:relative;margin-bottom:2px}"+
 "body.sm .wns a.wm::after,body.sm .wns a.wf::after{content:attr(data-ab);font-size:11px;font-weight:700}"+
 "body.sm .wns a.wf i{position:absolute;right:4px;top:5px}body.sm .wns a.wf u{position:absolute;left:1px;top:1px;font-size:11px}"+
@@ -38,6 +40,13 @@ var el=document.createElement('nav');el.className='wns';el.setAttribute('aria-la
 var STX={work:'working',bg:'background task running',wait:'waits for you',idle:'session open'},GRP=['Favorites','Active now','Other','Finished'];
 var small=false,data=window.WN_SIDE||null,key='',title=document.title,first=true;
 try{small=localStorage.getItem('wn-side')==='sm'}catch(e){}
+// Motion: the pages animate what changes. "on" shows it whatever the system says (the default: the animations are
+// small and tell what happened), "sys" follows the system's "reduce motion", "off" shows none. The class on <html>
+// is set before anything is drawn; the pages' styles read it.
+var MO=['on','sys','off'],MOT={on:'Motion: on',sys:'Motion: as the system',off:'Motion: off'},MOH={on:'Changes are animated, whatever the system setting says. Click to follow the system.',sys:'Changes are animated unless the system asks to reduce motion. Click to turn them off.',off:'Nothing is animated. Click to turn animations on.'},mo='on';
+try{var m0=localStorage.getItem('wn-motion');if(MO.indexOf(m0)>=0)mo=m0}catch(e){}
+function moSet(){var c=document.documentElement.classList;MO.forEach(function(x){c.toggle('mo-'+x,x===mo)})}
+moSet();
 function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function abbr(n){var w=String(n).replace(/[^0-9A-Za-zЀ-ӿ\s]/g,' ').split(/\s+/).filter(Boolean);return ((w[0]||'?').charAt(0)+((w[1]||'').charAt(0))).toUpperCase()}
 function grp(x){return x.fav?GRP[0]:x.state?GRP[1]:x.done?GRP[3]:GRP[2]}
@@ -57,6 +66,7 @@ function draw(){if(!data)return;visit();var cur=here(),tab=cur?'':(window.WN_TAB
    var tip=x.name+'\n'+(ask==='permission'?'Claude asks for a permission in the terminal.':ask?'Claude wrote something and waits for your answer.':x.state?'Its session: '+STX[x.state]+'.':'No open session.')+(x.waiting?'\n'+x.waiting+' open item'+(x.waiting>1?'s':'')+' only you can do.':'')+(x.done?'\nReady to release.':'');
    return '<a class="wf'+(x.done?' wdn':'')+(ask?' wask':'')+(fresh?' wnew':'')+'" href="/f/'+encodeURIComponent(x.id)+'/" data-ab="'+esc(abbr(x.name))+'"'+(mine?' aria-current="page"':'')+' title="'+esc(tip)+'"><i class="'+x.state+'"></i><span>'+esc(x.name)+'</span>'+(ask?'<u aria-hidden="true">'+(ask==='permission'?'✋':'💬')+'</u>':'')+
     '<small>'+sub+(x.waiting?' · '+x.waiting+' item'+(x.waiting>1?'s':'')+' for you':'')+'</small></a>'}).join(''):''}).join('');
+ h+='<button type="button" class="wmo" data-mo="1" data-ab="'+{on:'◉',sys:'◐',off:'○'}[mo]+'" title="'+MOH[mo]+'"><span>'+MOT[mo]+'</span></button>';
  var k=h+small;if(k!==key){key=k;el.innerHTML=h;
   el.querySelector('.wtop button').onclick=function(){small=!small;try{localStorage.setItem('wn-side',small?'sm':'')}catch(e){}draw();el.querySelector('.wtop button').focus()};
   if(first){first=false;var c=el.querySelector('a.wf[aria-current]');if(c&&c.scrollIntoView)c.scrollIntoView({block:'nearest',inline:'center'})}}
@@ -64,7 +74,8 @@ function draw(){if(!data)return;visit();var cur=here(),tab=cur?'':(window.WN_TAB
  var bk=document.querySelector('.back');if(bk)bk.style.display='none'}
 function load(){fetch('/api/features',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){data=j;draw()}).catch(function(){})}
 // on the home page Sessions and Features switch its tab without loading it again
-el.addEventListener('click',function(e){var a=e.target.closest('a[data-tab]');if(a&&location.pathname==='/'&&typeof window.wnShowTab==='function'){e.preventDefault();window.wnShowTab(a.dataset.tab)}});
+el.addEventListener('click',function(e){var mb=e.target.closest('button[data-mo]');if(mb){mo=MO[(MO.indexOf(mo)+1)%MO.length];try{localStorage.setItem('wn-motion',mo)}catch(x){}moSet();draw();var nb=el.querySelector('button[data-mo]');if(nb)nb.focus();return}
+ var a=e.target.closest('a[data-tab]');if(a&&location.pathname==='/'&&typeof window.wnShowTab==='function'){e.preventDefault();window.wnShowTab(a.dataset.tab)}});
 window.wnSide={refresh:draw};
 // a page from the server comes with the data: draw at once, before the first paint
 if(data)draw();else load();setInterval(load,5000);

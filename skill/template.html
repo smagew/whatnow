@@ -221,7 +221,10 @@ body{--sw:0px}
 .cwf button[disabled]{opacity:.45;cursor:default}.cwf button:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
 .cwn{margin:0;padding:2px 14px 10px;font-size:12px;color:var(--mut)}.cwn.err{color:var(--bad)}
 @media(max-width:860px){.rail{position:static;max-height:none}.tbr{flex-direction:column-reverse;align-items:stretch;gap:8px}.frw{align-self:flex-start;padding:0;flex-wrap:wrap}}
-@media(prefers-reduced-motion:reduce){.pl,.ico.w.on{animation:none}}
+/* Motion is a choice of the reader (the switch at the bottom of the bar puts a class on <html>): "on" animates
+   whatever the system says, "sys" follows the system's "reduce motion", "off" animates nothing. */
+@media(prefers-reduced-motion:reduce){html.mo-sys .pl,html.mo-sys .ico.w.on{animation:none}}
+html.mo-off .pl,html.mo-off .ico.w.on{animation:none}
 /* the page stays invisible until its script has drawn it: while a new page shows nothing, the browser keeps the old
    one on screen, so going from one page to another never shows a half-drawn page. Shown anyway after 1.5 s. */
 body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes wnshow{to{visibility:visible}}
@@ -236,7 +239,8 @@ body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes w
 .chgt{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;line-height:1.5;padding:0 6px;border-radius:99px;background:#f3d36b;color:#3a2a00;white-space:nowrap;vertical-align:1px}
 .chb{display:inline-block;margin-right:6px;font-size:11px;font-weight:700;line-height:1.5;padding:0 6px;border-radius:99px;background:#f3d36b;color:#3a2a00;vertical-align:1px;animation:chb .6s ease-in-out 4}
 /* with "reduce motion" nothing moves; the glow stays, it is a change of colour, not a movement */
-@media(prefers-reduced-motion:reduce){.chn,.chb{animation:none}}
+@media(prefers-reduced-motion:reduce){html.mo-sys .chn,html.mo-sys .chb{animation:none}}
+html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
 /* the detail of an item (how it ended), the result of a stage, and the commits an item names */
 .dtl{all:unset;cursor:pointer;display:inline-block;margin:3px 0 0;font-size:12px;font-weight:600;color:var(--acc)}.dtl::after{content:' ▾'}.dtl[aria-expanded=true]::after{content:' ▴'}
 .dtl:hover{text-decoration:underline}.dtl:focus-visible,.grc:focus-visible,.gst:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}

@@ -50,7 +50,9 @@ main{max-width:1148px;margin:0 auto;padding:20px 24px 70px}
 .legend{margin:0 0 14px;font-size:13px;color:var(--mut);display:flex;gap:16px;flex-wrap:wrap;align-items:center}.legend b{color:var(--ink);font-weight:600}.legend .k{display:inline-block;width:22px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:6px}.k.ok{background:var(--ok)}.k.part{background:linear-gradient(90deg,var(--part) 50%,var(--no) 50%)}.k.no{background:var(--no)}
 .mockbanner{background:#fbeccb;color:#6d4600;border-radius:10px;padding:7px 14px;font-size:13px;margin-bottom:14px}
 @media(max-width:820px){.row.lab{display:none}.row{grid-template-columns:70px 1fr}.row .pass,.row .lvw{grid-column:1/-1}.pr,.nx,.evb,.evl{padding-left:18px}.fh{grid-template-columns:1fr}.ring{grid-row:auto}}
-@media(prefers-reduced-motion:reduce){.cdot.pulse,.lv.work i{animation:none}}
+/* motion is the reader's choice, see the switch at the bottom of the bar: on / as the system / off */
+@media(prefers-reduced-motion:reduce){html.mo-sys .cdot.pulse,html.mo-sys .lv.work i{animation:none}}
+html.mo-off .cdot.pulse,html.mo-off .lv.work i{animation:none}
 .tabs{display:flex;gap:4px}.tabs[hidden]{display:none}.tabs button{all:unset;cursor:pointer;color:#9fb3a8;padding:8px 16px;border-radius:10px 10px 0 0;font-weight:600;font-size:14px}
 .tabs button[aria-selected=true]{background:var(--bg);color:var(--ink)}.tabs button:focus-visible{outline:3px solid #7ab8ff}
 .tabs .n{font-size:12px;background:#ffffff26;border-radius:99px;padding:0 7px;margin-left:6px}.tabs button[aria-selected=true] .n{background:#dfe5e1}

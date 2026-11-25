@@ -105,7 +105,11 @@ word as the evidence, or a decision). **Restore** undoes it.
 **What changed since you last looked.** When the plan of a feature gets new items, new plan lines, a new stage or new
 open items, the page says so on top ("The plan changed since you last looked"), marks the stages with the number of
 changes and makes the changed items glow for a few seconds; **Show** leads to the first of them. "Last looked" is kept
-per feature in the browser. With the system's "reduce motion" nothing moves, the glow stays. A session that keeps a
+per feature in the browser. The page is not loaded again for this: it takes the new data and redraws in place.
+
+**Motion.** The switch at the bottom of the bar chooses how the pages animate: **on** (the default: changes are
+animated whatever the system says), **as the system** (nothing moves when the system asks to reduce motion) and
+**off**. It is kept in the browser. A session that keeps a
 dashboard is reminded at every prompt to write new work into the plan before it starts (`"remind": false` in
 `~/.whatnow/config.json` turns the reminder off), so a request you make shows up at once.
 
