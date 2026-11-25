@@ -234,7 +234,10 @@ html.mo-off .pl,html.mo-off .ico.w.on{animation:none}
    one on screen, so going from one page to another never shows a half-drawn page. Shown anyway after 1.5 s. */
 body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes wnshow{to{visibility:visible}}
 /* what changed in the plan since the page was last looked at: a note on top, a mark on the stage, a glow on the item */
-.chw{padding:0 24px}.chn{max-width:1180px;margin:14px auto -4px;box-sizing:border-box;background:#fff6d6;border:1px solid #ecd27a;border-radius:10px;padding:8px 12px;display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center;font-size:13px;color:#4a3800;animation:chin .5s ease-out}
+/* The notes float over the page, in the bottom right corner above the line of the chat: they take no room in the
+   page, so nothing moves when one appears or goes. (They used to be put above the content, and pushed all of it down.) */
+.chw{position:fixed;z-index:39;right:20px;bottom:calc(var(--th,0px) + 78px);width:min(560px,calc(100vw - var(--sw,0px) - 40px));display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.chn{pointer-events:auto;box-sizing:border-box;background:#fff6d6;border:1px solid #ecd27a;border-radius:12px;padding:10px 14px;display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center;font-size:13px;color:#4a3800;box-shadow:0 10px 30px rgba(22,36,30,.22);animation:chin .4s ease-out}
 .chn[hidden]{display:none}.chn b{font-weight:600}.chn .x{flex:1}
 .chn button{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;padding:2px 10px;border-radius:99px;border:1px solid #4a380066}.chn button.go{background:#4a3800;color:#fff;border-color:#4a3800}.chn button:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
 /* The motion of the page, chosen from the examples in /demo/motion. Each answers one event, in 0.2 to 0.4 s,
@@ -264,7 +267,9 @@ body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes w
 @keyframes eq{0%,100%{height:3px}50%{height:12px}}.act .sw{animation:chin .3s ease-out both}
 html.mo-off .sent.sw{animation:none}
 .sent.sw{animation:chin .35s ease-out both}.sent .eq{margin-right:8px;vertical-align:-1px}.sent .okm{display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:50%;background:#dff3e8;color:var(--ok);font-size:11px;font-weight:700;margin-right:8px}
-.chn.ans{background:#e6f4ec;border-color:#a9d8bd;color:#0b3a2a;margin-bottom:8px}.chn.ans button{border-color:#0b3a2a66}.chn.ans button.go{background:var(--ok);border-color:var(--ok);color:#fff}.chn.ans.bad{background:var(--badb);border-color:#e6b0ab;color:var(--bad)}.chn.ans .x{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.chn.ans{background:#e6f4ec;border-color:#a9d8bd;color:#0b3a2a;flex-wrap:wrap}.chn.ans .x{flex-basis:100%;order:3}.chn.ans button{border-color:#0b3a2a66}.chn.ans button.go{background:var(--ok);border-color:var(--ok);color:#fff}.chn.ans.bad{background:var(--badb);border-color:#e6b0ab;color:var(--bad)}.chn.ans b{flex:1}.chn.ans button{flex:none}
+/* the answer is what the user waited for: it is shown whole, up to three lines, not cut to one */
+.chn.ans .x{min-width:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
 @media(prefers-reduced-motion:reduce){html.mo-sys .an1b,html.mo-sys .an2a,html.mo-sys .an2t,html.mo-sys .sg i.an3a::after,html.mo-sys .roll>span,html.mo-sys .p6b,html.mo-sys .eq i,html.mo-sys .act .sw{animation:none}html.mo-sys .roll .old{display:none}html.mo-sys .eq i{height:8px}}
 html.mo-off .an1b,html.mo-off .an1m,html.mo-off .an2a,html.mo-off .an2t,html.mo-off .sg i.an3a::after,html.mo-off .roll>span,html.mo-off .p6b,html.mo-off .eq i,html.mo-off .act .sw{animation:none}html.mo-off .roll .old{display:none}html.mo-off .eq i{height:8px}
 .chgt{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;line-height:1.5;padding:0 6px;border-radius:99px;background:#f3d36b;color:#3a2a00;white-space:nowrap;vertical-align:1px}
@@ -534,7 +539,8 @@ function gotInbox(j){var m={},ans=null;(j.entries||[]).filter(function(e){return
 // The answer of the session is said on top, where it cannot be missed, and leads to the item it is about: the
 // reply used to appear only under the item, which may have moved or be on another stage.
 function ansNote(e){var w=document.querySelector('.chw');if(!w)return;var el=$('ans');if(!el){el=document.createElement('div');el.id='ans';el.className='chn ans';el.setAttribute('role','status');w.insertBefore(el,w.firstChild)}
- var ok=e.state==='done';el.className='chn ans'+(ok?'':' bad');el.hidden=false;
+ var ok=e.state==='done';el.className='chn ans'+(ok?'':' bad');el.hidden=false;ANSID=renOf(e.fid);if(sameAsAnswer()&&$('chn'))$('chn').hidden=true;
+ el.title=(ok?e.note:e.error)||'';clearTimeout(ansNote.t);ansNote.t=setTimeout(function(){if(!el.matches(':hover'))el.hidden=true},60000);   // the answer stays under its item too
  el.innerHTML='<b>'+(ok?'The session answered':'The message was not delivered')+'</b> <span class="x">'+(e.item?'about «'+esc(String(e.item).slice(0,70))+(String(e.item).length>70?'…':'')+'»'+(ok&&e.note?': ':''):'')+(ok?esc(e.note||''):esc(e.error||''))+'</span><button type="button" class="go" data-an="show">Show the item</button><button type="button" data-an="x">Got it</button>';
  el.onclick=function(x){var b=x.target.closest('button');if(!b)return;if(b.dataset.an==='x'){el.hidden=true;return}
   var id=renOf(e.fid),si=-1;P.stages.forEach(function(s,i){if((s.fids||[]).indexOf(id)>=0)si=i});
@@ -581,9 +587,16 @@ function chMark(){if(CG.off||!(CG.n||CG.nb))return;var live=Date.now()-CG.t0<260
   var was=(CG.dn||{})[cs.n],nb=cc.querySelector('.ft2>span');if(nb&&was!=null&&was!==cs.dn&&!nb.dataset.ch){nb.dataset.ch=1;nb.innerHTML='<span class="roll"><span class="old">'+was+'</span><span class="new">'+cs.dn+'</span></span> of '+cs.tot+' done'}}
  [].forEach.call(document.querySelectorAll('#stl .rr[data-i]'),function(r){var s=P.stages[+r.dataset.i],c=s&&CG.s[s.n];if(!c||r.querySelector('.chb'))return;
   var b=document.createElement('span');b.className='chb';b.textContent=c.neu?'new':'+'+c.c;b.title=c.neu?'A new stage since you last looked':c.c+' new or changed item'+(c.c>1?'s':'')+' since you last looked';var nm=r.querySelector('.nm,.tt');if(nm)nm.insertBefore(b,nm.firstChild);else r.appendChild(b)})}
-function chNote(){var el=$('chn');if(!el||!(CG.n||CG.nb))return;var st=Object.keys(CG.s),f=P.stages[CG.first];
+// One event, one note: when the only change of the plan is the item the session has just answered about, the note
+// about the answer says it all, and "the plan has just changed" would repeat it.
+var ANSID='';
+// (the answer may come before the page learns that the plan changed, so the item is looked up by the id it has now)
+function sameAsAnswer(){var id=renOf(ANSID);return !!ANSID&&$('ans')&&!$('ans').hidden&&CG.n+CG.nb===1&&!!(CG.f[id]||CG.b[id])}
+function chNote(){var el=$('chn');if(el&&sameAsAnswer()){el.hidden=true;return}if(!el||!(CG.n||CG.nb))return;var st=Object.keys(CG.s),f=P.stages[CG.first];
  var h='<b>'+(CG.now?'The plan has just changed.':'The plan changed since you last looked.')+'</b> <span class="x">'+(CG.n?CG.n+' new or changed item'+(CG.n>1?'s':'')+(f?' in stage '+f.n+' «'+esc(f.title)+'»'+(st.length>1?' and '+(st.length-1)+' more':''):''):'')+(CG.n&&CG.nb?', ':'')+(CG.nb?CG.nb+' new open item'+(CG.nb>1?'s':''):'')+'</span><button type="button" class="go" data-ch="show">Show</button><button type="button" data-ch="x" aria-label="Hide this note">Got it</button>';
  el.innerHTML=h;el.hidden=false;
+ // it goes by itself after a while; the marks on the stages and on the items stay, they are the lasting record
+ clearTimeout(CG.hide);CG.hide=setTimeout(function(){if(!el.matches(':hover'))el.hidden=true},14000);
  el.onclick=function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.ch==='x'){CG.off=true;el.hidden=true;[].forEach.call(document.querySelectorAll('.chgt,.chb'),function(x){x.remove()});return}
   CG.t0=Date.now();[].forEach.call(document.querySelectorAll('[data-ch]'),function(x){if(x.tagName==='LI'){delete x.dataset.ch;x.classList.remove('chg','an1b','an1m');var t=x.querySelector('.chgt');if(t)t.remove()}});
   if(CG.n&&CG.first>=0){show('work');renderStage(CG.first)}else show('ov');
