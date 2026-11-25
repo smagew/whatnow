@@ -893,7 +893,10 @@ if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);$('cwu').onclick=fu
   function fail(m){CHAT.busy=false;CHAT.err=m;$('cwn').className='cwn err';$('cwn').textContent=m;chatFit()}
   post({action:'tell',session:CHAT.sid,text:txt}).then(function(r){if(!r.ok)return fail((r.j&&r.j.error)||'could not send');
    CHAT.busy=false;t.value='';draft('c:'+P.slug,'');chatFit();CHAT.lkey='';var l=$('cwl');l.scrollTop=l.scrollHeight;pollChat();lastMsg()}).catch(function(){fail('no connection to the server')})});
- if(P.live)setInterval(pollChat,3000)}
+ if(P.live){setInterval(pollChat,3000);
+  // while the messages are in front of the reader, the chat is asked every second: a reply is in the transcript
+  // only when Claude has finished writing it, and three more seconds on top of that were noticeable
+  setInterval(function(){if(CHAT.open&&tmode()==='chat'&&document.visibilityState==='visible')pollChat()},1000)}}
 // The Git tab: one block per repository the sessions of the feature work in. What is committed and pushed, how far
 // the branch is from the main one, the pull request (GitHub) or merge request (GitLab) of the branch, the commits
 // with links, who else is in the repository, and two things to ask the session for: to push, to open the request.
