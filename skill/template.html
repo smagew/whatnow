@@ -774,7 +774,7 @@ function lookApply(){var b=$('cwb');if(!b)return;var L=look(),c=hexRGB(L.chat),t
  b.style.setProperty('--cbg','rgba('+c.join(',')+','+a+')');b.style.setProperty('--tbg','rgba('+t.join(',')+','+a+')');b.style.setProperty('--ta',Math.min(1,a+.15));
  b.classList.toggle('see',a<1);b.classList.toggle('cdk',lum(c)<.45);
  if(TAPI&&TAPI.theme)TAPI.theme(lum(t)<.55?'#e6efe9':'#16241e')}
-function lookDraw(){var el=$('cwst'),L=look(),sw=function(list,k,cur){return list.map(function(x){return '<button type="button" class="sw" data-lk="'+k+'" data-v="'+x+'" style="background:'+x+'" aria-pressed="'+(x.toLowerCase()===cur.toLowerCase())+'" aria-label="'+x+'"></button>'}).join('')+'<input type="color" data-lk="'+k+'" value="'+cur+'" aria-label="Another colour">'};
+function lookDraw(){var el=$('cwst'),L=look(),sw=function(list,k,cur){return list.map(function(hx){return '<button type="button" class="sw" data-lk="'+k+'" data-v="'+hx+'" style="background:'+hx+'" aria-pressed="'+(hx.toLowerCase()===cur.toLowerCase())+'" aria-label="'+hx+'"></button>'}).join('')+'<input type="color" data-lk="'+k+'" value="'+cur+'" aria-label="Another colour">'};
  el.innerHTML='<h5>Messages background</h5><div class="row">'+sw(LOOKC,'chat',L.chat)+'</div><h5>Terminal background</h5><div class="row">'+sw(LOOKT,'term',L.term)+'</div>'+
   '<h5>Opacity of both</h5><div class="row"><input type="range" min="40" max="100" step="5" value="'+Math.round(L.alpha*100)+'" data-lk="alpha" aria-label="Opacity"><span class="pc">'+Math.round(L.alpha*100)+'%</span></div><button type="button" class="rs" data-lk="reset">Back to the default look</button>'}
 function lookSet(k,v){var l=CHAT.box.look=CHAT.box.look||{};if(k==='reset')delete CHAT.box.look;else l[k]=v;boxSave();lookApply()}
