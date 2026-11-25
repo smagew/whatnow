@@ -276,6 +276,25 @@ html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
 .gr p{margin:6px 0 0;font-size:13px}.gr p b.bad{color:var(--bad)}.gr p small,.acf small{color:var(--mut)}
 .acl{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:4px}.acl code{white-space:normal;word-break:break-all}.acl code.bad{background:var(--badb);color:var(--bad)}
 .acf{margin:4px 0 0;padding:0;list-style:none;font-size:13px}.acf li{margin-top:4px}
+/* the three layouts of the Access tab (?acc=1|2|3) */
+.axu{list-style:none;margin:4px 0 0;padding:0;font-size:13px}.axu li{margin-top:5px;min-width:0}.axu code{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}.axu code.bad{background:var(--badb);color:var(--bad)}
+.axu b{font-weight:600}.gr small{color:var(--mut)}
+.axd{margin-top:6px;font-size:13px}.axd>summary{cursor:pointer;color:var(--acc);font-weight:600;font-size:12.5px;list-style:none}.axd>summary::-webkit-details-marker{display:none}.axd>summary::after{content:' ▾'}.axd[open]>summary::after{content:' ▴'}
+.axd>summary:focus-visible,.axo>summary:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}.axw{color:var(--mut);line-height:1.7}.axw b{color:var(--ink);font-weight:600}.axe{color:var(--mut)}
+.axm{margin:12px 0 0;padding:10px 14px;border-radius:10px;background:#e8eeea;font-size:14px}.axm b{font-weight:700;margin-right:6px}.axm.warn{background:var(--warnb);color:#5a4300}.axm.bad{background:var(--badb);color:var(--bad)}
+.axl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}.axl.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.axc{border:1px solid var(--line);border-radius:10px;padding:10px 12px 12px;min-width:0;border-top:3px solid #8c9a92}.axc.free{border-top-color:var(--ok)}.axc.ask{border-top-color:var(--part)}.axc.never{border-top-color:var(--bad)}
+.axc h4{margin:0 0 2px;font-size:13px}.axc p{margin:4px 0 0}.axs{color:var(--mut);font-size:12.5px}.axf{margin-top:12px}
+@media(max-width:1000px){.axl,.axl.two{grid-template-columns:1fr}}
+.axt{display:grid;grid-template-columns:200px minmax(0,1fr);gap:0;margin:12px 0 0;font-size:13px}.axt dt{padding:9px 12px 9px 0;border-top:1px solid var(--line);color:var(--mut);font-weight:500}.axt dd{margin:0;padding:9px 0;border-top:1px solid var(--line);min-width:0}
+.axt dt:first-of-type,.axt dt:first-of-type+dd{border-top:0}.axt .axu{margin-top:0}.axt .axu li:first-child{margin-top:0}
+.axp{font-weight:700;padding:1px 9px;border-radius:99px;background:#e8eeea}.axp.warn{background:var(--warnb);color:#5a4300}.axp.bad{background:var(--badb);color:var(--bad)}
+@media(max-width:760px){.axt{grid-template-columns:1fr}.axt dd{border-top:0;padding-top:0}}
+.axq{margin:12px 0 8px;font-size:14.5px;line-height:1.7}
+.axo{border-top:1px solid var(--line)}.axo>summary{cursor:pointer;display:flex;gap:12px;align-items:baseline;padding:10px 0;list-style:none;font-size:13.5px}.axo>summary::-webkit-details-marker{display:none}
+.axo>summary b{flex:none;width:180px;font-weight:600}.axo>summary span{flex:1;min-width:0;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.axo>summary::after{content:'▾';color:var(--mut)}.axo[open]>summary::after{content:'▴'}
+.axo>div{padding:0 0 12px 192px;font-size:13px}.axo>div p{margin:8px 0 0}.axo>div p:first-child{margin-top:0}
+@media(max-width:760px){.axo>summary b{width:auto}.axo>div{padding-left:0}}
 /* the folders the sessions of the feature work in: a card under the stages */
 .dcard{margin:18px 0 4px 2px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:12px;font-size:13px;color:var(--mut);line-height:1.5}
 .dcard h4{margin:0 0 6px;font-size:13px;color:var(--ink)}.dcard .dp{display:block;margin-top:6px}.dcard .dn{margin-top:12px}.dcard code{white-space:normal;word-break:break-all}.dcard b{color:var(--ink);font-weight:600}
@@ -655,7 +674,45 @@ var ACC={d:null,busy:false,timer:0};
 var MODES={'default':['','Asks before it edits a file or runs a command that no rule allows.'],acceptEdits:['','Edits files without asking; asks before a command that no rule allows.'],plan:['','Reads and plans only: it changes nothing until you approve the plan.'],
  auto:['warn','Works without asking. A safety check looks at each action and stops the risky ones.'],bypassPermissions:['bad','Does everything without asking and without a safety check.'],dontAsk:['','Does what the rules allow and refuses the rest without asking.']};
 function accChips(l,cls){return '<span class="acl">'+l.map(function(x){return '<code'+(cls?' class="'+cls+'"':'')+'>'+esc(x)+'</code>'}).join('')+'</span>'}
-function accCard(s){var m=MODES[s.mode]||['','']
+// Three layouts of a session's access to choose from (?acc=1|2|3; 0 is the first draft). Shared parts first.
+var AV=(function(){try{var v=new URLSearchParams(location.search).get('acc');return v===null?1:Math.max(0,Math.min(3,+v||0))}catch(e){return 1}})();
+function axNice(n){return n.indexOf(' ')>=0?n:n.replace(/^claude_ai_/,'claude.ai ').replace(/^plugin_([^_]+)_/,'plugin $1: ').replace(/_/g,' ')}
+// a list one thing per line; what does not fit the first lines is folded
+function axLines(l,max,cls){if(!l.length)return '';var row=function(x){return '<li><code'+(cls?' class="'+cls+'"':'')+' title="'+esc(x)+'">'+esc(x)+'</code></li>'},a=l.slice(0,max),b=l.slice(max);
+ return '<ul class="axu">'+a.map(row).join('')+'</ul>'+(b.length?'<details class="axd"><summary>'+b.length+' more</summary><ul class="axu">'+b.map(row).join('')+'</ul></details>':'')}
+function axData(s){var rl=s.rules||[],R={allow:[],ask:[],deny:[],dirs:[],from:[]};rl.forEach(function(r){['allow','ask','deny','dirs'].forEach(function(k){R[k]=R[k].concat(r[k]||[])});R.from.push(r.source+': '+r.file)});
+ var mcp=s.mcp||[],d=s.dirs||{};return{R:R,on:mcp.filter(function(x){return x.tools>2}),off:mcp.filter(function(x){return x.tools<=2}),files:s.files||[],tools:s.tools||[],
+  now:d.now||d.root||'',root:d.root||'',add:d.add||[],seen:(d.seen||[]).filter(function(x){return x!==d.root&&x!==d.now}),m:MODES[s.mode]||['',''],known:!!s.mcp}}
+function axHead(s){return '<div class="grh"><h3>'+esc(s.name||s.id.slice(0,8))+'</h3><span class="tag '+(s.open?'ok':'no')+'">'+(s.open?(STX[s.state]||'open'):'closed')+'</span>'+(s.model?'<span class="gp">model '+esc(s.model)+'</span>':'')+'</div>'}
+function axFolders(D){return '<ul class="axu"><li><b>Works in</b> <code>'+esc(D.now||'not known')+'</code></li>'+(D.root&&D.root!==D.now?'<li><b>Started in</b> <code>'+esc(D.root)+'</code> <small>and everything under it</small></li>':D.now?'<li><small>started here; reaches everything under it</small></li>':'')+D.add.concat(D.R.dirs).map(function(x){return '<li><b>Added</b> <code>'+esc(x)+'</code></li>'}).join('')+'</ul>'+(D.seen.length?'<details class="axd"><summary>'+D.seen.length+' more it worked in lately</summary>'+axLines(D.seen,99)+'</details>':'')}
+// 1. By consequence: what it does without asking, what it asks about, what it never does; then what it reaches.
+function accV1(s){var D=axData(s),auto=s.mode==='auto'||s.mode==='bypassPermissions';
+ return '<section class="gr ax1">'+axHead(s)+'<p class="axm '+D.m[0]+'"><b>'+esc(s.mode||'mode not known')+'</b> '+(D.m[1]||'The transcript of this session does not say its permission mode.')+'</p>'+
+  '<div class="axl"><div class="axc free"><h4>Does without asking</h4>'+(auto?'<p>'+(s.mode==='auto'?'Everything the safety check lets through.':'Everything.')+'</p>':s.mode==='acceptEdits'?'<p>Edits of files.</p>':'')+(D.R.allow.length?'<p class="axs">'+D.R.allow.length+' rule'+(D.R.allow.length>1?'s':'')+' allow</p>'+axLines(D.R.allow,5):auto?'':'<p class="axe">No rules allow anything.</p>')+'</div>'+
+  '<div class="axc ask"><h4>Asks you first</h4>'+(D.R.ask.length?axLines(D.R.ask,5):'<p class="axe">'+(auto?'Nothing: in this mode it does not stop to ask.':s.mode==='plan'?'Everything: it only plans.':'Whatever no rule allows.')+'</p>')+'</div>'+
+  '<div class="axc never"><h4>Never</h4>'+(D.R.deny.length?axLines(D.R.deny,5,'bad'):'<p class="axe">No rule forbids anything.</p>')+'</div></div>'+
+  '<div class="axl two"><div class="axc"><h4>Reaches on this machine</h4>'+axFolders(D)+'</div><div class="axc"><h4>Reaches outside</h4>'+(D.known?(D.on.length?'<ul class="axu">'+D.on.map(function(x){return '<li><b>'+esc(axNice(x.name))+'</b> <small>'+x.tools+' tools</small></li>'}).join('')+'</ul>':'<p class="axe">No outside service in use.</p>')+(D.off.length?'<details class="axd"><summary>'+D.off.length+' more offered, not signed in</summary><p class="axw">'+D.off.map(function(x){return esc(axNice(x.name))}).join(' · ')+'</p></details>':''):'<p class="axe">Not known: the transcript was not found.</p>')+'</div></div>'+
+  (D.known?'<details class="axd axf"><summary>'+D.files.length+' instruction file'+(D.files.length===1?'':'s')+' loaded, '+D.tools.length+' tools used'+(D.R.from.length?', rules from '+D.R.from.length+' settings file'+(D.R.from.length>1?'s':''):'')+'</summary>'+(D.files.length?'<p><b>Instruction files</b></p>'+axLines(D.files.map(function(f){return f.path}),99):'')+(D.tools.length?'<p><b>Tools it has used</b></p><p class="axw">'+D.tools.map(esc).join(' · ')+'</p>':'')+(D.R.from.length?'<p><b>Settings files with rules</b></p>'+axLines(D.R.from,99):'')+'</details>':'')+'</section>'}
+// 2. A sheet: the name of a thing on the left, what it is on the right, the same order for every session.
+function accV2(s){var D=axData(s),row=function(k,v){return v?'<dt>'+k+'</dt><dd>'+v+'</dd>':''},n=function(l){return l.length?' <small>'+l.length+'</small>':''};
+ return '<section class="gr ax2">'+axHead(s)+'<dl class="axt">'+row('Permission mode','<b class="axp '+D.m[0]+'">'+esc(s.mode||'not known')+'</b> '+(D.m[1]||''))+
+  row('Works in','<code>'+esc(D.now||'not known')+'</code>')+row('Started in',D.root&&D.root!==D.now?'<code>'+esc(D.root)+'</code> <small>reaches everything under it</small>':D.now?'<small>the same folder; reaches everything under it</small>':'')+
+  row('Added folders',D.add.concat(D.R.dirs).length?axLines(D.add.concat(D.R.dirs),4):'')+row('Also worked in'+n(D.seen),axLines(D.seen,3))+
+  row('Allowed without asking'+n(D.R.allow),D.R.allow.length?axLines(D.R.allow,4):'<small>no rules</small>')+row('Asks first'+n(D.R.ask),D.R.ask.length?axLines(D.R.ask,4):'<small>no rules</small>')+row('Never'+n(D.R.deny),D.R.deny.length?axLines(D.R.deny,4,'bad'):'<small>no rules</small>')+
+  (D.known?row('Outside services in use'+n(D.on),D.on.length?'<span class="axw">'+D.on.map(function(x){return '<b>'+esc(axNice(x.name))+'</b> '+x.tools+' tools'}).join(' · ')+'</span>':'<small>none</small>')+
+   row('Offered, not signed in'+n(D.off),D.off.length?'<details class="axd"><summary>show '+D.off.length+'</summary><p class="axw">'+D.off.map(function(x){return esc(axNice(x.name))}).join(' · ')+'</p></details>':'')+
+   row('Instruction files'+n(D.files),axLines(D.files.map(function(f){return f.path}),4))+row('Tools it has used'+n(D.tools),D.tools.length?'<span class="axw">'+D.tools.map(esc).join(' · ')+'</span>':'<small>none yet</small>'):row('Transcript','<small>not found: services, files and tools are not known</small>'))+
+  row('Rules come from',D.R.from.length?axLines(D.R.from,4):'')+'</dl></section>'}
+// 3. One sentence, then drawers: each line says its answer in short and opens for the whole of it.
+function accV3(s){var D=axData(s),dr=function(k,sum,body,open){return '<details class="axo"'+(open?' open':'')+'><summary><b>'+k+'</b><span>'+sum+'</span></summary><div>'+body+'</div></details>'},pl=function(n,w){return n+' '+w+(n===1?'':'s')};
+ return '<section class="gr ax3">'+axHead(s)+'<p class="axq"><b class="axp '+D.m[0]+'">'+esc(s.mode||'mode not known')+'</b> in <code>'+esc(D.root||D.now||'?')+'</code>'+(D.R.allow.length+D.R.ask.length+D.R.deny.length?', '+pl(D.R.allow.length+D.R.ask.length+D.R.deny.length,'rule'):', no rules')+(D.known?', '+pl(D.on.length,'outside service')+' in use':'')+'.</p>'+
+  dr('Permission mode',esc(s.mode||'not known'),'<p>'+(D.m[1]||'The transcript of this session does not say it.')+'</p>')+
+  dr('Folders',esc(D.now||'not known')+(D.add.length+D.seen.length?' and '+(D.add.length+D.seen.length)+' more':''),axFolders(D))+
+  dr('Rules',D.R.allow.length+' allowed · '+D.R.ask.length+' ask · '+D.R.deny.length+' never',(D.R.deny.length?'<p><b>Never</b></p>'+axLines(D.R.deny,99,'bad'):'')+(D.R.ask.length?'<p><b>Asks first</b></p>'+axLines(D.R.ask,99):'')+(D.R.allow.length?'<p><b>Allowed without asking</b></p>'+axLines(D.R.allow,99):'')+(D.R.from.length?'<p><b>From</b></p>'+axLines(D.R.from,99):'<p class="axe">No allow, ask or deny rules in the settings files that apply.</p>'))+
+  (D.known?dr('Outside services',D.on.length+' in use · '+D.off.length+' offered',(D.on.length?'<ul class="axu">'+D.on.map(function(x){return '<li><b>'+esc(axNice(x.name))+'</b> <small>'+x.tools+' tools</small></li>'}).join('')+'</ul>':'<p class="axe">None in use.</p>')+(D.off.length?'<p><b>Offered, not signed in</b></p><p class="axw">'+D.off.map(function(x){return esc(axNice(x.name))}).join(' · ')+'</p>':''))+
+   dr('Instruction files',pl(D.files.length,'file'),D.files.length?axLines(D.files.map(function(f){return f.path}),99):'<p class="axe">None seen in the transcript.</p>')+dr('Tools it has used',String(D.tools.length),D.tools.length?'<p class="axw">'+D.tools.map(esc).join(' · ')+'</p>':'<p class="axe">None yet.</p>'):'')+'</section>'}
+function accCard(s){return [accCard0,accV1,accV2,accV3][AV](s)}
+function accCard0(s){var m=MODES[s.mode]||['','']
  ,h='<section class="gr"><div class="grh"><h3>'+esc(s.name||s.id.slice(0,8))+'</h3><span class="tag '+(s.open?'ok':'no')+'">'+(s.open?(STX[s.state]||'open'):'closed')+'</span>'+(s.model?'<span class="gp">model '+esc(s.model)+'</span>':'')+'</div>';
  h+='<div class="acm '+m[0]+'"><b>Permission mode: '+esc(s.mode||'not known')+'</b>'+(m[1]?' <span>'+m[1]+'</span>':s.mode?'':' <span>The transcript of this session does not say it.</span>')+'</div>';
  h+='<h4>Folders</h4><div class="acd">'+(s.dirs&&(s.dirs.now||s.dirs.root)?dirsLine({dirs:s.dirs}):'<span class="gm">Not known.</span>')+'</div>';

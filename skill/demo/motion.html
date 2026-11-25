@@ -1,0 +1,111 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>whatnow: motion examples</title>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Examples of motion for the dashboard, to choose from. Each case is a real piece of the interface; every variant
+   has its own Play button. Nothing here follows the system's "reduce motion": the page exists to show motion.
+   Rules kept in every variant: only transform, opacity and colour change (no layout thrash), 160-420 ms for an
+   answer to an event, one accent at a time, no bounce. --k slows everything down for a close look. */
+:root{--bg:#eef1ee;--paper:#fff;--ink:#17231d;--mut:#586860;--line:#d7dfda;--side:#16241e;--ok:#0f7a4a;--part:#e8b13a;--no:#dfe5e1;--bad:#b3261e;--warnb:#fbeccb;--acc:#0b6b4f;--live:#1f5fd0;--liveb:#e3ecfc;--k:1;--ease:cubic-bezier(.2,.7,.2,1)}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;color:var(--ink);font:14.5px/1.5 Geologica,system-ui,sans-serif}
+header{background:var(--side);color:#dfe9e3;padding:22px 28px 20px}header h1{margin:0;font-size:22px;font-weight:600;color:#fff}header p{margin:6px 0 0;max-width:74ch;color:#9fb3a8;font-size:13.5px}
+.bar{display:flex;gap:10px;align-items:center;margin-top:14px;font-size:13px}.bar button{all:unset;cursor:pointer;padding:3px 12px;border-radius:99px;border:1px solid #ffffff55;color:#fff;font-weight:600;font-size:12.5px}.bar button[aria-pressed=true]{background:#fff;color:var(--side)}
+main{max-width:1180px;margin:0 auto;padding:8px 28px 80px}
+section.case{margin-top:34px}section.case>h2{margin:0;font-size:18px;font-weight:600}section.case>p{margin:4px 0 14px;color:var(--mut);max-width:78ch;font-size:13.5px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px}
+.v{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px 16px;display:flex;flex-direction:column}
+.vh{display:flex;gap:10px;align-items:baseline}.vh b{font-size:14px;font-weight:600}.vh code{font:600 12px ui-monospace,Menlo,monospace;background:var(--side);color:#fff;border-radius:6px;padding:1px 7px}
+.vh button{all:unset;cursor:pointer;margin-left:auto;font-size:12.5px;font-weight:600;padding:3px 14px;border-radius:99px;background:var(--side);color:#fff}.vh button:hover{background:#0b3a2a}.vh button:focus-visible,.bar button:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
+.v>p{margin:4px 0 12px;font-size:12.5px;color:var(--mut);min-height:38px}
+.stage{flex:1;background:#f7f9f7;border:1px dashed var(--line);border-radius:10px;padding:12px;min-height:172px;overflow:hidden;position:relative}
+/* pieces of the real interface */
+ul.it{list-style:none;margin:0;padding:0}ul.it li{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:9px;font-size:13.5px}
+.ico{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;margin-top:1px;position:relative}
+.ico.q{border:2px solid #9aa9a1;color:transparent}.ico.y{background:#dff3e8;color:var(--ok)}.ico.w{border:2px solid var(--liveb);border-top-color:var(--live);animation:spin calc(.9s*var(--k)) linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.card{background:#fff;border:1.5px solid var(--live);border-radius:12px;padding:10px 12px;position:relative;overflow:hidden}.card .pill{display:inline-block;font-size:11px;font-weight:700;background:var(--live);color:#fff;border-radius:99px;padding:0 8px}
+.card h4{margin:6px 0 8px;font-size:14px;font-weight:600}.segs{display:flex;gap:3px}.segs i{flex:1;height:7px;border-radius:2px;background:var(--no);position:relative;overflow:hidden}.segs i.d{background:var(--ok)}
+.meta{display:flex;justify-content:space-between;margin-top:8px;font-size:12.5px;color:var(--mut)}
+.rail{display:grid;grid-template-columns:28px 1fr auto;gap:8px 10px;align-items:center;font-size:13px}.dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;background:var(--ok);position:relative}.dot.cu{background:var(--live)}.dot.pa{background:var(--part);color:#3a2a00}
+.note{background:#fff6d6;border:1px solid #ecd27a;border-radius:10px;padding:7px 12px;font-size:13px;color:#4a3800;display:flex;gap:10px;align-items:center}.note b{font-weight:600}.note span{flex:1}.note em{font-style:normal;font-weight:600;font-size:12px;padding:1px 10px;border-radius:99px;background:#4a3800;color:#fff}
+.tabs{display:flex;gap:2px;background:var(--side);border-radius:10px 10px 0 0;padding:8px 10px 0}.tabs span{padding:8px 14px;border-radius:9px 9px 0 0;color:#a9bdb2;font-weight:500;font-size:13.5px;display:flex;gap:6px;align-items:center}.tabs span.on{background:var(--bg);color:var(--ink);font-weight:600}
+.cnt{display:inline-grid;font-size:11px;font-weight:700;background:var(--bad);color:#fff;border-radius:99px;padding:0 7px;height:17px;line-height:17px;overflow:hidden}
+.mark{font-size:11px;font-weight:700;padding:0 6px;border-radius:99px;background:#f3d36b;color:#3a2a00;justify-self:start}
+.tick{font-size:12.5px;color:var(--mut);margin-top:8px;display:flex;gap:8px;align-items:center;height:20px}
+/* ---- 1. a new item ---- */
+@keyframes wash{0%,35%{background:#fff0b3}100%{background:transparent}}
+.n1a{animation:unfold calc(.36s*var(--k)) var(--ease) both,wash calc(2.2s*var(--k)) ease-out both}@keyframes unfold{from{max-height:0;opacity:0;padding-top:0;padding-bottom:0}to{max-height:60px;opacity:1}}
+.n1b{animation:slidein calc(.32s*var(--k)) var(--ease) both;box-shadow:inset 3px 0 0 var(--part)}.n1b.done{box-shadow:inset 0 0 0 var(--part);transition:box-shadow calc(.6s*var(--k)) ease-out}@keyframes slidein{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+.n1c{animation:fadein calc(.28s*var(--k)) ease-out calc(.24s*var(--k)) both,wash calc(2.2s*var(--k)) ease-out calc(.24s*var(--k)) both}@keyframes fadein{from{opacity:0}to{opacity:1}}
+.glide{transition:transform calc(.26s*var(--k)) var(--ease)}
+/* ---- 2. a status changes ---- */
+.s2a{animation:ringonce calc(.7s*var(--k)) ease-out both}@keyframes ringonce{0%{box-shadow:0 0 0 0 rgba(15,122,74,.45)}100%{box-shadow:0 0 0 10px rgba(15,122,74,0)}}
+.s2a>span,.s2c>span{animation:fadein calc(.2s*var(--k)) ease-out both}
+svg.chk{width:20px;height:20px}svg.chk circle{fill:#dff3e8;transform-origin:center;animation:grow calc(.24s*var(--k)) var(--ease) both}svg.chk path{fill:none;stroke:var(--ok);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:14;stroke-dashoffset:14;animation:draw calc(.3s*var(--k)) ease-out calc(.16s*var(--k)) forwards}
+@keyframes grow{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}@keyframes draw{to{stroke-dashoffset:0}}
+.s2c{animation:flip calc(.34s*var(--k)) var(--ease) both}@keyframes flip{from{transform:rotateY(90deg)}to{transform:none}}
+.settle{animation:settle calc(.5s*var(--k)) ease-out both}@keyframes settle{from{color:var(--ok)}to{color:inherit}}
+/* ---- 3. progress grows ---- */
+.segs i.f3a::after{content:'';position:absolute;inset:0;background:var(--ok);transform-origin:left;animation:fill calc(.42s*var(--k)) var(--ease) both}@keyframes fill{from{transform:scaleX(0)}to{transform:none}}
+.segs i.f3b{animation:tint calc(.5s*var(--k)) ease-out both}@keyframes tint{from{background:var(--no)}40%{background:#7fd0a6}to{background:var(--ok)}}
+.roll{display:inline-grid;overflow:hidden;height:1.5em;vertical-align:bottom}.roll>span{grid-area:1/1}.roll .old{animation:rollout calc(.26s*var(--k)) var(--ease) both}.roll .new{animation:rollin calc(.26s*var(--k)) var(--ease) both}
+@keyframes rollout{to{transform:translateY(-100%);opacity:0}}@keyframes rollin{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
+/* ---- 4. work is going on ---- */
+.w4a::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--live);animation:breathe calc(2.6s*var(--k)) ease-in-out infinite}@keyframes breathe{0%,100%{opacity:.12;transform:scale(.92)}50%{opacity:.55;transform:scale(1.08)}}
+.w4b::after{content:'';position:absolute;top:0;bottom:0;width:38%;left:0;background:linear-gradient(100deg,transparent,rgba(31,95,208,.10),transparent);animation:sweep calc(3.2s*var(--k)) ease-in-out infinite}@keyframes sweep{0%{transform:translateX(-110%)}55%,100%{transform:translateX(290%)}}
+.eq{display:inline-flex;gap:2px;align-items:flex-end;height:12px}.eq i{width:3px;background:var(--live);border-radius:1px;animation:eq calc(1.1s*var(--k)) ease-in-out infinite}.eq i:nth-child(2){animation-delay:calc(-.35s*var(--k))}.eq i:nth-child(3){animation-delay:calc(-.7s*var(--k))}@keyframes eq{0%,100%{height:3px}50%{height:12px}}
+.swap{animation:fadein calc(.3s*var(--k)) ease-out both}
+.thin{position:absolute;left:0;right:0;top:0;height:2px;background:var(--liveb);overflow:hidden}.thin::after{content:'';position:absolute;top:0;bottom:0;width:30%;background:var(--live);border-radius:2px;animation:run calc(1.8s*var(--k)) ease-in-out infinite}@keyframes run{0%{transform:translateX(-110%)}100%{transform:translateX(440%)}}
+/* ---- 5. the note and the mark ---- */
+.d5a{animation:drop calc(.36s*var(--k)) var(--ease) both}@keyframes drop{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+.d5b{animation:fadein calc(.4s*var(--k)) ease-out both}
+.m5a{animation:pop calc(.28s*var(--k)) var(--ease) calc(.2s*var(--k)) both}@keyframes pop{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:none}}
+.m5b{animation:fadein calc(.3s*var(--k)) ease-out calc(.2s*var(--k)) both}
+/* ---- 6. a counter ---- */
+.p6b{animation:pulse1 calc(.5s*var(--k)) ease-out both}@keyframes pulse1{0%{box-shadow:0 0 0 0 rgba(179,38,30,.55)}100%{box-shadow:0 0 0 9px rgba(179,38,30,0)}}
+</style></head><body>
+<header><h1>Motion examples</h1>
+<p>Six moments of the dashboard, each in a few variants. Press Play on a variant; tell which letter you want for each case (for example “1A, 2B, 3A, 4C, 5A, 6A”), or what to change. Everything answers an event in 0.2 to 0.4 seconds; only “work is going on” repeats, and slowly.</p>
+<div class="bar"><span>Speed</span><button type="button" data-k="1" aria-pressed="true">Normal</button><button type="button" data-k="4" aria-pressed="false">4× slower</button><button type="button" id="all">Play everything</button></div></header>
+<main id="m"></main>
+<script>
+(function(){
+var $=function(h){var d=document.createElement('div');d.innerHTML=h;return d.firstElementChild};
+function ic(k){return '<i class="ico '+k+'"><span>'+(k==='y'?'✓':'')+'</span></i>'}
+function items(){return '<ul class="it"><li>'+ic('y')+'<span>Server reads the state of the repositories</span></li><li>'+ic('y')+'<span>Requests found through git itself</span></li><li>'+ic('q')+'<span>Check the buttons in the app window</span></li></ul>'}
+function card(done){var s='';for(var i=0;i<9;i++)s+='<i'+(i<done?' class="d"':'')+'></i>';return '<div class="card"><span class="pill">agent is here</span><h4>Git tab</h4><div class="segs">'+s+'</div><div class="meta"><span class="cntx">'+done+' of 9 done</span><span>changed just now</span></div></div>'}
+function rail(){return '<div class="rail"><i class="dot">✓</i><span>Terminal in the app</span><span></span><i class="dot pa">9</i><span class="nm">Fixes of 25 November</span><span></span><i class="dot cu">10</i><span>Git tab</span><span></span></div>'}
+var NEW='<li>'+ic('w')+'<span>Export of the plan: taken, starting</span></li>';
+var CASES=[
+ {t:'1. A new item appears in the plan',d:'The agent takes a task and writes it into the plan. The eye has to find the new line without the list jumping.',v:[
+  {c:'1A',n:'Unfold',d:'The line opens to its height and stays tinted for two seconds. The lines below move with it.',b:items,p:function(s){var l=$(NEW);l.className='n1a';l.style.overflow='hidden';s.querySelector('ul').insertBefore(l,s.querySelector('li:last-child'))}},
+  {c:'1B',n:'Slide in with a marker',d:'The line slides in from the left with a yellow edge; the edge fades after a moment. No tint.',b:items,p:function(s){var l=$(NEW);l.className='n1b';s.querySelector('ul').insertBefore(l,s.querySelector('li:last-child'));setTimeout(function(){l.classList.add('done')},1600*K)}},
+  {c:'1C',n:'Make room, then fade in',d:'The lines below glide down first, then the new line fades in where the room was made. The calmest one.',b:items,p:function(s){var ul=s.querySelector('ul'),last=ul.lastElementChild,y0=last.getBoundingClientRect().top,l=$(NEW);l.className='n1c';ul.insertBefore(l,last);var dy=y0-last.getBoundingClientRect().top;last.style.transform='translateY('+dy+'px)';last.getBoundingClientRect();last.classList.add('glide');last.style.transform=''}}]},
+ {t:'2. An item is done',d:'The circle of an item becomes a green check. This is the most frequent event, so it has to be small.',v:[
+  {c:'2A',n:'Cross-fade with a ring',d:'The check fades in and one ring leaves the circle.',b:items,p:function(s){var i=s.querySelector('.ico.q');i.className='ico y s2a';i.innerHTML='<span>✓</span>';i.nextElementSibling.className='settle'}},
+  {c:'2B',n:'The check is drawn',d:'The circle fills and the check is drawn with a stroke, as if by hand.',b:items,p:function(s){var i=s.querySelector('.ico.q');i.className='ico';i.innerHTML='<svg class="chk" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10"/><path d="M5.6 10.4l3 3 5.8-6.4"/></svg>';i.nextElementSibling.className='settle'}},
+  {c:'2C',n:'Flip',d:'The circle turns over like a tile and shows the check.',b:items,p:function(s){var i=s.querySelector('.ico.q');i.className='ico y s2c';i.innerHTML='<span>✓</span>'}}]},
+ {t:'3. Progress grows',d:'One more item of the stage is done: a segment of the strip and the count change.',v:[
+  {c:'3A',n:'The segment fills, the number rolls',d:'The segment fills from left to right; “6” rolls up and “7” comes from below.',b:function(){return card(6)},p:function(s){s.querySelectorAll('.segs i')[6].className='f3a';s.querySelector('.cntx').innerHTML='<span class="roll"><span class="old">6</span><span class="new">7</span></span> of 9 done'}},
+  {c:'3B',n:'The segment warms up',d:'The segment changes colour through a lighter green; the number is simply replaced.',b:function(){return card(6)},p:function(s){s.querySelectorAll('.segs i')[6].className='d f3b';s.querySelector('.cntx').textContent='7 of 9 done'}}]},
+ {t:'4. Work is going on',d:'Nothing in the plan changes for minutes while the agent works. Something has to say “it is alive” without asking for attention. These run until you press Play on another one.',v:[
+  {c:'4A',n:'Breathing ring',d:'A ring around the number of the current stage breathes slowly, about once in 2.6 s.',b:rail,p:function(s){s.querySelector('.dot.cu').classList.add('w4a')}},
+  {c:'4B',n:'Light across the card',d:'A faint light crosses the card of the current stage every three seconds.',b:function(){return card(6)},p:function(s){s.querySelector('.card').classList.add('w4b')}},
+  {c:'4C',n:'A line of what it does now',d:'Under the card: three small bars that move while the agent works, and what it did last. The text changes when the agent does something else.',b:function(){return card(6)+'<div class="tick"></div>'},p:function(s){var t=s.querySelector('.tick'),L=['Editing app/git.go','Running go test ./app','Reading skill/template.html','Committing'],i=0;clearInterval(s._t);function put(){t.innerHTML='<span class="eq"><i></i><i></i><i></i></span><span class="swap">'+L[i%L.length]+' · just now</span>';i++}put();s._t=setInterval(put,2400*K)}},
+  {c:'4D',n:'Thin line on top',d:'A two-pixel line runs along the top edge of the page header while a session of the feature works.',b:function(){return '<div class="tabs" style="position:relative"><div class="thinh"></div><span class="on">Progress</span><span>What is left</span><span>Git</span></div>'+card(6)},p:function(s){s.querySelector('.thinh').className='thin'}}]},
+ {t:'5. “The plan has just changed”',d:'The note on top and the mark with the number on the stage that changed.',v:[
+  {c:'5A',n:'The note drops in, the mark pops',d:'The note comes down by a few pixels; the mark grows from a point a moment later.',b:rail,p:function(s){s.insertBefore($('<div class="note d5a" style="margin-bottom:12px"><b>The plan has just changed.</b><span>2 new items in stage 9</span><em>Show</em></div>'),s.firstChild);var n=s.querySelector('.nm');n.insertAdjacentHTML('afterbegin','<span class="mark m5a" style="margin-right:6px">+2</span>')}},
+  {c:'5B',n:'Both fade in',d:'Nothing moves: the note and the mark appear by opacity only.',b:rail,p:function(s){s.insertBefore($('<div class="note d5b" style="margin-bottom:12px"><b>The plan has just changed.</b><span>2 new items in stage 9</span><em>Show</em></div>'),s.firstChild);var n=s.querySelector('.nm');n.insertAdjacentHTML('afterbegin','<span class="mark m5b" style="margin-right:6px">+2</span>')}}]},
+ {t:'6. A counter changes',d:'The number of open items on a tab, the number of sessions that wait in the bar.',v:[
+  {c:'6A',n:'The number rolls',d:'The old number leaves upward, the new one comes from below.',b:function(){return '<div class="tabs"><span>Progress</span><span class="on">What is left <i class="cnt" style="font-style:normal">8</i></span><span>Git</span></div>'},p:function(s){s.querySelector('.cnt').innerHTML='<span class="roll" style="height:17px"><span class="old">8</span><span class="new">9</span></span>'}},
+  {c:'6B',n:'One pulse',d:'The number is replaced and one ring leaves the badge.',b:function(){return '<div class="tabs"><span>Progress</span><span class="on">What is left <i class="cnt" style="font-style:normal">8</i></span><span>Git</span></div>'},p:function(s){var c=s.querySelector('.cnt');c.textContent='9';c.classList.add('p6b')}}]}];
+var K=1,m=document.getElementById('m'),plays=[];
+CASES.forEach(function(c){var sec=$('<section class="case"><h2>'+c.t+'</h2><p>'+c.d+'</p><div class="grid"></div></section>');m.appendChild(sec);
+ c.v.forEach(function(v){var el=$('<div class="v"><div class="vh"><code>'+v.c+'</code><b>'+v.n+'</b><button type="button">Play</button></div><p>'+v.d+'</p><div class="stage"></div></div>'),st=el.querySelector('.stage');
+  function reset(){clearInterval(st._t);st.innerHTML=v.b()}function play(){reset();st.getBoundingClientRect();setTimeout(function(){v.p(st)},260)}
+  reset();el.querySelector('button').onclick=play;plays.push(play);sec.querySelector('.grid').appendChild(el)})});
+document.querySelector('.bar').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+ if(b.id==='all'){plays.forEach(function(p,i){setTimeout(p,i*350)});return}
+ K=+b.dataset.k;document.documentElement.style.setProperty('--k',K);[].forEach.call(document.querySelectorAll('.bar button[data-k]'),function(x){x.setAttribute('aria-pressed',x===b)})});
+})();
+</script></body></html>
