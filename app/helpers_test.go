@@ -141,6 +141,7 @@ printf '%%s\n' "$1 $2" >> "$d/calls"
 case "$1" in
 agents) sleep "$(cat "$d/sleep")"; cat "$d/agents.json" ;;
 --resume) printf '%%s\n' "$2" >> "$d/resumed"; cat "$d/resume.out"; exit "$(cat "$d/resume.code")" ;;
+--bg) printf '%%s\n' "$@" > "$d/spawn.args"; pwd > "$d/spawn.cwd"; cat "$d/spawn.out" ;;
 esac
 `, e.fake)
 	writeFile(e.t, e.fakeBin, []byte(script))
@@ -149,6 +150,7 @@ esac
 	e.fakeSet("agents.json", "[]")
 	e.fakeSet("resume.out", "started bg")
 	e.fakeSet("resume.code", "0")
+	e.fakeSet("spawn.out", "backgrounded · ab12cd34 · a new one")
 	e.writeConfig(map[string]any{"claudeBin": e.fakeBin})
 }
 

@@ -122,6 +122,16 @@ A session that keeps a
 dashboard is reminded at every prompt to write new work into the plan before it starts (`"remind": false` in
 `~/.whatnow/config.json` turns the reminder off), so a request you make shows up at once.
 
+**New feature with the same access.** The three dots in the header of a feature page have **New feature with the same
+access**: a clean Claude Code session (it knows nothing of the old conversation) started in the background in the
+folder the feature was started in, with the same added folders and the same permission mode; the rules, MCP servers
+and instruction files of that folder come with the folder. The form shows what is copied and asks for the task only:
+the session puts its work on the dashboard as a feature of its own and names it from the task. For a git repository
+you choose where it works: in its own copy of the code (a worktree on a new branch, made by Claude Code, so the two
+sessions cannot overwrite each other's files) or in the same folder. Until the feature exists, the bar shows the
+session under *Starting*. What a session was started with is kept in `~/.whatnow/spawned.json`. An added folder
+has to be one Claude Code trusts already; if it is not, Claude Code says so and nothing is started.
+
 **Request status.** The header of a feature page has a **↻ Request status** button next to "Updated ... ago". It asks the
 feature's session (same routing as above) to compare `feature.json` with what it really did and bring the page up to
 date. Only one such request is open at a time; the page reloads itself when the file changes.

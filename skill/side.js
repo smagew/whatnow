@@ -60,6 +60,8 @@ function draw(){if(!data)return;visit();var cur=here(),tab=cur?'':(window.WN_TAB
   '<a class="wm" href="/#sessions" data-tab="S" data-ab="S"'+(tab==='S'?' aria-current="page"':'')+' title="Every Claude Code session"><span>Sessions</span>'+(data.waiting?'<em title="Sessions that wait for you">'+data.waiting+' wait</em>':'')+'</a>'+
   '<a class="wm" href="/#features" data-tab="F" data-ab="F"'+(tab==='F'?' aria-current="page"':'')+' title="Every feature with its readiness"><span>Features</span></a>'+
   '<a class="wm" href="/#favorites" data-tab="V" data-ab="★"'+(tab==='V'?' aria-current="page"':'')+' title="The sessions and features you starred"><span>Favorites</span>'+(data.favorites?'<small>'+data.favorites+'</small>':'')+'</a><hr>';
+ // sessions started from the dashboard that have not made their feature yet
+ var st=data.starting||[];if(st.length)h+='<h4>Starting</h4>'+st.map(function(x){return '<a class="wf" href="/#sessions" data-ab="'+esc(abbr(x.name||'new'))+'" title="'+esc((x.name||'A new session')+'\nA new session, started from the dashboard. It becomes a feature when it has written its plan.\n\n'+(x.task||''))+'"><i class="work"></i><span>'+esc(x.name||'new session')+'</span><small>starting, no feature yet</small></a>'}).join('');
  h+=GRP.map(function(g){var it=f.filter(function(x){return grp(x)===g});
   return it.length?'<h4>'+g+'</h4>'+it.map(function(x){var mine=x.id===cur,ask=x.ask||'',fresh=!!ask&&!mine&&x.saidT>seen(x.id);if(fresh)asks++;
    var sub=ask==='permission'?'asks for your permission':ask?(fresh?'new reply, waits for your answer':'waits for your answer'):x.state?STX[x.state]:'no open session';

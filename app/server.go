@@ -736,6 +736,10 @@ func act(body map[string]any) (int, any) {
 	switch action {
 	case "track":
 		return tellSession(sid, trackText)
+	case "spawn":
+		place, _ := body["place"].(string)
+		slug, _ := body["feature"].(string)
+		return spawnFeature(slug, text, place)
 	case "fav", "unfav":
 		return favorite(body)
 	case "hide", "unhide":
@@ -1037,7 +1041,7 @@ func featuresList() map[string]any {
 		}
 		return strings.ToLower(fmt.Sprint(a["name"])) < strings.ToLower(fmt.Sprint(b["name"]))
 	})
-	return map[string]any{"features": out, "waiting": waiting, "favorites": len(favs)}
+	return map[string]any{"features": out, "waiting": waiting, "favorites": len(favs), "starting": spawnedNow()}
 }
 
 // ------------------------------------------------------------------ http
@@ -1170,6 +1174,11 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	case "/demo/motion", "/demo/talk", "/demo/ask", "/demo/reply": // examples of the interface to choose from (skill/demo)
 		send(w, 200, []byte(page("demo"+strings.TrimPrefix(path, "/demo")+".html")), "text/html; charset=utf-8")
+	case "/api/spawn": // what a new session started from this feature would get
+		if s, ok := slugArg(); ok {
+			code, v := spawnPlan(s)
+			sendJSON(w, code, v)
+		}
 	case "/api/panel": // the data of a feature page: the open page takes it when the plan changes, instead of loading again
 		if s, ok := slugArg(); ok {
 			src := filepath.Join(featuresDir(), s, "feature.json")

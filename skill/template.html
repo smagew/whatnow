@@ -112,6 +112,20 @@ body{--sw:0px}
 .ses b{color:#fff;font-weight:600}.ses .st{font-size:12px;padding:1px 8px;border-radius:99px;background:#ffffff1f}
 .ses .st.work{background:#2f9e6a;color:#fff}.ses .st.bg{background:#3b7be0;color:#fff}.ses .st.wait{background:#e0a21a;color:#2b2000}
 .ses button{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;color:#fff;border:1px solid #ffffff66;padding:2px 10px;border-radius:99px}
+.fmw{position:relative;display:inline-flex}.fmw[hidden]{display:none}.fmb{all:unset;cursor:pointer;color:#cfe3d8;width:24px;height:22px;text-align:center;border-radius:8px;font-size:16px;line-height:18px}.fmb:hover{background:#ffffff1f;color:#fff}.fmb:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}
+.fmn{position:absolute;z-index:30;top:calc(100% + 6px);left:0;background:var(--paper);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(22,36,30,.28);padding:4px}.fmn[hidden]{display:none}
+.fmn button{all:unset;cursor:pointer;display:block;padding:7px 12px;border-radius:7px;color:var(--ink);font-size:13px;font-weight:600;white-space:nowrap}.fmn button:hover,.fmn button:focus-visible{background:#eef3f0}.fmn small{display:block;font-weight:400;color:var(--mut);font-size:11.5px}
+.nfw{position:fixed;inset:0;z-index:80;background:rgba(15,27,22,.5);display:grid;place-items:center;padding:20px}.nfw[hidden]{display:none}
+.nf{background:var(--paper);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:min(620px,100%);max-height:calc(100vh - 40px);overflow-y:auto;padding:22px 24px 20px;font-size:13.5px;line-height:1.5}
+.nf h2{margin:0 0 6px;font-size:18px}.nf .nfm{margin:0 0 10px;color:var(--mut)}.nf .nfm b{color:var(--ink);font-weight:600}
+.nfl{list-style:none;margin:0 0 14px;padding:10px 12px;background:#f5f8f6;border-radius:10px;display:grid;gap:6px}.nfl li{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:baseline}.nfl li>span{color:var(--mut);font-size:12.5px}
+.nfl li>div{min-width:0;line-height:1.7}.nfl code{background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 7px;font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}.nfl small{color:var(--mut)}
+.nf .nfb{display:block;font-weight:600;margin-bottom:4px}.nf textarea{width:100%;min-height:92px;border:1px solid #c3cec7;border-radius:9px;padding:9px 11px;font:inherit;resize:vertical;background:#fff}.nf textarea:focus-visible{outline:3px solid #2a8cff;outline-offset:1px}
+.nfp{border:0;margin:14px 0 0;padding:0;display:grid;gap:8px}.nfp legend{font-weight:600;padding:0;margin-bottom:6px}
+.nfp label{display:grid;grid-template-columns:18px 1fr;gap:10px;align-items:start;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}.nfp label.on{border-color:var(--live);background:var(--liveb2)}
+.nfp input{margin:3px 0 0}.nfp b{font-weight:600}.nfp em{font-style:normal;font-size:11.5px;font-weight:600;color:#0f6b40;background:#e6f4ec;border-radius:99px;padding:1px 8px;margin-left:4px}.nfp small{display:block;color:var(--mut);margin-top:2px;font-size:12.5px}
+.nf .row{display:flex;gap:10px;align-items:center;margin-top:16px}.nf .go{all:unset;cursor:pointer;background:var(--side);color:#fff;font-weight:600;padding:8px 18px;border-radius:10px}.nf .go[disabled]{opacity:.55;cursor:default}
+.nf .cx{all:unset;cursor:pointer;color:var(--mut);padding:8px 8px}.nf .go:focus-visible,.nf .cx:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}.nf .nferr{color:var(--bad);margin:12px 0 0}.nf .nfok{margin:8px 0 0}
 .ses button.pl{width:22px;height:22px;padding:0;text-align:center;font-size:15px;line-height:21px}
 .rps{display:flex;gap:6px;align-items:center;min-width:0}.rps button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#cfe3d8;background:#ffffff14;border-radius:99px;padding:2px 10px 2px 8px;white-space:nowrap}
 .rps button b{color:#fff;font-weight:600}.rps button i{width:6px;height:6px;border-radius:50%;background:#e8b13a}.rps button:hover{background:#ffffff26}.rps button:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}.rps small{color:#9fb3a8;font-size:12px}
@@ -370,11 +384,12 @@ html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
 .dcard h4{margin:0 0 6px;font-size:13px;color:var(--ink)}.dcard .dp{display:block;margin-top:6px}.dcard .dn{margin-top:12px}.dcard code{white-space:normal;word-break:break-all}.dcard b{color:var(--ink);font-weight:600}
 </style>
 <script>window.PANEL=/*__DATA__*/null;</script></head><body>
-<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="rps" id="rps"></span><span class="qb" id="qb"></span></div></div></div>
+<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="rps" id="rps"></span><span class="fmw" id="fmw" hidden><button type="button" class="fmb" id="fmb" aria-haspopup="menu" aria-expanded="false" aria-label="More for this feature" title="More">⋯</button><span class="fmn" id="fmn" role="menu" hidden><button type="button" role="menuitem" id="fmnew">New feature with the same access<small>A clean session: same folders and permissions, empty memory</small></button></span></span><span class="qb" id="qb"></span></div></div></div>
 <div class="tbr"><div class="tabs" role="tablist" id="tabs"></div><span class="frw"><span class="frg"><span id="fr"></span><button type="button" id="rq" hidden>↻ Request status</button></span></span></div></header>
 <div class="syw"><div class="sy" id="sy" role="status" hidden></div></div>
 <div class="chw"><div class="chn" id="chn" role="status" hidden></div></div>
 <main id="main"></main>
+<div class="nfw" id="nfw" hidden><div class="nf" role="dialog" aria-modal="true" aria-labelledby="nfh" id="nf"></div></div>
 <aside class="cw" id="cw" aria-label="The session: messages and terminal" hidden><div class="cwu" id="cwu" role="status" tabindex="0" hidden></div><div class="cl1 cwp" id="cwp" role="button" tabindex="0"></div>
 <div class="cwb" id="cwb" hidden><i class="cwr t" data-r="t"></i><i class="cwr l" data-r="l"></i><i class="cwr c" data-r="c"></i><div class="cwh"><span id="cwsw"><i class="lma" aria-hidden="true">C</i></span><span id="cwt"></span><button type="button" class="ib" id="cwm" hidden aria-haspopup="menu" aria-expanded="false" aria-label="More" title="More"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="3" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="13" cy="8" r="1.5" fill="currentColor"/></svg></button><button type="button" class="ib" id="cwsd"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 2.5v11M13 8H5.5M8.5 5l-3 3 3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" class="ib" id="cwd"></button><button type="button" class="ib" id="cwx" aria-label="Fold" title="Fold to a line in the corner. Nothing is closed: a terminal stays connected."><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="cwmn" id="cwmn" role="menu" hidden><button type="button" role="menuitem" id="cwdc">Disconnect the terminal<small>The session keeps running in the background</small></button></div></div>
 <div class="cwl" id="cwl" aria-live="polite"></div>
@@ -945,6 +960,40 @@ function actLine(){var el=$('act');if(!el)return;var a=agent(),t=actText(a);if(!
 var renderRail0=renderRail;renderRail=function(){renderRail0();dirsUI();actLine()};
 function gotSes(j){SES.bound=j.bound||[];SES.sessions=j.sessions||[];sesBar();dirsUI();actLine();lastMsg();var a=agent(),k=a?a.id+a.state:'';if(k!==SES.key){SES.key=k;if(FORM)renderRail();else renderStage(cur)}if(!TC||!$('fr').contains(TC))freshBar()}
 function loadSes(){if(INIT.ses){var j=INIT.ses;INIT.ses=null;gotSes(j);return}fetch('/api/sessions?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(gotSes).catch(function(){})}
+// A new feature with the access of this one: a clean session in the same folders with the same permission mode.
+// The form asks for the task only (the session names its feature from it), shows what is copied, and, for a git
+// repository, asks where the new session works: in a copy of its own or in the same folder.
+var NF={plan:null,place:'worktree',busy:false,err:'',done:null};
+function nfClose(){$('nfw').hidden=true;NF.done=null;var b=$('fmb');if(b)b.focus()}
+function nfDraw(){var p=NF.plan,el=$('nf'),h='<h2 id="nfh">New feature with the same access</h2>';
+ if(NF.done){el.innerHTML=h+'<p class="nfok"><b>Started: '+esc(NF.done.name)+'.</b> It is in the bar on the left under "Starting" and becomes a feature of its own when it has written its plan. Its session is in the Sessions list.</p><div class="row"><button type="button" class="go" data-nf="close">Close</button></div>';el.querySelector('button').focus();return}
+ if(!p){el.innerHTML=h+(NF.err?'<p class="nferr">'+esc(NF.err)+'</p><div class="row"><button type="button" class="cx" data-nf="close">Close</button></div>':'<p class="nfm">Reading the access of this feature…</p>');return}
+ var md=MODES[p.mode]||null,was=($('nft')||{}).value;
+ h+='<p class="nfm">A new Claude session with an empty memory: it knows nothing of what was said here. It gets the same access as <b>'+esc(p.name||'the session of this feature')+'</b>:</p>'+
+  '<ul class="nfl"><li><span>Works in</span><div><code>'+esc(p.rootShown)+'</code></div></li>'+(p.dirsShown.length?'<li><span>Also reaches</span><div>'+p.dirsShown.map(function(d){return '<code>'+esc(d)+'</code>'}).join(' ')+'</div></li>':'')+
+  (p.mode?'<li><span>Permissions</span><div><b class="axp '+(md?md[0]:'')+'">'+esc(p.mode)+'</b>'+(md?' <small>'+md[1]+'</small>':'')+'</div></li>':'')+
+  '<li><span>And</span><div><small>the rules, outside services and instruction files of that folder, as in the Access tab.</small></div></li></ul>'+
+  '<label class="nfb" for="nft">What should it do?</label><textarea id="nft" placeholder="Describe the task. The new feature gets its name from it.">'+esc(was===undefined?draft('n:'+P.slug):was)+'</textarea>';
+ if(p.git)h+='<fieldset class="nfp"><legend>Where does it work?</legend>'+
+  '<label class="'+(NF.place==='worktree'?'on':'')+'"><input type="radio" name="nfp" value="worktree"'+(NF.place==='worktree'?' checked':'')+'><span><b>In its own copy of the code</b> <em>safer</em><small>Claude Code makes a second working copy of this repository, on a new branch. This session and the new one cannot overwrite each other\'s files. The new work reaches the main code when its branch is merged.</small></span></label>'+
+  '<label class="'+(NF.place==='same'?'on':'')+'"><input type="radio" name="nfp" value="same"'+(NF.place==='same'?' checked':'')+'><span><b>In the same folder</b><small>Both sessions change the same files in '+esc(p.rootShown)+'. Fine when this session is finished, or the new work is in other files; otherwise they get in each other\'s way.</small></span></label></fieldset>';
+ h+=(NF.err?'<p class="nferr">'+esc(NF.err)+'</p>':'')+'<div class="row"><button type="button" class="go" data-nf="go"'+(NF.busy?' disabled':'')+'>'+(NF.busy?'Starting…':'Start the session')+'</button><button type="button" class="cx" data-nf="close">Cancel</button></div>';
+ el.innerHTML=h;var t=$('nft');if(t&&was===undefined){t.focus();t.setSelectionRange(t.value.length,t.value.length)}}
+function nfOpen(){NF={plan:null,place:'worktree',busy:false,err:'',done:null};$('nfw').hidden=false;nfDraw();
+ fetch('/api/spawn?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(r){if(!r.ok){NF.err=r.j.error||'could not read the access';nfDraw();return}NF.plan=r.j;if(!r.j.git)NF.place='same';nfDraw()}).catch(function(){NF.err='no connection to the server';nfDraw()})}
+if($('fmw')&&P.live){$('fmw').hidden=false;
+ var fmShut=function(){var m=$('fmn');if(!m.hidden){m.hidden=true;$('fmb').setAttribute('aria-expanded','false')}};
+ $('fmb').onclick=function(e){e.stopPropagation();var m=$('fmn');m.hidden=!m.hidden;$('fmb').setAttribute('aria-expanded',!m.hidden);if(!m.hidden)$('fmnew').focus()};
+ document.addEventListener('click',function(e){if(!e.target.closest('#fmn'))fmShut()});
+ $('fmnew').onclick=function(){fmShut();nfOpen()};
+ $('nfw').addEventListener('click',function(e){if(e.target===$('nfw')&&!NF.busy){nfClose();return}var b=e.target.closest('[data-nf]');if(!b)return;
+  if(b.dataset.nf==='close'){if(!NF.busy)nfClose();return}
+  var txt=($('nft').value||'').trim();if(!txt){NF.err='Write the task first.';nfDraw();$('nft').focus();return}
+  NF.busy=true;NF.err='';nfDraw();
+  post({action:'spawn',feature:P.slug,text:txt,place:NF.place}).then(function(r){NF.busy=false;if(!r.ok){NF.err=(r.j&&r.j.error)||'could not start the session';nfDraw();return}draft('n:'+P.slug,'');NF.done=r.j;nfDraw()}).catch(function(){NF.busy=false;NF.err='no connection to the server';nfDraw()})});
+ $('nfw').addEventListener('change',function(e){if(e.target.name==='nfp'){NF.place=e.target.value;nfDraw()}});
+ $('nfw').addEventListener('input',function(e){if(e.target.id==='nft')draft('n:'+P.slug,e.target.value)});
+ $('nfw').addEventListener('keydown',function(e){if(e.key==='Escape'&&!NF.busy)nfClose()})}
 if($('rps'))$('rps').addEventListener('click',function(e){if(e.target.closest('[data-rp]')&&$('tab-git'))$('tab-git').click()});
 if($('ses'))$('ses').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.dataset.term)return;var v=b.dataset.ses;
  if(v==='pick'){SES.pick=!SES.pick;SES.err='';sesBar();return}
