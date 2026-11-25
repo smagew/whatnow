@@ -152,9 +152,9 @@ is moved along the bottom by its title row, and the arrow with a bar throws it t
 when you go to another page or close the app. The size and the place are remembered, the view is remembered for every feature, and a
 terminal view that was open is opened again when you come back, also after the app was closed.
 
-**Terminal (app window only).** Every session has a **Terminal** button. On the page of a feature it opens the window
-of the session in the terminal view; on the home page it opens a dock at the bottom of the window with all the
-terminals as tabs (the top edge resizes it, **Hide** keeps it connected). A terminal stays connected while you are on
+**Terminal (app window only).** On the page of a feature the terminal is the second view of the window of the
+session (the **>_** half of its switch). On the home page every session has a **Terminal** button; it opens a dock at
+the bottom of the window with all the terminals as tabs (the top edge resizes it, **Hide** keeps it connected). A terminal stays connected while you are on
 other pages and in the other view. **Disconnect the terminal** (behind the three dots, so that it is not hit by
 accident) closes it; the session goes on
 either way. A session can be shown when it runs in the background:

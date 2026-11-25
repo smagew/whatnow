@@ -112,6 +112,10 @@ body{--sw:0px}
 .ses b{color:#fff;font-weight:600}.ses .st{font-size:12px;padding:1px 8px;border-radius:99px;background:#ffffff1f}
 .ses .st.work{background:#2f9e6a;color:#fff}.ses .st.bg{background:#3b7be0;color:#fff}.ses .st.wait{background:#e0a21a;color:#2b2000}
 .ses button{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;color:#fff;border:1px solid #ffffff66;padding:2px 10px;border-radius:99px}
+.ses button.pl{width:22px;height:22px;padding:0;text-align:center;font-size:15px;line-height:21px}
+.rps{display:flex;gap:6px;align-items:center;min-width:0}.rps button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#cfe3d8;background:#ffffff14;border-radius:99px;padding:2px 10px 2px 8px;white-space:nowrap}
+.rps button b{color:#fff;font-weight:600}.rps button i{width:6px;height:6px;border-radius:50%;background:#e8b13a}.rps button:hover{background:#ffffff26}.rps button:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}.rps small{color:#9fb3a8;font-size:12px}
+@media(min-width:861px){body.sb:not(.sm) header #t{display:none}body.sb:not(.sm) header .sub{margin-top:0;font-size:14px;color:#cfe3d8}}
 .ses button:hover{background:#ffffff1f}.ses button:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}
 .pick{position:absolute;z-index:40;top:calc(100% + 6px);left:0;padding:8px;background:#22352c;border-radius:10px;width:min(640px,calc(100vw - var(--sw) - 48px));box-shadow:0 12px 32px #0006;white-space:normal}
 .pick ul{list-style:none;margin:0;padding:0;max-height:260px;overflow:auto}
@@ -136,9 +140,10 @@ body{--sw:0px}
 @keyframes pl{0%{box-shadow:0 0 0 0 rgba(31,95,208,.5)}100%{box-shadow:0 0 0 9px rgba(31,95,208,0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
 .frw{align-self:center;padding-bottom:6px;flex:none;display:flex;align-items:center;gap:8px}
-#rq{all:unset;cursor:pointer;font-size:14px;font-weight:700;color:var(--side);background:#fff;border:1px solid #fff;padding:6px 18px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-#rq[hidden]{display:none}#rq:hover{background:#dff3e8;border-color:#dff3e8}#rq:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}#rq:disabled{cursor:default;background:none;color:#fff;border-color:#ffffff66;box-shadow:none;font-weight:600}
-.fr{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#fff;background:#ffffff1c;border-radius:999px;padding:3px 11px;white-space:nowrap}
+#rq{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;line-height:20px;color:var(--side);background:#fff;border:1px solid #fff;padding:2px 13px;border-radius:999px;white-space:nowrap}
+#rq[hidden]{display:none}#rq:hover{background:#dff3e8;border-color:#dff3e8}#rq:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}#rq:disabled{cursor:default;background:none;color:#cfe3d8;border-color:transparent}
+.frg{display:flex;align-items:center;background:#ffffff1c;border-radius:999px;padding:3px}.frg #fr:empty{display:none}
+.fr{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#fff;border-radius:999px;padding:3px 12px 3px 10px;white-space:nowrap}
 .fr .ld{background:#7fb0ff}.fr.wait .ld{background:#e8b13a}.fr.old .ld{background:transparent;box-shadow:inset 0 0 0 2px #8c9a92}.fr.old{color:#a9bdb2}
 .fr small{font-weight:400;color:#cfe3d8;font-size:12px}
 @media(max-width:1560px){.fr small{display:none}}
@@ -365,8 +370,8 @@ html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
 .dcard h4{margin:0 0 6px;font-size:13px;color:var(--ink)}.dcard .dp{display:block;margin-top:6px}.dcard .dn{margin-top:12px}.dcard code{white-space:normal;word-break:break-all}.dcard b{color:var(--ink);font-weight:600}
 </style>
 <script>window.PANEL=/*__DATA__*/null;</script></head><body>
-<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="qb" id="qb"></span></div></div></div>
-<div class="tbr"><div class="tabs" role="tablist" id="tabs"></div><span class="frw"><span id="fr"></span><button type="button" id="rq" hidden>↻ Request status</button></span></div></header>
+<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="rps" id="rps"></span><span class="qb" id="qb"></span></div></div></div>
+<div class="tbr"><div class="tabs" role="tablist" id="tabs"></div><span class="frw"><span class="frg"><span id="fr"></span><button type="button" id="rq" hidden>↻ Request status</button></span></span></div></header>
 <div class="syw"><div class="sy" id="sy" role="status" hidden></div></div>
 <div class="chw"><div class="chn" id="chn" role="status" hidden></div></div>
 <main id="main"></main>
@@ -695,10 +700,14 @@ var SES={bound:[],sessions:[],pick:false,err:''};
 function ago2(ts){var m=Math.round((Date.now()-ts)/60000);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago'}
 function sesName(s){return s.name||s.project||s.id.slice(0,8)}
 function sesBar(){var b=$('ses');if(!b||!P.live)return;
- var h=SES.bound.length?'<span>Session:</span>'+SES.bound.slice(0,3).map(function(s){return '<b>'+esc(sesName(s))+'</b><span class="st '+s.state+'">'+STX[s.state]+'</span>'+(window.WN_TERM?'<button type="button" data-term="'+esc(s.id)+'">Terminal</button>':'')}).join(' ')+'<button type="button" data-ses="pick">'+(SES.pick?'Close':'Attach another')+'</button>'
+ var h=SES.bound.length?'<span>Session:</span>'+SES.bound.slice(0,3).map(function(s){return '<b>'+esc(sesName(s))+'</b><span class="st '+s.state+'">'+STX[s.state]+'</span>'}).join(' ')+'<button type="button" class="pl" data-ses="pick" aria-label="'+(SES.pick?'Close the list of sessions':'Attach another session')+'"'+(SES.pick?'':tipA('Attach another session','A feature can have several sessions: pick one more from the list, and its work and messages show here too.'))+'>'+(SES.pick?'×':'+')+'</button>'
   :'<span>No session is linked to this feature yet.</span><button type="button" data-ses="pick">'+(SES.pick?'Close':'Attach a session')+'</button>';
  if(SES.pick){h+='<div class="pick">'+(SES.err?'<div class="rt err"><span>'+esc(SES.err)+'</span></div>':'')+(SES.sessions.length?'<ul>'+SES.sessions.map(function(s){return '<li><button type="button" data-ses="'+esc(s.id)+'"><b>'+esc(sesName(s))+'</b><span class="st '+s.state+'">'+STX[s.state]+'</span><small>'+esc(s.project)+(s.what?' · '+esc(s.what):'')+' · '+ago2(s.t)+(s.other?' · now on: '+esc(s.other):'')+'</small></button></li>'}).join('')+'</ul>':'<small>No sessions seen yet. Install the hooks and work in Claude Code; sessions appear here.</small>')+'</div>'}
- b.innerHTML=h}
+ b.innerHTML=h;repoLine()}
+// Where the work goes, from git itself: every repository of the feature with the branch it is on now. The line
+// of text above it is what the agent wrote about the feature and can be out of date; this one cannot.
+function repoLine(){var el=$('rps');if(!el)return;var rs=((typeof GIT!=='undefined'&&GIT&&GIT.d)||INIT.git||{}).repos||[];
+ el.innerHTML=rs.slice(0,4).map(function(r){return '<button type="button" data-rp="1"'+tipA(r.path+(r.worktree?' (worktree '+r.worktree+')':''),'On branch '+(r.branch||'(no branch)')+(r.dirty?', '+r.dirty+' file'+(r.dirty>1?'s':'')+' not committed':'')+(r.ahead?', '+r.ahead+' commit'+(r.ahead>1?'s':'')+' not pushed':'')+'. Opens the Git tab.')+'><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="4.5" cy="3.5" r="1.7" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="4.5" cy="12.5" r="1.7" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="11.5" cy="6" r="1.7" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M4.5 5.2v5.6M11.5 7.7c0 2.3-7 1.3-7 3.1" fill="none" stroke="currentColor" stroke-width="1.4"/></svg><b>'+esc(r.name)+'</b>'+esc(r.branch||'no branch')+(r.dirty||r.ahead?'<i></i>':'')+'</button>'}).join('')+(rs.length>4?'<small>+'+(rs.length-4)+'</small>':'')}
 // Claude's last reply as one line (under the tabs and in the corner); "Reply" opens the chat window
 var CHAT={open:false,items:[],key:'',lkey:'',sid:'',busy:false,err:'',seen:0,box:{}};
 try{CHAT.box=JSON.parse(localStorage.getItem('wn-chat')||'{}')||{}}catch(e){}
@@ -869,7 +878,7 @@ function planGo(si,fid){show('work');renderStage(si);setTimeout(function(){glowA
 function gitUI(){var el=$('gitl');if(!el)return;var rs=GIT.d.repos||[],h='<p class="why">The repositories the sessions of this feature work in. Read with git on this machine; nothing is changed there.</p>'+rs.map(gitCard).join('');
  if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h}
  var up=0;rs.forEach(function(r){up+=(r.ahead||0)+(r.dirty?1:0)});var tbn=$('tab-git');if(tbn){var c=tbn.querySelector('.cnt');if(up&&!c){c=document.createElement('span');c.className='cnt';tbn.appendChild(c)}if(c){if(up){c.textContent=up;c.title='Unpushed commits and repositories with uncommitted files'}else c.remove()}}}
-function gitLoad(){if(GIT.busy)return;GIT.busy=true;fetch('/api/git?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){GIT.busy=false;if(j&&j.repos){var before=JSON.stringify(GIT.d.refs||{});GIT.d=j;gitUI();if(JSON.stringify(j.refs||{})!==before&&!FORM)renderStage(cur)}}).catch(function(){GIT.busy=false})}
+function gitLoad(){if(GIT.busy)return;GIT.busy=true;fetch('/api/git?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){GIT.busy=false;if(j&&j.repos){var before=JSON.stringify(GIT.d.refs||{});GIT.d=j;repoLine();gitUI();if(JSON.stringify(j.refs||{})!==before&&!FORM)renderStage(cur)}}).catch(function(){GIT.busy=false})}
 function gitShow(){gitUI();gitLoad();if(!GIT.timer)GIT.timer=setInterval(function(){if(curTab==='git'&&document.visibilityState==='visible')gitLoad()},20000)}
 if(HASGIT){gitUI();setTimeout(gitLoad,1200);   // the count on the tab needs the state even while another tab is open
  if(location.hash==='#git')show('git');
@@ -934,6 +943,7 @@ function actLine(){var el=$('act');if(!el)return;var a=agent(),t=actText(a);if(!
 var renderRail0=renderRail;renderRail=function(){renderRail0();dirsUI();actLine()};
 function gotSes(j){SES.bound=j.bound||[];SES.sessions=j.sessions||[];sesBar();dirsUI();actLine();lastMsg();var a=agent(),k=a?a.id+a.state:'';if(k!==SES.key){SES.key=k;if(FORM)renderRail();else renderStage(cur)}if(!TC||!$('fr').contains(TC))freshBar()}
 function loadSes(){if(INIT.ses){var j=INIT.ses;INIT.ses=null;gotSes(j);return}fetch('/api/sessions?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(gotSes).catch(function(){})}
+if($('rps'))$('rps').addEventListener('click',function(e){if(e.target.closest('[data-rp]')&&$('tab-git'))$('tab-git').click()});
 if($('ses'))$('ses').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.dataset.term)return;var v=b.dataset.ses;
  if(v==='pick'){SES.pick=!SES.pick;SES.err='';sesBar();return}
  post({feature:P.slug,action:'attach',session:v}).then(function(r){if(!r.ok){SES.err=(r.j&&r.j.error)||'could not attach';sesBar();return}SES.pick=false;SES.err='';loadSes()}).catch(function(){SES.err='no connection to the server';sesBar()})});
