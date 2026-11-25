@@ -56,7 +56,11 @@ function mine(){return SCOPE?ALL.filter(function(t){return t.feature===SCOPE||HE
 var TERMS=[];
 var X=null,FIT=null,RUN=0;         // the xterm on screen and the number of its read loop
 function height(){var max=Math.max(160,window.innerHeight-120);return Math.max(160,Math.min(max,S.h||Math.round(window.innerHeight*0.45)))}
-function layout(){TERMS=mine();var on=S.open&&(TERMS.length||WAIT);dock.hidden=!on;pill.hidden=on||!(TERMS.length||WAIT);
+// EMB: on a feature page the terminal has no dock of its own. It is one of the two views of the window of the
+// session (Messages / Terminal): the page gives the place for it (window.WN_EMBED) and decides when it is shown.
+var EMB=null,LAST='';
+function layout(){if(EMB){TERMS=ALL;mark();if(X)fit();if(EMB.state)EMB.state();return}
+ TERMS=mine();var on=S.open&&(TERMS.length||WAIT);dock.hidden=!on;pill.hidden=on||!(TERMS.length||WAIT);
  document.body.classList.toggle('tm',!!on);document.body.style.setProperty('--th',on?height()+'px':'0px');
  pill.innerHTML='<i></i>Terminal'+(TERMS.length>1?' · '+TERMS.length:TERMS.length?': '+esc(TERMS[0].name):'');
  tabs.innerHTML=TERMS.map(function(t){return '<button type="button" class="wtt" role="tab" data-id="'+t.id+'" aria-selected="'+(t.id===S.cur&&!WAIT)+'" title="'+esc(t.name)+'">'+esc(t.name)+'</button>'}).join('')+(WAIT?'<button type="button" class="wtt" role="tab" aria-selected="true">'+esc(WAIT.name||'session')+'</button>':'');
@@ -72,7 +76,7 @@ function lib(){if(libs)return libs;libs=new Promise(function(ok,bad){var l=docum
   var a=document.createElement('script');a.src='/xterm.js';a.onerror=bad;a.onload=function(){var b=document.createElement('script');b.src='/xterm-addon-fit.js';b.onerror=bad;b.onload=function(){var c=document.createElement('script');c.src='/xterm-addon-web-links.js';c.onerror=bad;c.onload=ok;document.head.appendChild(c)};document.head.appendChild(b)};document.head.appendChild(a)});return libs}
 function bytes(b64){var s=atob(b64),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
 var SENT={cols:0,rows:0};
-function fit(){if(!X||dock.hidden)return;try{FIT.fit()}catch(e){}if(X.cols!==SENT.cols||X.rows!==SENT.rows){SENT={cols:X.cols,rows:X.rows};post({op:'resize',id:S.cur,cols:X.cols,rows:X.rows}).catch(function(){})}}
+function fit(){if(!X||(!EMB&&dock.hidden)||!xt.offsetWidth)return;try{FIT.fit()}catch(e){}if(X.cols!==SENT.cols||X.rows!==SENT.rows){SENT={cols:X.cols,rows:X.rows};post({op:'resize',id:S.cur,cols:X.cols,rows:X.rows}).catch(function(){})}}
 function say(html){msg.hidden=!html;xt.hidden=!!html;msg.innerHTML=html||''}
 // show the terminal t in a fresh xterm. A terminal that was already running (another page, another tab) is replayed
 // from the output the app keeps: the program does not draw its screen again by itself. While the replay is written,
@@ -95,29 +99,38 @@ function read(t,off,run,first){if(run!==RUN)return;
   if(j.reset&&X)X.reset();if(j.data&&X)X.write(bytes(j.data),first);else if(first)first();
   if(j.done){gone(t);return}read(t,j.off,run)}).catch(function(e){if(run!==RUN)return;if(e===404){gone(t);return}setTimeout(function(){read(t,off,run,first)},1000)})}
 function gone(t){ALL=ALL.filter(function(x){return x.id!==t.id});TERMS=mine();if(t.session===ST.s[SCOPE])forget();if(S.cur===t.id){RUN++;if(X){X.dispose();X=null}xt.innerHTML='';
-  if(TERMS.length)show(TERMS[0]);else{S.cur='';save();layout()}}else layout()}
+  if(TERMS.length&&!EMB)show(TERMS[0]);else{S.cur='';save();layout()}}else layout()}
+// the last thing the session said in the terminal, for the folded line of the window
+function tail(){if(!X)return '';var b=X.buffer.active,fb='';for(var i=b.length-1;i>=0&&i>b.length-200;i--){var l=b.getLine(i);if(!l)continue;var s=l.translateToString(true).trim();if(!s)continue;
+  var m=/^[⏺●]\s*(.+)$/.exec(s);if(m)return m[1];if(!fb&&!/^[❯>─╭╰│⏵✻✢✳✶✽·]/.test(s))fb=s}return fb}
+// the view is taken away (the window is folded, or shows the messages): the terminal itself goes on running
+function detach(){RUN++;if(X){LAST=tail()||LAST;X.dispose();X=null}xt.innerHTML=''}
+// show the terminal of a session: the one that runs, or a new one
+function showSes(sid,quiet){var t=ALL.filter(function(x){return x.session===sid})[0];if(t){HERE[t.id]=1;show(t);return Promise.resolve({term:t})}return open(sid,null,quiet)}
 function leave(){var t=TERMS.filter(function(x){return x.id===S.cur})[0];if(!t)return;post({op:'close',id:t.id}).catch(function(){});gone(t);forget()}
 
 // open the terminal of a session; a session that is open in another terminal has to be moved to the background there
 // quiet: the page opens it by itself (it was open before the app was closed); if the session cannot be attached
 // now, nothing is shown and the user is not asked for anything
 function open(sid,cancelled,quiet){var d=X?{cols:X.cols,rows:X.rows}:{cols:Math.max(60,Math.floor((window.innerWidth-300)/8)),rows:Math.max(12,Math.floor(height()/17)-3)};
- post({op:'open',session:sid,cols:d.cols,rows:d.rows,running:quiet?1:0}).then(function(r){if(cancelled&&cancelled())return;var j=r.j||{};if(quiet&&!j.term)return;
-  if(j.term){HERE[j.term.id]=1;if(!ALL.some(function(x){return x.id===j.term.id}))ALL.push(j.term);show(j.term,!!j.fresh);return}
+ return post({op:'open',session:sid,cols:d.cols,rows:d.rows,running:quiet?1:0}).then(function(r){if(cancelled&&cancelled())return null;var j=r.j||{};if(quiet&&!j.term)return j;
+  if(j.term){HERE[j.term.id]=1;if(!ALL.some(function(x){return x.id===j.term.id}))ALL.push(j.term);show(j.term,!!j.fresh);return j}
   if(j.need==='background'){var first=!WAIT||WAIT.sid!==sid;WAIT={sid:sid,name:j.name,t:first?Date.now():WAIT.t};S.open=true;save();RUN++;
    say('<h3>'+esc(j.name||'This session')+' is open in another terminal</h3><p>A terminal cannot be taken over from outside. In that terminal type <code>/background</code> and press Enter: the session moves to the background and opens here by itself. You can attach to it from any terminal later with <code>claude attach</code>.</p><p><button type="button" class="wta" data-x="copy">Copy /background</button> <button type="button" class="wta" data-x="stop">Cancel</button></p><p><small>Waiting for the session to move…</small></p>');
-   layout();var w=WAIT;setTimeout(function(){if(WAIT===w)open(sid,function(){return WAIT!==w})},2000);return}
-  WAIT=WAIT||{sid:sid,name:''};S.open=true;say('<p class="wte">'+esc(j.error||'Could not open the terminal.')+'</p><p><button type="button" class="wta" data-x="stop">Close</button></p>');layout();WAIT=null
- }).catch(function(){say('<p class="wte">No connection to the app.</p>');layout()})}
+   layout();var w=WAIT;setTimeout(function(){if(WAIT===w)open(sid,function(){return WAIT!==w})},2000);return j}
+  WAIT=WAIT||{sid:sid,name:''};S.open=true;say('<p class="wte">'+esc(j.error||'Could not open the terminal.')+'</p><p><button type="button" class="wta" data-x="stop">Close</button></p>');layout();WAIT=null;return j
+ }).catch(function(){say('<p class="wte">No connection to the app.</p>');layout();return null})}
 
 document.addEventListener('click',function(e){var b=e.target.closest('button[data-term]');if(!b)return;e.preventDefault();e.stopPropagation();
- var sid=b.dataset.term,t=ALL.filter(function(x){return x.session===sid})[0];if(t){HERE[t.id]=1;show(t);return}open(sid)},true);
-dock.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var x=b.dataset.x;
+ var sid=b.dataset.term;if(EMB&&EMB.request){EMB.request(sid);return}   // the window of the session shows it
+ var t=ALL.filter(function(x){return x.session===sid})[0];if(t){HERE[t.id]=1;show(t);return}open(sid)},true);
+dock.addEventListener('click',act);
+function act(e){var b=e.target.closest('button');if(!b)return;var x=b.dataset.x;
  if(b.dataset.id){var t=TERMS.filter(function(q){return q.id===b.dataset.id})[0];if(t&&(t.id!==S.cur||WAIT))show(t);return}
  if(x==='hide'){S.open=false;save();layout()}
  else if(x==='leave')leave()
- else if(x==='stop'){WAIT=null;say('');if(TERMS.length)show(TERMS.filter(function(q){return q.id===S.cur})[0]||TERMS[0]);layout()}
- else if(x==='copy'){try{navigator.clipboard.writeText('/background');b.textContent='Copied'}catch(err){}}});
+ else if(x==='stop'){WAIT=null;say('');if(!EMB&&TERMS.length)show(TERMS.filter(function(q){return q.id===S.cur})[0]||TERMS[0]);layout()}
+ else if(x==='copy'){try{navigator.clipboard.writeText('/background');b.textContent='Copied'}catch(err){}}}
 pill.addEventListener('click',function(){S.open=true;save();var t=TERMS.filter(function(q){return q.id===S.cur})[0]||TERMS[0];if(t&&!X)show(t);else{layout();if(X)X.focus()}});
 // the top edge resizes the dock
 var gr=dock.querySelector('.wtg');
@@ -127,9 +140,13 @@ gr.addEventListener('pointerdown',function(e){e.preventDefault();gr.setPointerCa
 gr.addEventListener('dblclick',function(){S.h=0;save();layout();fit()});
 window.addEventListener('resize',function(){layout()});
 
-window.wnTerm={open:open,has:has};
+window.wnTerm={open:open,has:has,show:showSes,detach:detach,leave:leave,fit:fit,tail:function(){return (X?tail():'')||LAST},focus:function(){if(X)X.focus()},
+ waiting:function(){return !!WAIT},live:function(){return !!X},stop:function(){WAIT=null;say('')},cur:function(){return ALL.filter(function(t){return t.id===S.cur})[0]||null}};
+if(window.WN_EMBED){EMB=window.WN_EMBED;xt=EMB.xt;msg=EMB.msg;msg.addEventListener('click',act);dock.hidden=true;pill.hidden=true;
+ if(window.ResizeObserver)new ResizeObserver(function(){fit()}).observe(xt)}
 // a page opened while terminals run (another feature, the home page): connect to them again
 fetch('/api/term/list',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){ALL=(j.terms||[]).filter(function(t){return !t.done});TERMS=mine();
+ if(EMB){layout();if(EMB.ready)EMB.ready(window.wnTerm);return}
  if(!TERMS.length){layout();if(ST.o[SCOPE]===true&&ST.s[SCOPE])open(ST.s[SCOPE],null,true);return}   // it was open here before the app was closed
  var t=TERMS.filter(function(q){return q.id===S.cur})[0]||TERMS[0];if(S.open)show(t);else{S.cur=t.id;layout()}}).catch(function(){});
 })();
