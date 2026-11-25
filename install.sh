@@ -42,3 +42,25 @@ elif command -v systemctl >/dev/null 2>&1 && [ -f "$HOME/.config/systemd/user/wh
   systemctl --user restart whatnow.service >/dev/null 2>&1 || true
 fi
 echo "Installed to $DEST"
+
+# ./install.sh --app (macOS): also build the desktop app, put it into /Applications and open it. An app window that
+# is open is closed first and opened again, so the window and the server are always of the same version; the
+# sessions shown in its terminal keep running in the background.
+if [ "$1" = "--app" ]; then
+  if [ "$(uname)" != "Darwin" ]; then
+    echo "--app installs the macOS app; on this system start the window with: $DEST/$EXE" >&2
+    exit 0
+  fi
+  WAILS="$(command -v wails || echo "$(go env GOPATH)/bin/wails")"
+  if [ ! -x "$WAILS" ]; then
+    echo "wails is not installed: go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.1" >&2
+    exit 1
+  fi
+  (cd "$HERE/app" && "$WAILS" build -clean >/dev/null)
+  APP="/Applications/whatnow.app"
+  pkill -f 'whatnow.*\.app/Contents/MacOS/whatnow' 2>/dev/null && sleep 1 || true
+  rm -rf "$APP"
+  cp -R "$HERE/app/build/bin/whatnow.app" "$APP"
+  open "$APP"
+  echo "App installed and opened: $APP"
+fi

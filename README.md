@@ -28,6 +28,7 @@ Ready builds for macOS (one app for Apple Silicon and Intel), Windows and Linux 
 `build` workflow in GitHub Actions and attached to a release for every `v*` tag. To build it yourself:
 ```sh
 ./install.sh        # copies skill/ into ~/.claude/skills/whatnow and builds ~/.claude/skills/whatnow/whatnow
+./install.sh --app  # macOS: the same, and the desktop app into /Applications, closed and opened again if it runs
 ```
 Then ask Claude to start a dashboard for a big piece of work (the `whatnow` skill does this). It writes
 `~/.whatnow/features/<name>/feature.json` and builds the pages. Open them:
