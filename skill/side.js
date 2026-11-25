@@ -27,6 +27,8 @@ var CSS="body{--sw:0px}body.sb{--sw:256px;padding-left:var(--sw)}body.sb.sm{--sw
 /* Claude wrote and waits for an answer */
 ".wns a.wnew{border-left-color:#e8b13a;background:#e8b13a1f}"+
 ".wns a.wnew small{color:#f3cf7a;font-weight:600}"+
+/* the open feature with a new reply: its row stays white, the amber edge and a dark amber line say "new" */
+".wns a.wnew[aria-current],.wns a.wnew[aria-current]:hover{background:#fff}.wns a.wnew[aria-current] small{color:#8a5a00}.wns a.wnew[aria-current] u::after{box-shadow:0 0 0 2px #fff}"+
 ".wns u{text-decoration:none;font-size:14px;line-height:1;position:relative}"+
 ".wns a.wnew u::after{content:'';position:absolute;right:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#e0452f;box-shadow:0 0 0 2px #0f1b16}"+
 "body.sm .wns{padding:10px 6px}body.sm .wns h4,body.sm .wns .wtop b,body.sm .wns a small,body.sm .wns a span,body.sm .wns a.wm em{display:none}"+
