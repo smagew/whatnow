@@ -438,6 +438,45 @@ var (
 	gitCacheMu sync.Mutex
 )
 
+var gitBusy = map[string]bool{} // the features whose state is being read in the background (under gitCacheMu)
+
+// gitStateFast is the state of the repositories for a page that is being opened: what is known already, at once.
+// Reading it from git takes seconds (several repositories, many commands), and the page used to wait for that on
+// every opening. A state older than gitKeep is read again in the background and is there for the next request;
+// the page asks for the fresh one itself after it is shown.
+func gitStateFast(slug string) map[string]any {
+	key := slug + "-"
+	gitCacheMu.Lock()
+	c, hit := gitCache[key]
+	stale := hit && time.Since(c.at) >= gitKeep && !gitBusy[key]
+	if stale {
+		gitBusy[key] = true
+	}
+	gitCacheMu.Unlock()
+	if !hit {
+		return gitState(slug, false)
+	}
+	if stale {
+		go func() {
+			gitState(slug, false)
+			gitCacheMu.Lock()
+			delete(gitBusy, key)
+			gitCacheMu.Unlock()
+		}()
+	}
+	return c.v
+}
+
+// warmGit reads the state of every feature once when the server starts, one after another.
+func warmGit() {
+	l, _ := os.ReadDir(featuresDir())
+	for _, e := range l {
+		if e.IsDir() && slugRe.MatchString(e.Name()) && isFile(filepath.Join(featuresDir(), e.Name(), "feature.json")) {
+			gitState(e.Name(), false)
+		}
+	}
+}
+
 // gitState is the Git tab of a feature: {"repos": [...]}; no repositories, no tab. remote=false leaves the remote
 // alone (fast, used when the page is built), remote=true also asks it for the branch and its request.
 func gitState(slug string, remote bool) map[string]any {

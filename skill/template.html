@@ -879,6 +879,8 @@ function gitUI(){var el=$('gitl');if(!el)return;var rs=GIT.d.repos||[],h='<p cla
  if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h}
  var up=0;rs.forEach(function(r){up+=(r.ahead||0)+(r.dirty?1:0)});var tbn=$('tab-git');if(tbn){var c=tbn.querySelector('.cnt');if(up&&!c){c=document.createElement('span');c.className='cnt';tbn.appendChild(c)}if(c){if(up){c.textContent=up;c.title='Unpushed commits and repositories with uncommitted files'}else c.remove()}}}
 function gitLoad(){if(GIT.busy)return;GIT.busy=true;fetch('/api/git?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){GIT.busy=false;if(j&&j.repos){var before=JSON.stringify(GIT.d.refs||{});GIT.d=j;repoLine();gitUI();if(JSON.stringify(j.refs||{})!==before&&!FORM)renderStage(cur)}}).catch(function(){GIT.busy=false})}
+// the page is opened with the state the server had at hand; the fresh one is asked for once it is shown
+if(typeof HASGIT!=='undefined'&&HASGIT)setTimeout(function(){if(document.visibilityState==='visible')gitLoad()},1500);
 function gitShow(){gitUI();gitLoad();if(!GIT.timer)GIT.timer=setInterval(function(){if(curTab==='git'&&document.visibilityState==='visible')gitLoad()},20000)}
 if(HASGIT){gitUI();setTimeout(gitLoad,1200);   // the count on the tab needs the state even while another tab is open
  if(location.hash==='#git')show('git');

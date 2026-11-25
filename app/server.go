@@ -1215,7 +1215,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					text(w, 500, "feature.json: "+err.Error())
 					return
 				}
-				send(w, 200, []byte(withSide(html, map[string]any{"ses": pickList(slug), "ver": versionInfo(slug), "inbox": map[string]any{"entries": inboxState()}, "git": gitState(slug, false)}, h.local)), "text/html; charset=utf-8")
+				send(w, 200, []byte(withSide(html, map[string]any{"ses": pickList(slug), "ver": versionInfo(slug), "inbox": map[string]any{"entries": inboxState()}, "git": gitStateFast(slug)}, h.local)), "text/html; charset=utf-8")
 				return
 			}
 		}
@@ -1281,6 +1281,7 @@ func (h handler) post(w http.ResponseWriter, r *http.Request) {
 // listen serves the pages to a browser on 127.0.0.1 as well. Returns an error when the port is taken.
 func listen(p int) error {
 	srv := &http.Server{Addr: fmt.Sprintf("127.0.0.1:%d", p), Handler: handler{port: p, local: debugLocal}, ReadHeaderTimeout: 10 * time.Second}
+	go warmGit() // so that the first opening of a feature page does not wait for git
 	return srv.ListenAndServe()
 }
 
