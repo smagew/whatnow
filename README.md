@@ -151,7 +151,8 @@ Claude notes while it still works does not pop up). **Reply** on the line, or th
 the session. It has two views, and the switch in its corner (**C** for the messages, **>_** for the terminal) goes
 from one to the other; the switch is on the folded line too.
 - *Messages*: the recent conversation of the session read from its transcript (what you typed in the terminal, what
-  Claude answered) and a field to write to it. A message goes to that session like one from the Sessions tab, and its
+  Claude answered) and a field to write to it. Messages are shown as Markdown: tables (a wide one scrolls
+  sideways), lists, code blocks, quotes, links. A message goes to that session like one from the Sessions tab, and its
   delivery state shows under it. A red dot marks a reply you have not opened yet.
 - *Terminal* (app window only): the session itself, live (xterm.js on a pseudo-terminal that runs `claude attach`).
   The folded line then shows the name of the session and the last line of its terminal.

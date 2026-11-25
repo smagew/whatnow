@@ -278,7 +278,14 @@ html.mo-off .cwu{animation:none}@media(prefers-reduced-motion:reduce){html.mo-sy
 .cw.wide .cb{max-width:min(88%,820px)}
 .cwh button:hover{background:var(--nob)}.cwh button:focus-visible{outline:3px solid #2a8cff}
 .cwl{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:12px 14px}
-.cb{max-width:88%;padding:8px 14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.cb{max-width:88%;padding:8px 14px;overflow-wrap:anywhere;min-width:0}
+.cb>*{margin:0 0 7px}.cb>:last-child{margin-bottom:0}.cb .mdh{font-weight:700}.cb ul,.cb ol{padding-left:20px}.cb li{margin:2px 0}.cb li.in1{margin-left:16px}.cb li.in2{margin-left:32px}.cb li.in3{margin-left:48px}
+.cb a{color:var(--live);text-decoration:underline;text-underline-offset:2px}.cb.u a{color:#cfe0ff}.cb hr{border:0;border-top:1px solid #0000001f}.cb.u hr{border-top-color:#ffffff40}
+.cb blockquote{border-left:3px solid var(--livel);padding-left:10px;color:var(--mut)}.cb.u blockquote{border-left-color:#ffffff66;color:#dfe9e3}
+.cb pre{background:#16241e;color:#e6efe9;border-radius:8px;padding:9px 11px;overflow-x:auto;font:12.5px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre}.cb pre code{background:none;padding:0;color:inherit;font:inherit}.cb.u pre{background:#0b1410}
+/* a table of a message: a real table; a wide one scrolls sideways inside the message instead of breaking it */
+.cb .mdt{overflow-x:auto;max-width:100%}.cb table{border-collapse:collapse;font-size:12.5px;line-height:1.4}.cb th,.cb td{border:1px solid #c9d6ee;padding:4px 9px;text-align:left;vertical-align:top;overflow-wrap:normal;word-break:normal}
+.cb th{background:#dfe9fb;font-weight:600;white-space:nowrap}.cb td.nw{white-space:nowrap}.cb td{background:#fff}.cb.u th,.cb.u td{border-color:#ffffff40}.cb.u th{background:#ffffff26}.cb.u td{background:#ffffff0f}
 .cb.a{align-self:flex-start;background:var(--liveb2);border:1px solid var(--livel);border-radius:4px 16px 16px 16px}
 .cb.u{align-self:flex-end;background:var(--side);color:#fff;border-radius:16px 4px 16px 16px}
 .cb.u code{background:#ffffff26;color:#fff}
@@ -760,7 +767,30 @@ function boxMove(e){if(CHAT.box.wide||e.button||e.target.closest('button,[data-s
   var o=CHAT.box,mid=left+r.width/2,l=mid<sw+(innerWidth-sw)/2;o.ax=l?'l':'r';o.x=Math.round(l?left-sw:innerWidth-left-r.width);boxSave();boxPlace();noteTop()}
  h.addEventListener('pointermove',mv);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up)}
 try{CHAT.seen=+localStorage.getItem('wn-seen-'+P.slug)||0}catch(e){}
-function md(t){return esc(t).replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>').replace(/^#{1,6} +(.+)$/gm,'<b>$1</b>')}
+// Markdown of a message, as Claude writes it: tables, lists, code blocks, quotes, headings, links, bold, code.
+// The text is escaped first, so nothing in a message becomes markup of its own; a link is http(s) only.
+function mdi(s){var codes=[];s=s.replace(/`([^`\n]+)`/g,function(_,c){codes.push(c);return '\u0001'+(codes.length-1)+'\u0001'});
+ s=s.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
+  .replace(/(^|[\s(])(https?:\/\/[^\s<]*[^\s<.,;:!?)\]])/g,'$1<a href="$2" target="_blank" rel="noopener">$2</a>')
+  .replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>').replace(/(^|[\s(])\*([^*\s][^*\n]*?)\*(?=[\s).,;:!?]|$)/g,'$1<i>$2</i>');
+ return s.replace(/\u0001(\d+)\u0001/g,function(_,i){return '<code>'+codes[i]+'</code>'})}
+function md(t){var L=esc(String(t).replace(/\r/g,'')).split('\n'),o=[],i=0,p=[],LI=/^(\s*)([-*+]|\d+[.)])\s+(.*)$/,SEP=/^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/,Q=/^\s*&gt;\s?/;
+ function flush(){if(p.length){o.push('<p>'+p.map(mdi).join('<br>')+'</p>');p=[]}}
+ function cells(l){return l.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(function(c){return c.trim()})}
+ while(i<L.length){var l=L[i],m;
+  if(/^\s*```/.test(l)){flush();var c=[];i++;while(i<L.length&&!/^\s*```/.test(L[i]))c.push(L[i++]);i++;o.push('<pre><code>'+c.join('\n')+'</code></pre>');continue}
+  if(l.indexOf('|')>=0&&i+1<L.length&&L[i+1].indexOf('|')>=0&&SEP.test(L[i+1])){flush();var h=cells(l),al=cells(L[i+1]).map(function(x){return /^:-+:$/.test(x)?' style="text-align:center"':/-:$/.test(x)?' style="text-align:right"':''}),rows=[];i+=2;
+   while(i<L.length&&L[i].indexOf('|')>=0&&L[i].trim())rows.push(cells(L[i++]));
+   o.push('<div class="mdt"><table><thead><tr>'+h.map(function(x,k){return '<th'+(al[k]||'')+'>'+mdi(x)+'</th>'}).join('')+'</tr></thead><tbody>'+rows.map(function(r){return '<tr>'+h.map(function(_,k){return '<td'+((r[k]||'').length<=16?' class="nw"':'')+(al[k]||'')+'>'+mdi(r[k]||'')+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table></div>');continue}
+  if(/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(l)){flush();o.push('<hr>');i++;continue}
+  if((m=/^\s*#{1,6}\s+(.+)$/.exec(l))){flush();o.push('<p class="mdh">'+mdi(m[1])+'</p>');i++;continue}
+  if(LI.test(l)){flush();var ord=/^\s*\d/.test(l),st=parseInt(l,10)||1,it=[];
+   while(i<L.length&&(LI.test(L[i])||(it.length&&/^\s{2,}\S/.test(L[i])))){m=LI.exec(L[i]);if(m)it.push([m[1].length,m[3]]);else it[it.length-1][1]+='<br>'+L[i].trim();i++}
+   o.push('<'+(ord?'ol'+(st>1?' start="'+st+'"':''):'ul')+'>'+it.map(function(x){return '<li'+(x[0]>=2?' class="in'+Math.min(3,x[0]>>1)+'"':'')+'>'+mdi(x[1])+'</li>'}).join('')+'</'+(ord?'ol':'ul')+'>');continue}
+  if(Q.test(l)){flush();var q=[];while(i<L.length&&Q.test(L[i]))q.push(L[i++].replace(Q,''));o.push('<blockquote>'+q.map(mdi).join('<br>')+'</blockquote>');continue}
+  if(!l.trim()){flush();i++;continue}
+  p.push(l);i++}
+ flush();return o.join('')}
 function oneLine(t){return esc(String(t).replace(/[`*#]/g,'').replace(/\s+/g,' ').slice(0,400))}
 function chatSes(){var s=null;SES.bound.forEach(function(x){if(x.said&&(!s||x.saidT>s.saidT))s=x});return s||agent()||SES.bound[0]||null}
 function answered(i){for(var j=i+1;j<CHAT.items.length;j++)if(CHAT.items[j].who==='a')return true;return false}
