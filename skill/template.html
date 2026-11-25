@@ -334,7 +334,8 @@ var ov='<p class="why sum">'+rich(P.summary||'')+'</p><div class="chips" id="ovt
 // work
 var w='<div class="md"><div class="rail" role="tablist" aria-orientation="vertical" aria-label="Stages" id="stl"></div><div class="det" id="det" role="tabpanel" tabindex="0"></div></div>';
 // dec
-var dc='<div class="two"><div class="det"><h2>Decided</h2><ul>'+P.decisions.map(function(x){return '<li>'+rich(x)+'</li>'}).join('')+'</ul></div><div class="det"><h2>Open</h2><ul>'+P.questions.map(function(x){return '<li>'+rich(x)+'</li>'}).join('')+'</ul></div></div>';
+function decHTML(){return '<div class="two"><div class="det"><h2>Decided</h2><ul>'+P.decisions.map(function(x){return '<li>'+rich(x)+'</li>'}).join('')+'</ul></div><div class="det"><h2>Open</h2><ul>'+P.questions.map(function(x){return '<li>'+rich(x)+'</li>'}).join('')+'</ul></div></div>'}
+var dc=decHTML();
 $('main').innerHTML=[['work',w],['ov',ov],['dec',dc]].concat(HASGIT?[['git','<div class="gitw" id="gitl"></div>']]:[]).concat(HASACC?[['acc','<div class="gitw" id="accl"><p class="why">Reading what the sessions may do…</p></div>']]:[]).map(function(x,i){return '<section role="tabpanel" id="p-'+x[0]+'" aria-labelledby="tab-'+x[0]+'"'+(i?' hidden':'')+'>'+x[1]+'</section>'}).join('');
 // tabs behaviour
 var tb=[].slice.call(document.querySelectorAll('#tabs button'));
@@ -453,7 +454,7 @@ function post(body){return fetch('/api/act',{method:'POST',headers:{'Content-Typ
 function onAct(e){var b=e.target.closest('button');if(!b||b.dataset.stage)return;
  if(b.dataset.dt){OPENF[b.dataset.dt]=!OPENF[b.dataset.dt];renderStage(cur);var nb=document.querySelector('#det button[data-dt="'+b.dataset.dt+'"]');if(nb)nb.focus();return}
  if(b.dataset.gc){gitGo(b.dataset.gc);return}if(b.dataset.ses==='open'){SES.pick=true;SES.err='';sesBar();window.scrollTo({top:0,behavior:'smooth'});return}var li=b.closest('[data-fid]');
- var back=function(k){location.hash=k==='blocker'?'ov':'work/'+P.stages[cur].n;location.reload()};
+ var back=function(k){FORM=null;softReload()};   // the page takes the new data in place, on the tab it is on
  if(b.dataset.a==='unskip'){var k0=li.dataset.kind||'';post({feature:P.slug,fid:li.dataset.fid,action:'unskip',kind:k0}).then(function(r){if(r.ok)back(k0)});return}
  if(b.dataset.a){FORM={fid:li.dataset.fid,a:b.dataset.a,text:'',kind:li.dataset.kind||''};ROUTE=null;renderStage(cur);var t=$('ftext');if(t)t.focus();
   if(b.dataset.a!=='skip'&&b.dataset.a!=='done')fetch('/api/route?feature='+encodeURIComponent(P.slug)).then(function(r){return r.json()}).then(function(r){ROUTE=r;if(FORM){FORM.text=($('ftext')||{}).value||FORM.text;renderStage(cur);var t2=$('ftext');if(t2)t2.focus()}}).catch(function(){});return}
@@ -476,16 +477,19 @@ if(location.hash==='#ov')show('ov');   // back from closing or restoring an open
 // items, new plan lines, new stages, new open items. Shown three ways: a note on top that leads to the place, a
 // mark with the count on the stage in the list, and a glow on the item itself that fades in a few seconds.
 var CG={f:{},p:{},s:{},b:{},n:0,nb:0,first:-1,t0:Date.now(),off:false};
-(function(){if(!P.live)return;var key='wn-seen-'+P.slug,old=null;try{old=JSON.parse(localStorage.getItem(key)||'null')}catch(e){}
- var now={s:{},b:{}};P.stages.forEach(function(s){var f={};(s.fids||[]).forEach(function(id,i){f[id]=s.facts[i][0]});now.s[s.n]={p:s.plan.slice(),f:f}});P.blockers.forEach(function(b){now.b[b.bid]=1});
+// the picture of the plan that is compared: per stage its plan lines and its items with their kinds, and the open items
+function snapOf(){var now={s:{},b:{}};P.stages.forEach(function(s){var f={};(s.fids||[]).forEach(function(id,i){f[id]=s.facts[i][0]});now.s[s.n]={p:s.plan.slice(),f:f}});P.blockers.forEach(function(b){now.b[b.bid]=1});return now}
+// cgDiff fills CG with what the plan has now and the older picture did not
+function cgDiff(old){CG.f={};CG.p={};CG.s={};CG.b={};CG.n=0;CG.nb=0;CG.first=-1;CG.t0=Date.now();CG.off=false;
  if(old&&old.s){P.stages.forEach(function(s,i){var a=old.s[s.n],c=0;
    (s.fids||[]).forEach(function(id,j){if(!a||!(id in a.f)){CG.f[id]='new';c++}else if(a.f[id]!==s.facts[j][0]){CG.f[id]='changed';c++}});
    s.plan.forEach(function(p,j){if(!a||a.p.indexOf(p)<0){(CG.p[s.n]=CG.p[s.n]||{})[j]=1;c++}});
    if(c||!a){CG.s[s.n]={c:c,neu:!a};CG.n+=c;if(CG.first<0)CG.first=i}});
-  P.blockers.forEach(function(b){if(!old.b[b.bid]){CG.b[b.bid]=1;CG.nb++}})}
- // "looked at" means the page was really on screen: a tab in the background keeps the older picture to compare with
- function seen(){if(document.visibilityState!=='visible')return;try{localStorage.setItem(key,JSON.stringify(now))}catch(e){}document.removeEventListener('visibilitychange',seen)}
- document.addEventListener('visibilitychange',seen);seen()})();
+  P.blockers.forEach(function(b){if(!old.b[b.bid]){CG.b[b.bid]=1;CG.nb++}})}}
+// "looked at" means the page was really on screen: a tab in the background keeps the older picture to compare with
+var SEENKEY='wn-seen-'+P.slug,SEENDUE=true;
+function seenSave(){if(!SEENDUE||document.visibilityState!=='visible')return;SEENDUE=false;try{localStorage.setItem(SEENKEY,JSON.stringify(snapOf()))}catch(e){}}
+if(P.live){(function(){var old=null;try{old=JSON.parse(localStorage.getItem(SEENKEY)||'null')}catch(e){}cgDiff(old)})();document.addEventListener('visibilitychange',seenSave);seenSave()}
 function chMark(){if(CG.off||!(CG.n||CG.nb))return;var live=Date.now()-CG.t0<9000,dl='animation-delay:-'+((Date.now()-CG.t0)/1000).toFixed(1)+'s';
  function glow(el,tag){if(el.dataset.ch)return;el.dataset.ch=1;if(live){el.classList.add('chg');el.style.cssText+=';'+dl}
   if(el.querySelector('.ag'))return;   // the item already says "new" or what it changed to, with the time
@@ -496,13 +500,26 @@ function chMark(){if(CG.off||!(CG.n||CG.nb))return;var live=Date.now()-CG.t0<900
  [].forEach.call(document.querySelectorAll('#stl .rr[data-i]'),function(r){var s=P.stages[+r.dataset.i],c=s&&CG.s[s.n];if(!c||r.querySelector('.chb'))return;
   var b=document.createElement('span');b.className='chb';b.textContent=c.neu?'new':'+'+c.c;b.title=c.neu?'A new stage since you last looked':c.c+' new or changed item'+(c.c>1?'s':'')+' since you last looked';var nm=r.querySelector('.nm,.tt');if(nm)nm.insertBefore(b,nm.firstChild);else r.appendChild(b)})}
 function chNote(){var el=$('chn');if(!el||!(CG.n||CG.nb))return;var st=Object.keys(CG.s),f=P.stages[CG.first];
- var h='<b>The plan changed since you last looked.</b> <span class="x">'+(CG.n?CG.n+' new or changed item'+(CG.n>1?'s':'')+(f?' in stage '+f.n+' «'+esc(f.title)+'»'+(st.length>1?' and '+(st.length-1)+' more':''):''):'')+(CG.n&&CG.nb?', ':'')+(CG.nb?CG.nb+' new open item'+(CG.nb>1?'s':''):'')+'</span><button type="button" class="go" data-ch="show">Show</button><button type="button" data-ch="x" aria-label="Hide this note">Got it</button>';
+ var h='<b>'+(CG.now?'The plan has just changed.':'The plan changed since you last looked.')+'</b> <span class="x">'+(CG.n?CG.n+' new or changed item'+(CG.n>1?'s':'')+(f?' in stage '+f.n+' «'+esc(f.title)+'»'+(st.length>1?' and '+(st.length-1)+' more':''):''):'')+(CG.n&&CG.nb?', ':'')+(CG.nb?CG.nb+' new open item'+(CG.nb>1?'s':''):'')+'</span><button type="button" class="go" data-ch="show">Show</button><button type="button" data-ch="x" aria-label="Hide this note">Got it</button>';
  el.innerHTML=h;el.hidden=false;
  el.onclick=function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.ch==='x'){CG.off=true;el.hidden=true;[].forEach.call(document.querySelectorAll('.chgt,.chb'),function(x){x.remove()});return}
   CG.t0=Date.now();[].forEach.call(document.querySelectorAll('[data-ch]'),function(x){if(x.tagName==='LI'){delete x.dataset.ch;x.classList.remove('chg');var t=x.querySelector('.chgt');if(t)t.remove()}});
   if(CG.n&&CG.first>=0){show('work');renderStage(CG.first)}else show('ov');
   setTimeout(function(){chMark();var g=document.querySelector('.chg');if(g&&g.scrollIntoView)g.scrollIntoView({block:'center',behavior:'smooth'})},60)}}
-if(P.live&&(CG.n||CG.nb)){chNote();chMark();new MutationObserver(function(){chMark()}).observe($('main'),{childList:true,subtree:true})}
+if(P.live){chNote();chMark();new MutationObserver(function(){chMark()}).observe($('main'),{childList:true,subtree:true})}
+// When feature.json changes the page is not loaded again: it takes the new data and redraws in place, so nothing
+// flashes and the place on the page is kept. What is new or changed glows, and the note on top says what it was.
+function applyData(N){var old=snapOf(),was=P.stages[cur]?P.stages[cur].n:null,y=window.scrollY;
+ Object.keys(P).forEach(function(k){delete P[k]});Object.keys(N).forEach(function(k){P[k]=N[k]});
+ CH=P.changes||[];CHF={};CHS={};CH.forEach(function(c){CHF[c.fid]=c;(CHS[c.stage]=CHS[c.stage]||[]).push(c)});VER=P.ver;
+ $('t').textContent=P.title;$('t').title=P.title;$('sub').innerHTML=rich(P.sub)+(P.updated&&!P.updatedTs?' Updated '+esc(P.updated)+'.':'');$('sub').title=$('sub').textContent;document.title=document.title.replace(/^(\(\d+\) )?.*$/,'$1'+P.title);
+ CUR=Math.max(0,P.stages.map(function(s){return s.n}).indexOf(P.cur));var at=P.stages.map(function(s){return s.n}).indexOf(was);
+ var follow=cur===OLDCUR;cur=at<0||follow?CUR:at;OLDCUR=CUR;   // the reader stays on the stage they opened; if they were on the current one, they follow it
+ var sm=document.querySelector('#p-ov .sum');if(sm)sm.innerHTML=rich(P.summary||'');if($('p-dec'))$('p-dec').innerHTML=decHTML();
+ var tb0=$('tab-ov');if(tb0){var c0=tb0.querySelector('.cnt');if(c0)c0.remove();if(P.blockers.length){c0=document.createElement('span');c0.className='cnt'+(P.blockers.some(function(b){return b.who==='you'})?' bad':'');c0.textContent=P.blockers.length;tb0.appendChild(c0)}}
+ cgDiff(old);CG.now=true;renderStage(cur);freshBar();var el=$('chn');if(el)el.hidden=true;chNote();chMark();SEENDUE=true;seenSave();if(typeof gitUI==='function'&&HASGIT)gitLoad();window.scrollTo(0,y)}
+var OLDCUR=CUR,RELOADING=false;
+function softReload(){if(RELOADING)return;RELOADING=true;fetch('/api/panel?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){RELOADING=false;if(!j||!j.stages)throw 0;applyData(j)}).catch(function(){RELOADING=false;location.reload()})}
 (function(){var m=/^#work\/(\d+)(?:\/([0-9a-f]{10}):(do|ask|skip))?$/.exec(location.hash);if(!m)return;var idx=P.stages.map(function(s){return s.n}).indexOf(+m[1]);if(idx<0)return;
  show('work');if(m[2]&&P.live){FORM={fid:m[2],a:m[3],text:''};ROUTE=null}renderStage(idx)})();
 if(P.live){pollInbox();setInterval(pollInbox,3000)}
@@ -686,7 +703,7 @@ function syBar(){var b=$('sy');if(!b||!P.live)return;
  if(SYNC.err)h+=' <span>'+esc(SYNC.err)+'</span>';
  b.hidden=!h;b.innerHTML=h}
 function gotVer(j){
- if(j.v&&VER&&j.v!==VER&&!FORM&&!BUSY){location.reload();return}
+ if(j.v&&VER&&j.v!==VER&&!FORM&&!BUSY){softReload();return}
  SYNC.behind=j.behind;SYNC.pending=j.pending;SYNC.asleep=j.asleep||'';syBar()}
 function pollVersion(){if(INIT.ver){var j=INIT.ver;INIT.ver=null;gotVer(j);return}fetch('/api/version?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(gotVer).catch(function(){})}
 function askSync(){if(SYNC.busy||SYNC.pending)return;SYNC.busy=true;SYNC.err='';syBar();

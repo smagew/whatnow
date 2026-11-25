@@ -1168,6 +1168,20 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		default:
 			send(w, 200, []byte(page("vendor"+path)), "text/javascript; charset=utf-8")
 		}
+	case "/api/panel": // the data of a feature page: the open page takes it when the plan changes, instead of loading again
+		if s, ok := slugArg(); ok {
+			src := filepath.Join(featuresDir(), s, "feature.json")
+			if !isFile(src) {
+				sendJSON(w, 404, map[string]any{"error": "unknown feature"})
+				return
+			}
+			_, data, err := panelPage(src, "/", true)
+			if err != nil {
+				sendJSON(w, 500, map[string]any{"error": "feature.json: " + err.Error()})
+				return
+			}
+			sendJSON(w, 200, data)
+		}
 	case "/api/access": // the Access tab: what the sessions of the feature may do and reach
 		if s, ok := slugArg(); ok {
 			sendJSON(w, 200, accessState(s))
