@@ -1,0 +1,49 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>whatnow: a name for the "Ask" button</title>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* A demo, not the app: names to choose from for the button that sends a free message about an item to the
+   session. Each card is the same item of a plan with one name: the buttons, the form the button opens, and how
+   the sent message reads under the item afterwards. Nothing here is sent anywhere. */
+:root{--bg:#eef1ee;--paper:#fff;--ink:#17231d;--mut:#586860;--line:#d7dfda;--side:#16241e;--ok:#0f7a4a;--live:#1f5fd0;--acc:#1f5fd0}
+*{box-sizing:border-box}html{background:var(--bg)}body{margin:0;color:var(--ink);font:14.5px/1.5 Geologica,system-ui,sans-serif}
+.demo{background:#0b1410;color:#dfe9e3;padding:14px 24px;font-size:13.5px}.demo b{color:#fff;font-weight:600}.demo p{margin:2px 0;max-width:900px}
+main{max-width:1180px;margin:22px auto 60px;padding:0 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:18px}
+.v{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.v h2{margin:0 0 2px;font-size:15px;font-weight:600;display:flex;gap:10px;align-items:center}.v h2 i{font-style:normal;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--side);color:#fff;font-size:12px}
+.v h2 em{font-style:normal;font-size:11.5px;font-weight:600;color:#0f6b40;background:#e6f4ec;border-radius:99px;padding:1px 9px}
+.v>p{margin:0 0 12px 34px;color:var(--mut);font-size:13px;max-width:60ch}
+.fi{display:flex;flex-wrap:wrap;gap:0 10px;align-items:flex-start;padding:6px 0;border-top:1px solid #eef2ef}
+.ico{font-style:normal;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;flex:none;border:2px solid #9aa9a1;margin-top:2px}
+.fi .t{flex:1;min-width:0;font-size:14px}
+.acts{display:flex;gap:6px;flex-basis:100%;margin:4px 0 4px 30px}
+.acts button{all:unset;cursor:pointer;font-size:12px;font-weight:600;padding:2px 9px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.acts button:hover,.acts button.on{border-color:var(--acc);color:var(--acc)}.acts button:focus-visible{outline:3px solid #2a8cff;outline-offset:1px}
+.fm{flex-basis:100%;margin:6px 0 4px 30px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fbfdfc}
+.fm textarea{width:100%;min-height:54px;border:1px solid #c3cec7;border-radius:8px;padding:8px 10px;font:inherit;font-size:13.5px;resize:vertical;background:#fff}
+.fm .row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.fm .go{all:unset;cursor:pointer;background:var(--side);color:#fff;font-size:13px;font-weight:600;padding:6px 14px;border-radius:9px}.fm .cx{font-size:13px;color:var(--mut);padding:6px 8px}
+.sent{flex-basis:100%;margin:6px 0 4px 30px;font-size:12.5px;border-radius:8px;padding:5px 10px;background:#e8f0fb;color:#1f4a99}
+.sent .yq{display:block;color:var(--ink);margin-bottom:3px;padding-bottom:4px;border-bottom:1px solid #0000000f}.sent .yq b{font-weight:600}
+.mm{display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:1px 7px 1px 6px;border-radius:99px;font-size:11px;font-weight:600;line-height:16px;white-space:nowrap;background:#e8f0fb;color:#1f4a99}
+.lab{margin:10px 0 2px 30px;font-size:11.5px;color:var(--mut)}
+</style></head><body>
+<div class="demo"><p><b>A name for the "Ask" button.</b> The button opens a field and sends what you write there to the session, about this item. It is used for a question, but also for a remark, a correction or "this is done, mark it". Five names on the same item: the buttons, the form, and the line under the item after sending.</p></div>
+<main id="m"></main>
+<script>
+var V=[
+ ['A','Write','The plain verb: you write to the session about this item. The chat field already says "Write to Claude…", so the two places speak the same way.','Write to the session about this item','Send','You wrote',1],
+ ['B','Message','A neutral noun; says what goes out, and fits anything from a question to a remark. As a button it reads less like an action than "Do it" next to it.','Your message about this item','Send the message','Your message',0],
+ ['C','Comment','Says the text belongs to this item. It also sounds like a note that nobody has to answer, and here the session does answer.','Your comment on this item','Send the comment','Your comment',0],
+ ['D','Discuss','Promises a back-and-forth about the item. Wrong for a short "ok, mark it done".','What you want to discuss about this item','Send','You wrote',0],
+ ['E','Tell Claude','Names who gets it. Longer than the other buttons, and it reads as an order more than as a question.','What Claude should know about this item','Send to Claude','You told Claude',0]];
+var bub='<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+document.getElementById('m').innerHTML=V.map(function(v){
+ return '<section class="v"><h2><i>'+v[0]+'</i>'+v[1]+(v[6]?'<em>my pick</em>':'')+'</h2><p>'+v[2]+'</p>'+
+  '<div class="lab">The buttons under an item</div>'+
+  '<div class="fi"><i class="ico"></i><span class="t">Check the header in the app after the fix</span><span class="acts"><button type="button">Do it</button><button type="button" class="on">'+v[1]+'</button><button type="button">Not needed</button></span>'+
+  '<div class="fm"><textarea placeholder="'+v[3]+'" aria-label="'+v[3]+'"></textarea><div class="row"><button type="button" class="go">'+v[4]+'</button><span class="cx">Cancel</span></div></div></div>'+
+  '<div class="lab">The same item after sending</div>'+
+  '<div class="fi"><i class="ico"></i><span class="t">Check the header in the app after the fix<span class="mm">'+bub+'sent</span></span>'+
+  '<div class="sent"><span class="yq"><b>'+v[5]+' at 12:30:</b> I checked it already, all looks fine</span>Sent at 12:30. Waiting to be delivered to session whatnow stage progress ui.</div></div></section>'}).join('');
+</script></body></html>

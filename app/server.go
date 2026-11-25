@@ -1168,7 +1168,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		default:
 			send(w, 200, []byte(page("vendor"+path)), "text/javascript; charset=utf-8")
 		}
-	case "/demo/motion", "/demo/talk": // examples of the interface to choose from (skill/demo)
+	case "/demo/motion", "/demo/talk", "/demo/ask": // examples of the interface to choose from (skill/demo)
 		send(w, 200, []byte(page("demo"+strings.TrimPrefix(path, "/demo")+".html")), "text/html; charset=utf-8")
 	case "/api/panel": // the data of a feature page: the open page takes it when the plan changes, instead of loading again
 		if s, ok := slugArg(); ok {
