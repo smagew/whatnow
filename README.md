@@ -1,11 +1,67 @@
 # whatnow
 
-A dashboard for running several Claude Code sessions at once: see what each one does and which of them waits for
-you, follow the progress of large, multi-project features stage by stage, and correct or ask a session from the
-page, switching between features in one click.
+**One window for all your Claude Code sessions.** See which one works, which one waits for you and what each has
+done, follow a large piece of work stage by stage across several repositories, and talk to any session — in a chat
+or in its real terminal — without hunting for the right terminal tab.
 
-It is made for engineers who run several features in parallel with AI coding agents in the terminal and want
-one place to look, instead of reading long CLI transcripts. It shows progress, not tokens or costs.
+It is made for engineers who run several pieces of work in parallel with Claude Code and want one place to look,
+instead of reading long CLI transcripts. It shows progress, not tokens or costs. Everything runs on your machine.
+
+![The page of a work with the window of its session: the chat](docs/img/chat.png)
+
+## Highlights
+
+### The session, next to its plan
+Every work has a page: the stages of the plan, what was really done in each, and what is left. Over it floats the
+window of the session that does the work. **Chat** shows the conversation, Markdown tables included, and the
+messages you typed in the terminal too; **Terminal** is the session itself (`claude attach`), keys and all. You can
+move the window left or right, make it full width, fold it to one line, or set its colors and see-through look.
+
+![The same window switched to the terminal of the session](docs/img/terminal.png)
+
+### What waits for you, at a glance
+The bar on the left groups works by project and says, in two short lines each, who has to act: *asks for your
+permission*, *new reply*, *background task running*. **What is left** splits the open items into *wait for you*,
+*need your look* and *for the agent*, each with *Done*, *Write* and *Not needed*. Alerts come as system
+notifications with a sound; clicking one opens the work.
+
+![What is left: the items that wait for you](docs/img/left.png)
+
+### Message every session at once
+**Message sessions** sends one message to the active sessions, to all open ones, or to the works or sessions you
+choose. Ready messages cover the usual moments: *Stop now* (a real stop, as Esc in the terminal, after you confirm),
+*Save the status and stop*, *I am going to sleep* (go on alone, nothing that goes outside, questions on the
+dashboard), *Status report*, *Good morning*. Sessions that sleep in the background are woken to read it.
+
+![Message sessions](docs/img/message.png)
+
+### Git, read for you
+The **Git** tab shows every repository the sessions of a work touch: branch, files not committed, commits not
+pushed, the commits of the branch tied to the stages of the plan, and links to the repository and its pull
+requests. It only reads; nothing is changed there.
+
+![The Git tab of a work](docs/img/git.png)
+
+### Start new work from the app
+**New work** starts a Claude Code session in the background: in a folder you pick, or with the same access as an
+existing work. You choose the permission mode and whether it works in the folder itself or in its own copy of the
+code (a git worktree, so two sessions never overwrite each other's files). Its page appears at once.
+
+![New work](docs/img/newwork.png)
+
+### Every session in one list
+**Sessions** lists every open Claude Code session, grouped by project, what waits for you first: how it started,
+what Claude last said, and buttons to write to it or open its terminal.
+
+![The list of sessions](docs/img/sessions.png)
+
+### And
+- **Screenshots for Claude** (macOS): the camera button in the session window lets you select a part of the screen;
+  the picture goes to the session as a file it can read.
+- **Access** tab: the folders, outside services and permissions a work uses.
+- Works in a browser too (`whatnow serve`), and on macOS, Windows and Linux.
+
+*The screenshots show made-up projects, sessions and people.*
 
 ## What you see
 - **Home page**: one card per feature. The percent of its plan that is done, the stages of the plan as a strip
