@@ -31,7 +31,9 @@ notifications with a sound; clicking one opens the work.
 **Message sessions** sends one message to the active sessions, to all open ones, or to the works or sessions you
 choose. Ready messages cover the usual moments: *Stop now* (a real stop, as Esc in the terminal, after you confirm),
 *Save the status and stop*, *I am going to sleep* (go on alone, nothing that goes outside, questions on the
-dashboard), *Status report*, *Good morning*. Sessions that sleep in the background are woken to read it.
+dashboard), *Status report*, *Good morning*. Sessions that sleep in the background are woken to read it. Going to
+sleep yourself? It also asks how long to keep the computer awake: **Stay awake** in the bar holds off the system's
+sleep for a few hours or until you turn it off, so the sessions work through the night.
 
 ![Message sessions](docs/img/message.png)
 
@@ -211,7 +213,14 @@ them before you send. Ready-made messages fill the field (Stop now, Save the sta
 Status report, Update the dashboard, Hold outward actions, Wrap up, Good morning) and can be changed before sending.
 A working session reads a message when its turn ends, so *Stop now* also stops the background sessions at once, as
 Esc in their terminal does, after a confirmation that says what this cuts off; a session open in your own terminal
-cannot be stopped from here and gets the message when its turn ends.
+cannot be stopped from here and gets the message when its turn ends. With *I am going to sleep* the form also asks
+how long the computer stays awake (8 hours unless you change it).
+
+**Stay awake.** At the bottom of the bar: the computer does not go to sleep by itself for 1, 2, 3 or 8 hours, or until
+you turn it off; the bar shows the time left. It is what a video player does while it plays: the screen may still go
+dark, the sessions go on. A laptop with its lid closed still sleeps, so leave it open. The hold ends with the app; the
+time is kept in `~/.whatnow/awake.json`, so the app started again takes up what is left. On macOS it is the system's
+`caffeinate`, on Linux `systemd-inhibit`, on Windows `SetThreadExecutionState`.
 
 **Screenshots for Claude (app window, macOS).** The camera in the title of the session window takes a part of the
 screen (the system selection, as Cmd+Shift+4; Space picks a window). The picture is kept with the work in

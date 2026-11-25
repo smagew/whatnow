@@ -741,6 +741,8 @@ func act(body map[string]any) (int, any) {
 	switch action {
 	case "track":
 		return tellSession(sid, trackText)
+	case "awake": // keep the computer awake for "minutes" (0: off, -1: until turned off)
+		return setAwake(num(body["minutes"]))
 	case "broadcast": // one message to several sessions; "interrupt" first stops the background ones (after a confirmation on the page)
 		return broadcast(body)
 	case "spawn":
@@ -1056,7 +1058,7 @@ func featuresList() map[string]any {
 		}
 		return strings.ToLower(fmt.Sprint(a["name"])) < strings.ToLower(fmt.Sprint(b["name"]))
 	})
-	return map[string]any{"features": out, "waiting": waiting, "favorites": len(favs), "starting": spawnedNow(), "alerts": alertMode()}
+	return map[string]any{"features": out, "waiting": waiting, "favorites": len(favs), "starting": spawnedNow(), "alerts": alertMode(), "awake": awakeNow()}
 }
 
 // ------------------------------------------------------------------ http
@@ -1393,6 +1395,7 @@ func (h handler) post(w http.ResponseWriter, r *http.Request) {
 func listen(p int) error {
 	srv := &http.Server{Addr: fmt.Sprintf("127.0.0.1:%d", p), Handler: handler{port: p, local: debugLocal}, ReadHeaderTimeout: 10 * time.Second}
 	go warmGit() // so that the first opening of a feature page does not wait for git
+	go awakeResume()
 	return srv.ListenAndServe()
 }
 
