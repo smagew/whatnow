@@ -10,6 +10,10 @@ var CSS="body{--sw:0px}body.sb{--sw:256px;padding-left:var(--sw)}body.sb.sm{--sw
 ".wns a.wm{display:flex;align-items:center;gap:8px;padding:7px 8px;font-weight:500}.wns a.wm:hover,.wns a.wf:hover{background:#ffffff14}"+
 ".wns a.wm em,.wns a.wm small{margin-left:auto}.wns a.wm small{color:#8ea398;font-size:12px}.wns a.wm[aria-current] small{color:#586860}"+
 ".wns a[aria-current]{background:#fff;color:#16241e;font-weight:600}.wns a[aria-current]:hover{background:#fff}"+
+/* The row of the open work keeps the weight of the others: a bolder name is wider, wrapped onto one more line for
+   some names, and the whole bar below it moved when one went from one work to another. A thin stroke makes the
+   name look heavier without changing its width. */
+".wns a.wf[aria-current]{font-weight:inherit}.wns a.wf[aria-current] span{-webkit-text-stroke:.4px currentColor}"+
 ".wns h4{margin:14px 8px 4px;font-size:11.5px;font-weight:600;color:#7f968a}"+
 ".wns a.wf{display:grid;grid-template-columns:10px 1fr auto;gap:2px 9px;align-items:baseline;padding:7px 8px;border-left:3px solid transparent}"+
 ".wns a.wf span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}"+
