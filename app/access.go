@@ -24,6 +24,7 @@ type access struct {
 	Files       []any           // instruction files it loaded: [{path, type}]
 	seenFile    map[string]bool // paths already in Files
 	Tools       map[string]bool // tools it used
+	GitDirs     map[string]bool // folders it committed or pushed in with `git -C dir` or `cd dir && git` (see git.go)
 }
 
 type accessCache struct {
@@ -166,6 +167,7 @@ func accessOf(sid string) *access {
 		}
 		read += int64(len(line))
 		c.a.note(line)
+		c.a.noteGit(line)
 	}
 	c.size = read
 	return c.a

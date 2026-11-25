@@ -81,6 +81,58 @@ func sessionFolders(sid string) []string {
 	return out
 }
 
+var (
+	gitDashC = regexp.MustCompile(`git\s+(?:-c\s+\S+\s+)*-C\s+("[^"]+"|'[^']+'|[^\s;&|)]+)`)
+	cdDir    = regexp.MustCompile(`(?:^|&&|;|\(|\|)\s*cd\s+("[^"]+"|'[^']+'|[^\s;&|)]+)`)
+	gitBash  = []byte(`"Bash"`)
+)
+
+// noteGit takes, out of one transcript row, the folders a shell command of the session committed or pushed in
+// when it named them itself: `git -C <dir> commit`, `cd <dir> && git push`. A session often works in one
+// repository and commits in another this way, without ever moving there, so its working folders alone do not
+// show that repository. Only commits and pushes count: reading another repository does not make it part of the
+// feature.
+func (a *access) noteGit(line []byte) {
+	if !bytes.Contains(line, gitBash) || !bytes.Contains(line, []byte("git")) {
+		return
+	}
+	row, _ := parseJSON(line).(map[string]any)
+	m, _ := row["message"].(map[string]any)
+	parts, _ := m["content"].([]any)
+	for _, x := range parts {
+		p, _ := x.(map[string]any)
+		if p == nil || p["type"] != "tool_use" || p["name"] != "Bash" {
+			continue
+		}
+		in, _ := p["input"].(map[string]any)
+		cmd := str(in, "command")
+		if !commitRe.MatchString(cmd) && !pushRe.MatchString(cmd) {
+			continue
+		}
+		cwd := str(row, "cwd")
+		var found [][]string
+		found = append(found, gitDashC.FindAllStringSubmatch(cmd, -1)...)
+		found = append(found, cdDir.FindAllStringSubmatch(cmd, -1)...)
+		for _, f := range found {
+			d := strings.Trim(f[1], `"'`)
+			if strings.ContainsAny(d, "$`*") { // a variable or a pattern: not a folder that can be read from here
+				continue
+			}
+			d = expandUser(d)
+			if !filepath.IsAbs(d) {
+				if cwd == "" {
+					continue
+				}
+				d = filepath.Join(cwd, d)
+			}
+			if a.GitDirs == nil {
+				a.GitDirs = map[string]bool{}
+			}
+			a.GitDirs[filepath.Clean(d)] = true
+		}
+	}
+}
+
 // featureRepos lists the repositories of a feature: every one its sessions worked in. They are remembered in
 // repos.json next to feature.json, so a repository stays on the tab after its session has moved on or closed.
 func featureRepos(slug string) []string {
@@ -96,7 +148,15 @@ func featureRepos(slug string) []string {
 		if f != slug {
 			continue
 		}
-		for _, dir := range sessionFolders(sid) {
+		dirs := sessionFolders(sid)
+		if a := accessOf(sid); a != nil { // and where it committed or pushed without moving there
+			accCacheMu.Lock()
+			for d := range a.GitDirs {
+				dirs = append(dirs, d)
+			}
+			accCacheMu.Unlock()
+		}
+		for _, dir := range dirs {
 			if top := repoOf(dir); top != "" {
 				set[top] = true
 			}
