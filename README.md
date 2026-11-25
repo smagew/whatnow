@@ -110,7 +110,14 @@ per feature in the browser. The page is not loaded again for this: it takes the 
 
 **Motion.** The switch at the bottom of the bar chooses how the pages animate: **on** (the default: changes are
 animated whatever the system says), **as the system** (nothing moves when the system asks to reduce motion) and
-**off**. It is kept in the browser. A session that keeps a
+**off**. It is kept in the browser. What moves, each in 0.2 to 0.4 seconds: a new item slides in with a yellow edge
+that fades; an item that became done gets one ring around its check; its segment of the strip fills and the count
+rolls; the note about a changed plan fades in; a counter that changed gives one pulse. Under the current stage, while
+its session works, three small bars and a line say what the agent does now ("editing git.go", "running go test"): the
+hook writes the file an edit touched and the program a command ran, never the arguments. The variants these were chosen
+from are on `/demo/motion`.
+
+A session that keeps a
 dashboard is reminded at every prompt to write new work into the plan before it starts (`"remind": false` in
 `~/.whatnow/config.json` turns the reminder off), so a request you make shows up at once.
 

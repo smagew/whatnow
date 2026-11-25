@@ -214,6 +214,38 @@ func classify(p map[string]any, failed bool) (kind string, ok bool, text string)
 	return "", false, ""
 }
 
+var (
+	progWord = regexp.MustCompile(`^[A-Za-z0-9_.+-]{1,24}$`)
+	subWord  = regexp.MustCompile(`^[a-z][a-z-]{1,11}$`)
+)
+
+// programOf names what a shell command runs, for the page: the program and, when it has one, its subcommand
+// ("go test", "npm run", "docker"). Arguments are never taken: they may hold paths, text and secrets.
+func programOf(cmd string) string {
+	part := partSplit.Split(strings.TrimSpace(cmd), 2)[0]
+	var words []string
+	for _, w := range strings.Fields(part) {
+		if envAssign.MatchString(w) && len(words) == 0 {
+			continue // FOO=1 in front of the command
+		}
+		words = append(words, w)
+	}
+	if len(words) == 0 {
+		return ""
+	}
+	prog := filepath.Base(strings.TrimLeft(words[0], "("))
+	if !progWord.MatchString(prog) {
+		return ""
+	}
+	if prog == "cd" && len(partSplit.Split(cmd, 2)) == 2 { // cd somewhere && the real command
+		return programOf(partSplit.Split(cmd, 2)[1])
+	}
+	if len(words) > 1 && subWord.MatchString(words[1]) {
+		return prog + " " + words[1]
+	}
+	return prog
+}
+
 func appendEvent(ev map[string]any) {
 	path := filepath.Join(home(), "events.jsonl")
 	_ = os.MkdirAll(home(), 0o755)
@@ -543,8 +575,12 @@ func runHook(args []string) (rc int) {
 		tool := str(p, "tool_name")
 		if tool == "Bash" {
 			kind, ok, text := classify(p, event == "PostToolUseFailure")
-			if text == "" {
+			if text == "" { // not a commit, a push or a test run: the program it ran, never its arguments
+				in, _ := p["tool_input"].(map[string]any)
 				text = "running commands"
+				if prog := programOf(str(in, "command")); prog != "" {
+					text = "running " + prog
+				}
 			}
 			state["state"], state["what"] = "work", text
 			if kind != "" {
@@ -553,6 +589,12 @@ func runHook(args []string) (rc int) {
 			}
 		} else {
 			state["state"] = "work"
+			// the file it changed: the page shows it as what the agent does now
+			if in, _ := p["tool_input"].(map[string]any); in != nil && writeTools[tool] {
+				if f := str(in, "file_path") + str(in, "notebook_path"); f != "" {
+					state["what"] = "editing " + runes(filepath.Base(f), 60)
+				}
+			}
 		}
 		autoBind(sid, tool, p["tool_input"])
 	case "Stop":

@@ -232,12 +232,35 @@ body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes w
 .chw{padding:0 24px}.chn{max-width:1180px;margin:14px auto -4px;box-sizing:border-box;background:#fff6d6;border:1px solid #ecd27a;border-radius:10px;padding:8px 12px;display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center;font-size:13px;color:#4a3800;animation:chin .5s ease-out}
 .chn[hidden]{display:none}.chn b{font-weight:600}.chn .x{flex:1}
 .chn button{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;padding:2px 10px;border-radius:99px;border:1px solid #4a380066}.chn button.go{background:#4a3800;color:#fff;border-color:#4a3800}.chn button:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
-@keyframes chin{from{transform:translateY(-12px);opacity:0}to{transform:none;opacity:1}}
+/* The motion of the page, chosen from the examples in /demo/motion. Each answers one event, in 0.2 to 0.4 s,
+   with transform, opacity and colour only:
+   - the note about a changed plan and the mark on a stage fade in where they are, nothing drops or pops;
+   - a new item slides in from the left with a yellow edge that fades after a moment;
+   - an item that became done: its check fades in and one ring leaves the circle;
+   - the segment of a newly done item fills from the left, and the count rolls to the new number;
+   - a counter that changed gives one pulse;
+   - under the current stage, while its session works: three small bars and what the agent does now. */
+@keyframes chin{from{opacity:0}to{opacity:1}}
 @keyframes chg{0%,45%{background-color:#fff0b3;box-shadow:0 0 0 4px #f3d36b}100%{background-color:transparent;box-shadow:0 0 0 0 transparent}}
-@keyframes chb{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+@keyframes chb{from{opacity:0}to{opacity:1}}
 .chg{animation:chg 9s ease-out both;border-radius:8px}
+@keyframes an1s{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@keyframes an1m{0%,62%{box-shadow:inset 3px 0 0 var(--part)}100%{box-shadow:inset 3px 0 0 transparent}}
+.an1b{animation:an1s .32s cubic-bezier(.2,.7,.2,1) both,an1m 2.4s ease-out both}.an1m{animation:an1m 2.4s ease-out both}
+@keyframes an2r{0%{box-shadow:0 0 0 0 rgba(15,122,74,.45)}100%{box-shadow:0 0 0 10px rgba(15,122,74,0)}}@keyframes an2t{from{color:var(--ok)}to{color:inherit}}
+.an2a{animation:an2r .7s ease-out both;border-radius:50%}.an2t{animation:an2t .6s ease-out both}
+@keyframes an3f{from{transform:scaleX(0)}to{transform:none}}
+.sg i.an3a{position:relative;overflow:hidden;background:var(--no)!important}.sg i.an3a::after{content:'';position:absolute;inset:0;background:var(--ok);transform-origin:left;animation:an3f .42s cubic-bezier(.2,.7,.2,1) both}
+.roll{display:inline-grid;overflow:hidden;height:1.5em;vertical-align:bottom}.roll>span{grid-area:1/1}.roll .old{animation:rollo .26s cubic-bezier(.2,.7,.2,1) both}.roll .new{animation:rolli .26s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rollo{to{transform:translateY(-100%);opacity:0}}@keyframes rolli{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
+@keyframes p6{0%{box-shadow:0 0 0 0 rgba(179,38,30,.55)}100%{box-shadow:0 0 0 9px rgba(179,38,30,0)}}.p6b{animation:p6 .5s ease-out both}
+.act{display:flex;gap:8px;align-items:center;min-height:18px;margin-top:8px;font-size:12.5px;color:var(--mut);font-weight:400}.act:empty{display:none}.act .at{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eq{flex:none;display:inline-flex;gap:2px;align-items:flex-end;height:12px}.eq i{width:3px;height:3px;background:var(--live);border-radius:1px;animation:eq 1.1s ease-in-out infinite}.eq i:nth-child(2){animation-delay:-.35s}.eq i:nth-child(3){animation-delay:-.7s}
+@keyframes eq{0%,100%{height:3px}50%{height:12px}}.act .sw{animation:chin .3s ease-out both}
+@media(prefers-reduced-motion:reduce){html.mo-sys .an1b,html.mo-sys .an2a,html.mo-sys .an2t,html.mo-sys .sg i.an3a::after,html.mo-sys .roll>span,html.mo-sys .p6b,html.mo-sys .eq i,html.mo-sys .act .sw{animation:none}html.mo-sys .roll .old{display:none}html.mo-sys .eq i{height:8px}}
+html.mo-off .an1b,html.mo-off .an1m,html.mo-off .an2a,html.mo-off .an2t,html.mo-off .sg i.an3a::after,html.mo-off .roll>span,html.mo-off .p6b,html.mo-off .eq i,html.mo-off .act .sw{animation:none}html.mo-off .roll .old{display:none}html.mo-off .eq i{height:8px}
 .chgt{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;line-height:1.5;padding:0 6px;border-radius:99px;background:#f3d36b;color:#3a2a00;white-space:nowrap;vertical-align:1px}
-.chb{display:inline-block;margin-right:6px;font-size:11px;font-weight:700;line-height:1.5;padding:0 6px;border-radius:99px;background:#f3d36b;color:#3a2a00;vertical-align:1px;animation:chb .6s ease-in-out 4}
+.chb{display:inline-block;margin-right:6px;font-size:11px;font-weight:700;line-height:1.5;padding:0 6px;border-radius:99px;background:#f3d36b;color:#3a2a00;vertical-align:1px;animation:chb .3s ease-out .2s both}
 /* with "reduce motion" nothing moves; the glow stays, it is a change of colour, not a movement */
 @media(prefers-reduced-motion:reduce){html.mo-sys .chn,html.mo-sys .chb{animation:none}}
 html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
@@ -270,26 +293,13 @@ html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
 .tag.live{background:var(--liveb);color:var(--live)}
 @media(max-width:860px){.gcl li{flex-wrap:wrap}.gcl .gs{flex-basis:100%;white-space:normal}}
 /* the Access tab (it shares the blocks of the Git tab) */
-.acm{margin-top:10px;padding:8px 12px;border-radius:8px;background:#e8eeea;font-size:13px}.acm.warn{background:var(--warnb);color:#5a4300}.acm.bad{background:var(--badb);color:var(--bad)}
-.acd{font-size:13px;color:var(--mut);line-height:1.5}.acd .dp{display:block;margin-top:4px}.acd b{color:var(--ink);font-weight:600}
-.acr{margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}.acr:first-of-type{border-top:0;padding-top:0}
 .gr p{margin:6px 0 0;font-size:13px}.gr p b.bad{color:var(--bad)}.gr p small,.acf small{color:var(--mut)}
-.acl{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:4px}.acl code{white-space:normal;word-break:break-all}.acl code.bad{background:var(--badb);color:var(--bad)}
-.acf{margin:4px 0 0;padding:0;list-style:none;font-size:13px}.acf li{margin-top:4px}
-/* the three layouts of the Access tab (?acc=1|2|3) */
+/* the Access tab: a sentence and drawers */
 .axu{list-style:none;margin:4px 0 0;padding:0;font-size:13px}.axu li{margin-top:5px;min-width:0}.axu code{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}.axu code.bad{background:var(--badb);color:var(--bad)}
 .axu b{font-weight:600}.gr small{color:var(--mut)}
 .axd{margin-top:6px;font-size:13px}.axd>summary{cursor:pointer;color:var(--acc);font-weight:600;font-size:12.5px;list-style:none}.axd>summary::-webkit-details-marker{display:none}.axd>summary::after{content:' ▾'}.axd[open]>summary::after{content:' ▴'}
 .axd>summary:focus-visible,.axo>summary:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}.axw{color:var(--mut);line-height:1.7}.axw b{color:var(--ink);font-weight:600}.axe{color:var(--mut)}
-.axm{margin:12px 0 0;padding:10px 14px;border-radius:10px;background:#e8eeea;font-size:14px}.axm b{font-weight:700;margin-right:6px}.axm.warn{background:var(--warnb);color:#5a4300}.axm.bad{background:var(--badb);color:var(--bad)}
-.axl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}.axl.two{grid-template-columns:repeat(2,minmax(0,1fr))}
-.axc{border:1px solid var(--line);border-radius:10px;padding:10px 12px 12px;min-width:0;border-top:3px solid #8c9a92}.axc.free{border-top-color:var(--ok)}.axc.ask{border-top-color:var(--part)}.axc.never{border-top-color:var(--bad)}
-.axc h4{margin:0 0 2px;font-size:13px}.axc p{margin:4px 0 0}.axs{color:var(--mut);font-size:12.5px}.axf{margin-top:12px}
-@media(max-width:1000px){.axl,.axl.two{grid-template-columns:1fr}}
-.axt{display:grid;grid-template-columns:200px minmax(0,1fr);gap:0;margin:12px 0 0;font-size:13px}.axt dt{padding:9px 12px 9px 0;border-top:1px solid var(--line);color:var(--mut);font-weight:500}.axt dd{margin:0;padding:9px 0;border-top:1px solid var(--line);min-width:0}
-.axt dt:first-of-type,.axt dt:first-of-type+dd{border-top:0}.axt .axu{margin-top:0}.axt .axu li:first-child{margin-top:0}
 .axp{font-weight:700;padding:1px 9px;border-radius:99px;background:#e8eeea}.axp.warn{background:var(--warnb);color:#5a4300}.axp.bad{background:var(--badb);color:var(--bad)}
-@media(max-width:760px){.axt{grid-template-columns:1fr}.axt dd{border-top:0;padding-top:0}}
 .axq{margin:12px 0 8px;font-size:14.5px;line-height:1.7}
 .axo{border-top:1px solid var(--line)}.axo>summary{cursor:pointer;display:flex;gap:12px;align-items:baseline;padding:10px 0;list-style:none;font-size:13.5px}.axo>summary::-webkit-details-marker{display:none}
 .axo>summary b{flex:none;width:180px;font-weight:600}.axo>summary span{flex:1;min-width:0;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.axo>summary::after{content:'▾';color:var(--mut)}.axo[open]>summary::after{content:'▴'}
@@ -387,7 +397,7 @@ function renderRail(){var el=$('stl');if(!el)return;var S=P.stages,a=P.live?agen
    h+='<button class="rr cur'+end+'"'+sel+'><i class="rd cu'+(st==='work'?' pl':'')+'"'+tipA('Stage '+s.n+': '+t[0],t[1])+'>'+s.n+'</i><span class="cc">'+
     '<span class="here'+(st==='work'||st==='bg'?'':st==='wait'?' wait':' idle')+'"'+(a?tipA('Session '+sesName(a),'It is '+STX[a.state]+'. Last activity '+age(a.t)+'.'):tipA('The work is at this stage','No session of this feature is open right now.'))+'>'+(st==='work'?'agent is here':st==='bg'?'background task running':st==='wait'?'agent waits for you':'current stage')+'</span>'+
     '<span class="tt">'+kmark(s)+rich(s.title)+'</span>'+(wf?'<span class="nw"><i class="ico w'+(st==='work'?' on':'')+'"></i><span>'+rich(wf[1])+'</span></span>':'')+segs(s)+
-    '<span class="ft2"><span>'+s.dn+' of '+s.tot+' done</span>'+(l?'<span'+tipA('Last change '+exact(l.ts),l.t)+'>changed '+ts(l.ts)+'</span>':'')+'</span></span></button>';return}
+    '<span class="ft2"><span>'+s.dn+' of '+s.tot+' done</span>'+(l?'<span'+tipA('Last change '+exact(l.ts),l.t)+'>changed '+ts(l.ts)+'</span>':'')+'</span><span class="act" id="act"></span></span></button>';return}
   var chip=l&&Date.now()-l.ts<D1?'<span class="agechip"'+tipA('Changed '+exact(l.ts),chText(l)+': '+l.t+(recent(s.n,D1)>1?' (and '+(recent(s.n,D1)-1)+' more in the last day)':''))+'>'+ts(l.ts,1)+'</span>':(s.tot?'<small>'+s.dn+' of '+s.tot+'</small>':'');
   h+='<button class="rr'+(i>CUR?' next':'')+(s.state==='no'?' fut':'')+end+'"'+sel+'><i class="rd '+s.state+'"'+tipA(t[0],t[1])+'>'+(s.state==='ok'?'✓':s.n)+'</i><span class="nm">'+kmark(s)+rich(s.title)+'</span>'+chip+'</button>'});
  if(S.length-tail>4)h+='<button class="rr more next end" data-more="1" aria-expanded="'+!fold+'"><i class="rd no">'+(fold?'…':'–')+'</i><span>'+(fold?'Show '+(S.length-tail-3)+' more stages':'Hide later stages')+'</span></button>';
@@ -503,8 +513,9 @@ var CG={f:{},p:{},s:{},b:{},n:0,nb:0,first:-1,t0:Date.now(),off:false};
 // the picture of the plan that is compared: per stage its plan lines and its items with their kinds, and the open items
 function snapOf(){var now={s:{},b:{}};P.stages.forEach(function(s){var f={};(s.fids||[]).forEach(function(id,i){f[id]=s.facts[i][0]});now.s[s.n]={p:s.plan.slice(),f:f}});P.blockers.forEach(function(b){now.b[b.bid]=1});return now}
 // cgDiff fills CG with what the plan has now and the older picture did not
-function cgDiff(old){CG.f={};CG.p={};CG.s={};CG.b={};CG.n=0;CG.nb=0;CG.first=-1;CG.t0=Date.now();CG.off=false;
+function cgDiff(old){CG.f={};CG.p={};CG.s={};CG.b={};CG.dn={};CG.n=0;CG.nb=0;CG.first=-1;CG.t0=Date.now();CG.off=false;
  if(old&&old.s){P.stages.forEach(function(s,i){var a=old.s[s.n],c=0;
+   if(a){var od=0;Object.keys(a.f).forEach(function(k){if(DONE_K[a.f[k]])od++});CG.dn[s.n]=od}   // how many were done before: the count rolls from it
    (s.fids||[]).forEach(function(id,j){if(!a||!(id in a.f)){CG.f[id]='new';c++}else if(a.f[id]!==s.facts[j][0]){CG.f[id]='changed';c++}});
    s.plan.forEach(function(p,j){if(!a||a.p.indexOf(p)<0){(CG.p[s.n]=CG.p[s.n]||{})[j]=1;c++}});
    if(c||!a){CG.s[s.n]={c:c,neu:!a};CG.n+=c;if(CG.first<0)CG.first=i}});
@@ -513,22 +524,31 @@ function cgDiff(old){CG.f={};CG.p={};CG.s={};CG.b={};CG.n=0;CG.nb=0;CG.first=-1;
 var SEENKEY='wn-seen-'+P.slug,SEENDUE=true;
 function seenSave(){if(!SEENDUE||document.visibilityState!=='visible')return;SEENDUE=false;try{localStorage.setItem(SEENKEY,JSON.stringify(snapOf()))}catch(e){}}
 if(P.live){(function(){var old=null;try{old=JSON.parse(localStorage.getItem(SEENKEY)||'null')}catch(e){}cgDiff(old)})();document.addEventListener('visibilitychange',seenSave);seenSave()}
-function chMark(){if(CG.off||!(CG.n||CG.nb))return;var live=Date.now()-CG.t0<9000,dl='animation-delay:-'+((Date.now()-CG.t0)/1000).toFixed(1)+'s';
- function glow(el,tag){if(el.dataset.ch)return;el.dataset.ch=1;if(live){el.classList.add('chg');el.style.cssText+=';'+dl}
+function chMark(){if(CG.off||!(CG.n||CG.nb))return;var live=Date.now()-CG.t0<2600,dl='animation-delay:-'+((Date.now()-CG.t0)/1000).toFixed(2)+'s';
+ // how an item shows that it changed: a new one slides in with a marker, one that became done gets a ring on its
+ // check, any other change gets the marker alone. A redraw in the middle goes on from where the motion was.
+ function glow(el,tag,how){if(el.dataset.ch)return;el.dataset.ch=1;
+  if(live){var ic=el.querySelector('.ico'),done=how!=='new'&&ic&&(ic.classList.contains('y')||ic.classList.contains('fixed'));
+   if(done){ic.classList.add('an2a');ic.style.cssText+=';'+dl;var tx=el.querySelector('.t');if(tx){tx.classList.add('an2t');tx.style.cssText+=';'+dl}}
+   else{el.classList.add(how==='new'?'an1b':'an1m');el.style.cssText+=';'+dl}}
   if(el.querySelector('.ag'))return;   // the item already says "new" or what it changed to, with the time
   var t=document.createElement('span');t.className='chgt';t.textContent=tag;var at=el.querySelector('.t')||el.querySelector('h3')||el;at.appendChild(t)}
- [].forEach.call(document.querySelectorAll('#det li[data-fid]'),function(li){var k=CG.f[li.dataset.fid];if(k)glow(li,k)});
- var pl=CG.p[P.stages[cur].n];if(pl)[].forEach.call(document.querySelectorAll('#det .pf>div:first-child li'),function(li,j){if(pl[j])glow(li,'new')});
- [].forEach.call(document.querySelectorAll('#ovl li[data-fid]'),function(li){if(CG.b[li.dataset.fid])glow(li,'new')});
+ [].forEach.call(document.querySelectorAll('#det li[data-fid]'),function(li){var k=CG.f[li.dataset.fid];if(k)glow(li,k,k)});
+ var pl=CG.p[P.stages[cur].n];if(pl)[].forEach.call(document.querySelectorAll('#det .pf>div:first-child li'),function(li,j){if(pl[j])glow(li,'new','new')});
+ [].forEach.call(document.querySelectorAll('#ovl li[data-fid]'),function(li){if(CG.b[li.dataset.fid])glow(li,'new','new')});
+ // the card of the current stage: the segment of an item that became done fills, the count rolls to the new number
+ var cc=document.querySelector('#stl .rr.cur'),cs=P.stages[CUR];
+ if(cc&&cs&&live){[].forEach.call(cc.querySelectorAll('.sg i'),function(sg,fi){var id=(cs.fids||[])[fi],f=cs.facts[fi];if(sg.dataset.ch||!id||CG.f[id]!=='changed'||!f||!DONE_K[f[0]])return;sg.dataset.ch=1;sg.classList.add('an3a')});
+  var was=(CG.dn||{})[cs.n],nb=cc.querySelector('.ft2>span');if(nb&&was!=null&&was!==cs.dn&&!nb.dataset.ch){nb.dataset.ch=1;nb.innerHTML='<span class="roll"><span class="old">'+was+'</span><span class="new">'+cs.dn+'</span></span> of '+cs.tot+' done'}}
  [].forEach.call(document.querySelectorAll('#stl .rr[data-i]'),function(r){var s=P.stages[+r.dataset.i],c=s&&CG.s[s.n];if(!c||r.querySelector('.chb'))return;
   var b=document.createElement('span');b.className='chb';b.textContent=c.neu?'new':'+'+c.c;b.title=c.neu?'A new stage since you last looked':c.c+' new or changed item'+(c.c>1?'s':'')+' since you last looked';var nm=r.querySelector('.nm,.tt');if(nm)nm.insertBefore(b,nm.firstChild);else r.appendChild(b)})}
 function chNote(){var el=$('chn');if(!el||!(CG.n||CG.nb))return;var st=Object.keys(CG.s),f=P.stages[CG.first];
  var h='<b>'+(CG.now?'The plan has just changed.':'The plan changed since you last looked.')+'</b> <span class="x">'+(CG.n?CG.n+' new or changed item'+(CG.n>1?'s':'')+(f?' in stage '+f.n+' «'+esc(f.title)+'»'+(st.length>1?' and '+(st.length-1)+' more':''):''):'')+(CG.n&&CG.nb?', ':'')+(CG.nb?CG.nb+' new open item'+(CG.nb>1?'s':''):'')+'</span><button type="button" class="go" data-ch="show">Show</button><button type="button" data-ch="x" aria-label="Hide this note">Got it</button>';
  el.innerHTML=h;el.hidden=false;
  el.onclick=function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.ch==='x'){CG.off=true;el.hidden=true;[].forEach.call(document.querySelectorAll('.chgt,.chb'),function(x){x.remove()});return}
-  CG.t0=Date.now();[].forEach.call(document.querySelectorAll('[data-ch]'),function(x){if(x.tagName==='LI'){delete x.dataset.ch;x.classList.remove('chg');var t=x.querySelector('.chgt');if(t)t.remove()}});
+  CG.t0=Date.now();[].forEach.call(document.querySelectorAll('[data-ch]'),function(x){if(x.tagName==='LI'){delete x.dataset.ch;x.classList.remove('chg','an1b','an1m');var t=x.querySelector('.chgt');if(t)t.remove()}});
   if(CG.n&&CG.first>=0){show('work');renderStage(CG.first)}else show('ov');
-  setTimeout(function(){chMark();var g=document.querySelector('.chg');if(g&&g.scrollIntoView)g.scrollIntoView({block:'center',behavior:'smooth'})},60)}}
+  setTimeout(function(){chMark();var g=document.querySelector('.an1b,.an1m,.an2a');if(g&&g.scrollIntoView)g.scrollIntoView({block:'center',behavior:'smooth'})},60)}}
 if(P.live){chNote();chMark();new MutationObserver(function(){chMark()}).observe($('main'),{childList:true,subtree:true})}
 // When feature.json changes the page is not loaded again: it takes the new data and redraws in place, so nothing
 // flashes and the place on the page is kept. What is new or changed glows, and the note on top says what it was.
@@ -539,7 +559,7 @@ function applyData(N){var old=snapOf(),was=P.stages[cur]?P.stages[cur].n:null,y=
  CUR=Math.max(0,P.stages.map(function(s){return s.n}).indexOf(P.cur));var at=P.stages.map(function(s){return s.n}).indexOf(was);
  var follow=cur===OLDCUR;cur=at<0||follow?CUR:at;OLDCUR=CUR;   // the reader stays on the stage they opened; if they were on the current one, they follow it
  var sm=document.querySelector('#p-ov .sum');if(sm)sm.innerHTML=rich(P.summary||'');if($('p-dec'))$('p-dec').innerHTML=decHTML();
- var tb0=$('tab-ov');if(tb0){var c0=tb0.querySelector('.cnt');if(c0)c0.remove();if(P.blockers.length){c0=document.createElement('span');c0.className='cnt'+(P.blockers.some(function(b){return b.who==='you'})?' bad':'');c0.textContent=P.blockers.length;tb0.appendChild(c0)}}
+ var tb0=$('tab-ov');if(tb0){var c0=tb0.querySelector('.cnt'),before=c0?c0.textContent:'';if(c0)c0.remove();if(P.blockers.length){c0=document.createElement('span');c0.className='cnt'+(P.blockers.some(function(b){return b.who==='you'})?' bad':'')+(before!==String(P.blockers.length)?' p6b':'');c0.textContent=P.blockers.length;tb0.appendChild(c0)}}   // a counter that changed gives one pulse
  cgDiff(old);CG.now=true;renderStage(cur);freshBar();var el=$('chn');if(el)el.hidden=true;chNote();chMark();SEENDUE=true;seenSave();if(typeof gitUI==='function'&&HASGIT)gitLoad();window.scrollTo(0,y)}
 var OLDCUR=CUR,RELOADING=false;
 function softReload(){if(RELOADING)return;RELOADING=true;fetch('/api/panel?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){RELOADING=false;if(!j||!j.stages)throw 0;applyData(j)}).catch(function(){RELOADING=false;location.reload()})}
@@ -674,8 +694,8 @@ var ACC={d:null,busy:false,timer:0};
 var MODES={'default':['','Asks before it edits a file or runs a command that no rule allows.'],acceptEdits:['','Edits files without asking; asks before a command that no rule allows.'],plan:['','Reads and plans only: it changes nothing until you approve the plan.'],
  auto:['warn','Works without asking. A safety check looks at each action and stops the risky ones.'],bypassPermissions:['bad','Does everything without asking and without a safety check.'],dontAsk:['','Does what the rules allow and refuses the rest without asking.']};
 function accChips(l,cls){return '<span class="acl">'+l.map(function(x){return '<code'+(cls?' class="'+cls+'"':'')+'>'+esc(x)+'</code>'}).join('')+'</span>'}
-// Three layouts of a session's access to choose from (?acc=1|2|3; 0 is the first draft). Shared parts first.
-var AV=(function(){try{var v=new URLSearchParams(location.search).get('acc');return v===null?1:Math.max(0,Math.min(3,+v||0))}catch(e){return 1}})();
+// The Access tab: one sentence about a session, then drawers, each saying its answer in short and opening for
+// the whole of it. Chosen from three layouts; long lists are one thing per line.
 function axNice(n){return n.indexOf(' ')>=0?n:n.replace(/^claude_ai_/,'claude.ai ').replace(/^plugin_([^_]+)_/,'plugin $1: ').replace(/_/g,' ')}
 // a list one thing per line; what does not fit the first lines is folded
 function axLines(l,max,cls){if(!l.length)return '';var row=function(x){return '<li><code'+(cls?' class="'+cls+'"':'')+' title="'+esc(x)+'">'+esc(x)+'</code></li>'},a=l.slice(0,max),b=l.slice(max);
@@ -685,48 +705,13 @@ function axData(s){var rl=s.rules||[],R={allow:[],ask:[],deny:[],dirs:[],from:[]
   now:d.now||d.root||'',root:d.root||'',add:d.add||[],seen:(d.seen||[]).filter(function(x){return x!==d.root&&x!==d.now}),m:MODES[s.mode]||['',''],known:!!s.mcp}}
 function axHead(s){return '<div class="grh"><h3>'+esc(s.name||s.id.slice(0,8))+'</h3><span class="tag '+(s.open?'ok':'no')+'">'+(s.open?(STX[s.state]||'open'):'closed')+'</span>'+(s.model?'<span class="gp">model '+esc(s.model)+'</span>':'')+'</div>'}
 function axFolders(D){return '<ul class="axu"><li><b>Works in</b> <code>'+esc(D.now||'not known')+'</code></li>'+(D.root&&D.root!==D.now?'<li><b>Started in</b> <code>'+esc(D.root)+'</code> <small>and everything under it</small></li>':D.now?'<li><small>started here; reaches everything under it</small></li>':'')+D.add.concat(D.R.dirs).map(function(x){return '<li><b>Added</b> <code>'+esc(x)+'</code></li>'}).join('')+'</ul>'+(D.seen.length?'<details class="axd"><summary>'+D.seen.length+' more it worked in lately</summary>'+axLines(D.seen,99)+'</details>':'')}
-// 1. By consequence: what it does without asking, what it asks about, what it never does; then what it reaches.
-function accV1(s){var D=axData(s),auto=s.mode==='auto'||s.mode==='bypassPermissions';
- return '<section class="gr ax1">'+axHead(s)+'<p class="axm '+D.m[0]+'"><b>'+esc(s.mode||'mode not known')+'</b> '+(D.m[1]||'The transcript of this session does not say its permission mode.')+'</p>'+
-  '<div class="axl"><div class="axc free"><h4>Does without asking</h4>'+(auto?'<p>'+(s.mode==='auto'?'Everything the safety check lets through.':'Everything.')+'</p>':s.mode==='acceptEdits'?'<p>Edits of files.</p>':'')+(D.R.allow.length?'<p class="axs">'+D.R.allow.length+' rule'+(D.R.allow.length>1?'s':'')+' allow</p>'+axLines(D.R.allow,5):auto?'':'<p class="axe">No rules allow anything.</p>')+'</div>'+
-  '<div class="axc ask"><h4>Asks you first</h4>'+(D.R.ask.length?axLines(D.R.ask,5):'<p class="axe">'+(auto?'Nothing: in this mode it does not stop to ask.':s.mode==='plan'?'Everything: it only plans.':'Whatever no rule allows.')+'</p>')+'</div>'+
-  '<div class="axc never"><h4>Never</h4>'+(D.R.deny.length?axLines(D.R.deny,5,'bad'):'<p class="axe">No rule forbids anything.</p>')+'</div></div>'+
-  '<div class="axl two"><div class="axc"><h4>Reaches on this machine</h4>'+axFolders(D)+'</div><div class="axc"><h4>Reaches outside</h4>'+(D.known?(D.on.length?'<ul class="axu">'+D.on.map(function(x){return '<li><b>'+esc(axNice(x.name))+'</b> <small>'+x.tools+' tools</small></li>'}).join('')+'</ul>':'<p class="axe">No outside service in use.</p>')+(D.off.length?'<details class="axd"><summary>'+D.off.length+' more offered, not signed in</summary><p class="axw">'+D.off.map(function(x){return esc(axNice(x.name))}).join(' · ')+'</p></details>':''):'<p class="axe">Not known: the transcript was not found.</p>')+'</div></div>'+
-  (D.known?'<details class="axd axf"><summary>'+D.files.length+' instruction file'+(D.files.length===1?'':'s')+' loaded, '+D.tools.length+' tools used'+(D.R.from.length?', rules from '+D.R.from.length+' settings file'+(D.R.from.length>1?'s':''):'')+'</summary>'+(D.files.length?'<p><b>Instruction files</b></p>'+axLines(D.files.map(function(f){return f.path}),99):'')+(D.tools.length?'<p><b>Tools it has used</b></p><p class="axw">'+D.tools.map(esc).join(' · ')+'</p>':'')+(D.R.from.length?'<p><b>Settings files with rules</b></p>'+axLines(D.R.from,99):'')+'</details>':'')+'</section>'}
-// 2. A sheet: the name of a thing on the left, what it is on the right, the same order for every session.
-function accV2(s){var D=axData(s),row=function(k,v){return v?'<dt>'+k+'</dt><dd>'+v+'</dd>':''},n=function(l){return l.length?' <small>'+l.length+'</small>':''};
- return '<section class="gr ax2">'+axHead(s)+'<dl class="axt">'+row('Permission mode','<b class="axp '+D.m[0]+'">'+esc(s.mode||'not known')+'</b> '+(D.m[1]||''))+
-  row('Works in','<code>'+esc(D.now||'not known')+'</code>')+row('Started in',D.root&&D.root!==D.now?'<code>'+esc(D.root)+'</code> <small>reaches everything under it</small>':D.now?'<small>the same folder; reaches everything under it</small>':'')+
-  row('Added folders',D.add.concat(D.R.dirs).length?axLines(D.add.concat(D.R.dirs),4):'')+row('Also worked in'+n(D.seen),axLines(D.seen,3))+
-  row('Allowed without asking'+n(D.R.allow),D.R.allow.length?axLines(D.R.allow,4):'<small>no rules</small>')+row('Asks first'+n(D.R.ask),D.R.ask.length?axLines(D.R.ask,4):'<small>no rules</small>')+row('Never'+n(D.R.deny),D.R.deny.length?axLines(D.R.deny,4,'bad'):'<small>no rules</small>')+
-  (D.known?row('Outside services in use'+n(D.on),D.on.length?'<span class="axw">'+D.on.map(function(x){return '<b>'+esc(axNice(x.name))+'</b> '+x.tools+' tools'}).join(' · ')+'</span>':'<small>none</small>')+
-   row('Offered, not signed in'+n(D.off),D.off.length?'<details class="axd"><summary>show '+D.off.length+'</summary><p class="axw">'+D.off.map(function(x){return esc(axNice(x.name))}).join(' · ')+'</p></details>':'')+
-   row('Instruction files'+n(D.files),axLines(D.files.map(function(f){return f.path}),4))+row('Tools it has used'+n(D.tools),D.tools.length?'<span class="axw">'+D.tools.map(esc).join(' · ')+'</span>':'<small>none yet</small>'):row('Transcript','<small>not found: services, files and tools are not known</small>'))+
-  row('Rules come from',D.R.from.length?axLines(D.R.from,4):'')+'</dl></section>'}
-// 3. One sentence, then drawers: each line says its answer in short and opens for the whole of it.
-function accV3(s){var D=axData(s),dr=function(k,sum,body,open){return '<details class="axo"'+(open?' open':'')+'><summary><b>'+k+'</b><span>'+sum+'</span></summary><div>'+body+'</div></details>'},pl=function(n,w){return n+' '+w+(n===1?'':'s')};
+function accCard(s){var D=axData(s),dr=function(k,sum,body,open){return '<details class="axo"'+(open?' open':'')+'><summary><b>'+k+'</b><span>'+sum+'</span></summary><div>'+body+'</div></details>'},pl=function(n,w){return n+' '+w+(n===1?'':'s')};
  return '<section class="gr ax3">'+axHead(s)+'<p class="axq"><b class="axp '+D.m[0]+'">'+esc(s.mode||'mode not known')+'</b> in <code>'+esc(D.root||D.now||'?')+'</code>'+(D.R.allow.length+D.R.ask.length+D.R.deny.length?', '+pl(D.R.allow.length+D.R.ask.length+D.R.deny.length,'rule'):', no rules')+(D.known?', '+pl(D.on.length,'outside service')+' in use':'')+'.</p>'+
   dr('Permission mode',esc(s.mode||'not known'),'<p>'+(D.m[1]||'The transcript of this session does not say it.')+'</p>')+
   dr('Folders',esc(D.now||'not known')+(D.add.length+D.seen.length?' and '+(D.add.length+D.seen.length)+' more':''),axFolders(D))+
   dr('Rules',D.R.allow.length+' allowed · '+D.R.ask.length+' ask · '+D.R.deny.length+' never',(D.R.deny.length?'<p><b>Never</b></p>'+axLines(D.R.deny,99,'bad'):'')+(D.R.ask.length?'<p><b>Asks first</b></p>'+axLines(D.R.ask,99):'')+(D.R.allow.length?'<p><b>Allowed without asking</b></p>'+axLines(D.R.allow,99):'')+(D.R.from.length?'<p><b>From</b></p>'+axLines(D.R.from,99):'<p class="axe">No allow, ask or deny rules in the settings files that apply.</p>'))+
   (D.known?dr('Outside services',D.on.length+' in use · '+D.off.length+' offered',(D.on.length?'<ul class="axu">'+D.on.map(function(x){return '<li><b>'+esc(axNice(x.name))+'</b> <small>'+x.tools+' tools</small></li>'}).join('')+'</ul>':'<p class="axe">None in use.</p>')+(D.off.length?'<p><b>Offered, not signed in</b></p><p class="axw">'+D.off.map(function(x){return esc(axNice(x.name))}).join(' · ')+'</p>':''))+
    dr('Instruction files',pl(D.files.length,'file'),D.files.length?axLines(D.files.map(function(f){return f.path}),99):'<p class="axe">None seen in the transcript.</p>')+dr('Tools it has used',String(D.tools.length),D.tools.length?'<p class="axw">'+D.tools.map(esc).join(' · ')+'</p>':'<p class="axe">None yet.</p>'):'')+'</section>'}
-function accCard(s){return [accCard0,accV1,accV2,accV3][AV](s)}
-function accCard0(s){var m=MODES[s.mode]||['','']
- ,h='<section class="gr"><div class="grh"><h3>'+esc(s.name||s.id.slice(0,8))+'</h3><span class="tag '+(s.open?'ok':'no')+'">'+(s.open?(STX[s.state]||'open'):'closed')+'</span>'+(s.model?'<span class="gp">model '+esc(s.model)+'</span>':'')+'</div>';
- h+='<div class="acm '+m[0]+'"><b>Permission mode: '+esc(s.mode||'not known')+'</b>'+(m[1]?' <span>'+m[1]+'</span>':s.mode?'':' <span>The transcript of this session does not say it.</span>')+'</div>';
- h+='<h4>Folders</h4><div class="acd">'+(s.dirs&&(s.dirs.now||s.dirs.root)?dirsLine({dirs:s.dirs}):'<span class="gm">Not known.</span>')+'</div>';
- var rl=s.rules||[],SRC={user:'your settings, for every project',project:'the project, shared with the team',local:'the project, only on this machine'};
- h+='<h4>Rules from the settings files</h4>'+(rl.length?rl.map(function(r){return '<div class="acr"><p class="gm"><b>'+esc(r.source)+'</b>: '+SRC[r.source]+' <code>'+esc(r.file)+'</code>'+(r.mode?' · default mode <code>'+esc(r.mode)+'</code>':'')+'</p>'+
-   (r.deny.length?'<p><b class="bad">Never</b> <small>'+r.deny.length+'</small>'+accChips(r.deny,'bad')+'</p>':'')+(r.ask.length?'<p><b>Asks first</b> <small>'+r.ask.length+'</small>'+accChips(r.ask)+'</p>':'')+
-   (r.allow.length?'<p><b>Allowed without asking</b> <small>'+r.allow.length+'</small>'+accChips(r.allow)+'</p>':'')+(r.dirs.length?'<p><b>More folders</b>'+accChips(r.dirs)+'</p>':'')+'</div>'}).join(''):'<p class="gm">No allow, ask or deny rules in the settings files that apply to it (user, project, local).</p>');
- // a server that offers only its two sign-in tools is not signed in yet; ids like claude_ai_Google_Drive are made readable
- if(s.mcp){var nice=function(n){return n.indexOf(' ')>=0?n:n.replace(/^claude_ai_/,'claude.ai ').replace(/^plugin_([^_]+)_/,'plugin $1: ').replace(/_/g,' ')},on=s.mcp.filter(function(x){return x.tools>2}),off=s.mcp.filter(function(x){return x.tools<=2});
-  h+='<h4>Outside services (MCP servers) <small>'+s.mcp.length+'</small></h4>'+(s.mcp.length?(on.length?'<p><b>In use</b> <small>with the number of tools</small>'+accChips(on.map(function(x){return nice(x.name)+' · '+x.tools}))+'</p>':'')+(off.length?'<p><b>Offered, not signed in</b> <small>'+off.length+'</small>'+accChips(off.map(function(x){return nice(x.name)}))+'</p>':''):'<p class="gm">None.</p>');
-  h+='<h4>Instruction files it loaded</h4>'+(s.files.length?'<ul class="acf">'+s.files.map(function(f){return '<li><code>'+esc(f.path)+'</code>'+(f.type?' <small>'+esc(f.type)+'</small>':'')+'</li>'}).join('')+'</ul>':'<p class="gm">None seen in the transcript.</p>');
-  h+='<h4>Tools it has used <small>'+s.tools.length+'</small></h4>'+(s.tools.length?'<p>'+accChips(s.tools)+'</p>':'<p class="gm">None yet.</p>')}
- else h+='<p class="gm">The transcript of this session was not found, so only the folders and the rules are known.</p>';
- return h+'</section>'}
 function accUI(){var el=$('accl');if(!el||!ACC.d)return;var ss=ACC.d.sessions||[],h='<p class="why">What each session of this feature may do and reach, as Claude Code wrote it into the session and as the settings files say. Nothing is changed from here.</p>'+(ss.length?ss.map(accCard).join(''):'<p class="gm">No session of this feature is known.</p>');
  if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h}}
 function accLoad(){if(ACC.busy)return;ACC.busy=true;fetch('/api/access?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){ACC.busy=false;if(j&&j.sessions){ACC.d=j;accUI()}}).catch(function(){ACC.busy=false})}
@@ -746,8 +731,17 @@ function dirsUI(){if(!P.live)return;var stl=$('stl'),b=SES.bound.filter(function
  if(!b.length){if(c)c.remove();return}
  var h='<h4>'+(b.some(function(s){return s.use})?'Folders and resources':'Folders')+'</h4>'+b.map(function(s){return (b.length>1?'<span class="dp dn"><b>'+esc(sesName(s))+'</b></span>':'')+dirsLine(s)}).join('');
  if(!c){c=document.createElement('div');c.className='dcard';stl.appendChild(c)}if(c.dataset.h!==h){c.dataset.h=h;c.innerHTML=h}}
-var renderRail0=renderRail;renderRail=function(){renderRail0();dirsUI()};
-function gotSes(j){SES.bound=j.bound||[];SES.sessions=j.sessions||[];sesBar();dirsUI();lastMsg();var a=agent(),k=a?a.id+a.state:'';if(k!==SES.key){SES.key=k;if(FORM)renderRail();else renderStage(cur)}if(!TC||!$('fr').contains(TC))freshBar()}
+// Under the current stage, while its session works: three small bars and what the agent does now, as the hook
+// last saw it ("editing git.go", "running go test"). The plan may not change for minutes; this line says the
+// work is alive. The text fades when it changes; nothing else moves.
+var ACT='';
+function actText(a){if(!a)return '';if(a.state==='bg')return 'Waiting for a background task';if(a.state!=='work')return '';var w=a.what||'';
+ if(/^received a prompt/.test(w))return 'Reading your message';if(!w||w==='running commands')return 'Working';return w.charAt(0).toUpperCase()+w.slice(1)}
+function actLine(){var el=$('act');if(!el)return;var a=agent(),t=actText(a);if(!t){if(el.firstChild)el.innerHTML='';ACT='';return}
+ if(t!==ACT||!el.firstChild){el.innerHTML='<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span class="at'+(ACT&&t!==ACT?' sw':'')+'" title="'+esc(t)+'">'+esc(t)+' · '+ts(a.t)+'</span>';ACT=t}
+ else{var s=el.querySelector('[data-ts]');if(s){s.dataset.ts=a.t;s.textContent=age(a.t)}}}
+var renderRail0=renderRail;renderRail=function(){renderRail0();dirsUI();actLine()};
+function gotSes(j){SES.bound=j.bound||[];SES.sessions=j.sessions||[];sesBar();dirsUI();actLine();lastMsg();var a=agent(),k=a?a.id+a.state:'';if(k!==SES.key){SES.key=k;if(FORM)renderRail();else renderStage(cur)}if(!TC||!$('fr').contains(TC))freshBar()}
 function loadSes(){if(INIT.ses){var j=INIT.ses;INIT.ses=null;gotSes(j);return}fetch('/api/sessions?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(gotSes).catch(function(){})}
 if($('ses'))$('ses').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.dataset.term)return;var v=b.dataset.ses;
  if(v==='pick'){SES.pick=!SES.pick;SES.err='';sesBar();return}
