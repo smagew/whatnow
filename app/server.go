@@ -660,6 +660,9 @@ func tellSession(sid string, text string) (int, any) {
 	switch {
 	case (ag != nil && listed) || (ag == nil && row != nil && row.State != "closed"):
 		entry["route"], entry["sessionName"] = "active", ag.name(sid)
+		if row == nil || !awake(row) { // nothing listens there: a background session is woken through its terminal
+			wakeSession(sid)
+		}
 	case row != nil && isDir(row.Cwd):
 		ok, out := resumeInBackground(sid, row.Cwd, entry)
 		entry["route"] = "bg"
@@ -862,6 +865,9 @@ func sendEntry(entry map[string]any) map[string]any {
 			entry["session"] = s.ID
 		} else { // nobody can take it now: left to the first session of the feature that can
 			entry["asleep"] = true
+			if wakeSession(s.ID) { // a background session is woken through its terminal, and takes it then
+				entry["session"] = s.ID
+			}
 		}
 	case "bg":
 		ok, out := resumeInBackground(s.ID, s.Cwd, entry)

@@ -91,6 +91,13 @@ On a feature page opened through the server every item of a stage has actions:
   unfinished. It is stored in `overrides.json` next to `feature.json` (Claude never writes that file, so the
   two cannot overwrite each other). It follows the item's text, not its position. **Restore** undoes it.
 
+**A session that sleeps.** A message reaches an open session through its hooks: while it works, at the end of the
+turn; while it is idle, through a watcher that Claude Code keeps for an hour. After that hour nothing listens. A
+*background* session is then woken through its terminal: the dashboard attaches to it, types one line ("There is a
+message for you from the whatnow dashboard.") and leaves; the hook of that prompt delivers the message. Nothing is
+typed when the screen of the session shows a question (Enter would answer it), and a session open in your own
+terminal cannot be reached this way: there you type something yourself.
+
 **Where *Do it* and *Write* go.** The message is written to `~/.whatnow/inbox/` and routed:
 1. **A session of the feature is open** (confirmed by `claude agents --json`): the message is addressed to it.
    If it is idle, the `--watch` hook wakes it (`asyncRewake`: exit code 2 makes Claude Code start a turn).
