@@ -220,7 +220,7 @@ body.sb header .sub{display:none}body.sb header .meta{margin-top:0}
 .cw{position:fixed;z-index:40;right:20px;bottom:20px}.cw[hidden],.cwb[hidden],.cwp[hidden]{display:none}
 .cwp .tx~small{display:none}
 .cwp{width:min(400px,calc(100vw - 24px));border-radius:22px;box-shadow:0 8px 28px rgba(22,36,30,.22)}
-.cwb{width:min(580px,calc(100vw - 24px));height:min(74vh,660px);background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 34px rgba(22,36,30,.26);display:flex;flex-direction:column;overflow:hidden;font-size:13.5px}
+.cwb{width:min(580px,calc(100vw - 24px));height:min(74vh,660px);background:var(--cbg,var(--paper));border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 34px rgba(22,36,30,.26);display:flex;flex-direction:column;overflow:hidden;font-size:13.5px}
 .cwh{display:flex;gap:10px;align-items:center;padding:9px 10px 9px 10px;border-bottom:1px solid var(--line)}
 .cwh small{color:var(--mut);font-size:12px}
 .cwh button{all:unset;cursor:pointer;margin-left:auto;color:var(--mut);font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:8px}
@@ -238,7 +238,7 @@ body.sb header .sub{display:none}body.sb header .meta{margin-top:0}
 .swB:not(.t) i:first-child{color:#fff}.swB.t::before{transform:translateX(31px);background:#e6efe9}.swB.t i:last-child{color:#16241e}.swB:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}
 .cwb.t .swB,.cwp.t .swB{background:#22352c}.cwb.t .swB i,.cwp.t .swB i{color:#9fb3a8}.cwb.t .swB.t i:last-child,.cwp.t .swB.t i:last-child{color:#16241e}
 html.mo-off .swB::before,html.mo-off .swB i{transition:none}
-.cwb.t{background:#16241e;border-color:#2c4136}.cwb.t .cwh{background:#0f1b16;border-color:#22352c;color:#dfe9e3}.cwb.t .cwh small{color:#9fb3a8}.cwb.t .cwh button{color:#9fb3a8}.cwb.t .cwh button:hover{background:#ffffff14;color:#fff}
+.cwb.t{background:var(--tbg,#16241e);border-color:#2c4136}.cwb.t .cwh{background:#0f1b16;border-color:#22352c;color:#dfe9e3}.cwb.t .cwh small{color:#9fb3a8}.cwb.t .cwh button{color:#9fb3a8}.cwb.t .cwh button:hover{background:#ffffff14;color:#fff}
 .cwp.t{background:#16241e;border-color:#2c4136;color:#dfe9e3}.cwp.t small{color:#9fb3a8}.cwp.t .go{color:#9fd3b5}.cl1 .tx.mono{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace}
 .cwp:focus-visible,.cwu:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
 .cwp.un .swB::after{content:'';position:absolute;left:24px;top:-3px;width:11px;height:11px;border-radius:50%;background:#e0452f;box-shadow:0 0 0 2px var(--paper);z-index:2}.cwp.t.un .swB::after{box-shadow:0 0 0 2px #16241e}
@@ -250,7 +250,7 @@ html.mo-off .swB::before,html.mo-off .swB i{transition:none}
 html.mo-off .cwu{animation:none}@media(prefers-reduced-motion:reduce){html.mo-sys .cwu{animation:none}}
 .cwp.t{width:min(520px,calc(100vw - 24px))}.cwp.t>b{flex:0 1 auto;min-width:0;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cwb .cwl[hidden],.cwb .cwf[hidden],.cwb .cwn[hidden]{display:none}
-.cwtm{flex:1;min-height:0;position:relative;background:#16241e}.cwtm[hidden]{display:none}.cwtx{position:absolute;inset:8px 4px 6px 12px}.cwtx[hidden]{display:none}
+.cwtm{flex:1;min-height:0;position:relative;background:transparent}.cwtm[hidden]{display:none}.cwtx{position:absolute;inset:8px 4px 6px 12px}.cwtx[hidden]{display:none}
 .cwtg{max-width:520px;margin:22px auto;padding:0 18px;line-height:1.5;font-size:14px;color:#dfe9e3}.cwtg[hidden]{display:none}.cwtg h3{margin:0 0 8px;font-size:16px;color:#fff}.cwtg p{margin:0 0 10px}
 .cwtg code{background:#ffffff1c;border-radius:6px;padding:2px 8px;font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:#fff}.cwtg small{color:#9fb3a8}.cwtg .wte{color:#ffb4ab}
 .cwtg .wta{all:unset;cursor:pointer;color:#cfe3d8;font-size:12.5px;font-weight:600;padding:3px 10px;border-radius:99px;border:1px solid #ffffff3d;white-space:nowrap}.cwtg .wta:hover{background:#ffffff1f}
@@ -266,6 +266,13 @@ html.mo-off .cwu{animation:none}@media(prefers-reduced-motion:reduce){html.mo-sy
 .cw.wide .cwr.l,.cw.wide .cwr.c{display:none}.cw.wide .cwr.t{left:0}
 .cw.wide .cb{max-width:min(88%,820px)}
 .cwh button:hover{background:var(--nob)}.cwh button:focus-visible{outline:3px solid #2a8cff}
+.cwb.see{-webkit-backdrop-filter:blur(16px) saturate(1.2);backdrop-filter:blur(16px) saturate(1.2)}.cwb.t.see .cwh{background:rgba(15,27,22,var(--ta,1))}
+.cwb.cdk:not(.t) .cwh{color:#dfe9e3;border-color:#ffffff1f}.cwb.cdk:not(.t) .cwh small,.cwb.cdk:not(.t) .cwh button,.cwb.cdk .ct,.cwb.cdk .cwe,.cwb.cdk .cwn,.cwb.cdk .cs{color:#aab7b0}.cwb.cdk .cwf{border-color:#ffffff1f}
+.cwst{position:absolute;z-index:6;top:calc(100% - 4px);right:10px;width:290px;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(22,36,30,.28);padding:12px 14px;font-size:12.5px}.cwst[hidden]{display:none}
+.cwst h5{margin:0 0 6px;font-size:12px;font-weight:600;color:var(--mut)}.cwst .row{display:flex;gap:6px;align-items:center;margin-bottom:12px}
+.cwst .sw{all:unset;cursor:pointer;width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1px #00000026}.cwst .sw[aria-pressed=true]{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--live)}.cwst .sw:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
+.cwst input[type=color]{width:26px;height:24px;padding:0;border:0;background:none;cursor:pointer;margin-left:4px}.cwst input[type=range]{flex:1}.cwst .pc{width:38px;text-align:right;font-variant-numeric:tabular-nums;color:var(--mut)}
+.cwst .rs{all:unset;cursor:pointer;color:var(--live);font-weight:600}.cwst .rs:hover{text-decoration:underline}
 .cwl{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:12px 14px}
 .cb{max-width:88%;padding:8px 14px;overflow-wrap:anywhere;min-width:0}
 .cb>*{margin:0 0 7px}.cb>:last-child{margin-bottom:0}.cb .mdh{font-weight:700}.cb ul,.cb ol{padding-left:20px}.cb li{margin:2px 0}.cb li.in1{margin-left:16px}.cb li.in2{margin-left:32px}.cb li.in3{margin-left:48px}
@@ -398,7 +405,7 @@ html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
 <div class="chw"><div class="chn" id="chn" role="status" hidden></div></div>
 <main id="main"></main>
 <aside class="cw" id="cw" aria-label="The session: messages and terminal" hidden><div class="cwu" id="cwu" role="status" tabindex="0" hidden></div><div class="cl1 cwp" id="cwp" role="button" tabindex="0"></div>
-<div class="cwb" id="cwb" hidden><i class="cwr t" data-r="t"></i><i class="cwr l" data-r="l"></i><i class="cwr c" data-r="c"></i><div class="cwh"><span id="cwsw"><i class="lma" aria-hidden="true">C</i></span><span id="cwt"></span><button type="button" class="ib" id="cwm" hidden aria-haspopup="menu" aria-expanded="false" aria-label="More" title="More"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="3" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="13" cy="8" r="1.5" fill="currentColor"/></svg></button><button type="button" class="ib" id="cwsd"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 2.5v11M13 8H5.5M8.5 5l-3 3 3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" class="ib" id="cwd"></button><button type="button" class="ib" id="cwx" aria-label="Fold" title="Fold to a line in the corner. Nothing is closed: a terminal stays connected."><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="cwmn" id="cwmn" role="menu" hidden><button type="button" role="menuitem" id="cwdc">Disconnect the terminal<small>The session keeps running in the background</small></button></div></div>
+<div class="cwb" id="cwb" hidden><i class="cwr t" data-r="t"></i><i class="cwr l" data-r="l"></i><i class="cwr c" data-r="c"></i><div class="cwh"><span id="cwsw"><i class="lma" aria-hidden="true">C</i></span><span id="cwt"></span><button type="button" class="ib" id="cwm" hidden aria-haspopup="menu" aria-expanded="false" aria-label="More" title="More"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="3" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="13" cy="8" r="1.5" fill="currentColor"/></svg></button><button type="button" class="ib" id="cwg" aria-haspopup="dialog" aria-expanded="false" aria-label="Look of this window" title="Look of this window"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="2.2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 1.8v1.6M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.6 3.6l1.1 1.1M11.3 11.3l1.1 1.1M3.6 12.4l1.1-1.1M11.3 4.7l1.1-1.1" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button><button type="button" class="ib" id="cwsd"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 2.5v11M13 8H5.5M8.5 5l-3 3 3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" class="ib" id="cwd"></button><button type="button" class="ib" id="cwx" aria-label="Fold" title="Fold to a line in the corner. Nothing is closed: a terminal stays connected."><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="cwst" id="cwst" role="dialog" aria-label="Look of this window" hidden></div><div class="cwmn" id="cwmn" role="menu" hidden><button type="button" role="menuitem" id="cwdc">Disconnect the terminal<small>The session keeps running in the background</small></button></div></div>
 <div class="cwl" id="cwl" aria-live="polite"></div>
 <div class="cwtm" id="cwtm" hidden><div class="cwtx" id="cwtx"></div><div class="cwtg" id="cwtg" hidden></div></div>
 <form class="cwf" id="cwf"><textarea id="cwi" rows="1" placeholder="Write to Claude…" aria-label="Message to Claude"></textarea><button type="submit" id="cws" disabled>Send</button></form>
@@ -757,6 +764,20 @@ function boxPlace(){var c=$('cw'),o=CHAT.box,wide=!!o.wide&&CHAT.open,l=o.ax==='
  var w=($('cwb').hidden?$('cwp'):$('cwb')).offsetWidth||400,x=Math.max(8,Math.min(o.x==null?20:o.x,innerWidth-boxSw()-w-8));
  c.style.left=l?boxSw()+x+'px':'auto';c.style.right=l?'auto':x+'px';
  var d=$('cwsd');d.hidden=wide;d.classList.toggle('flip',l);d.title=l?'Move the window to the right side':'Move the window to the left side';d.setAttribute('aria-label',d.title)}
+// The look of the window of the session: the background of the messages, the background of the terminal, and how
+// much of the page shows through both. Kept with the size and the place of the window.
+var LOOKC=['#ffffff','#f6f2ea','#eef3f8','#22302a','#111614'],LOOKT=['#16241e','#0d1117','#1e1e1e','#000000','#002b36'];
+function hexRGB(h){h=String(h||'').replace('#','');if(h.length===3)h=h.replace(/./g,'$&$&');var n=parseInt(h,16);return isNaN(n)||h.length!==6?null:[n>>16&255,n>>8&255,n&255]}
+function lum(c){return (0.2126*c[0]+0.7152*c[1]+0.0722*c[2])/255}
+function look(){var l=CHAT.box.look||{};return{chat:hexRGB(l.chat)?l.chat:'#ffffff',term:hexRGB(l.term)?l.term:'#16241e',alpha:l.alpha>=.4&&l.alpha<=1?+l.alpha:1}}
+function lookApply(){var b=$('cwb');if(!b)return;var L=look(),c=hexRGB(L.chat),t=hexRGB(L.term),a=L.alpha;
+ b.style.setProperty('--cbg','rgba('+c.join(',')+','+a+')');b.style.setProperty('--tbg','rgba('+t.join(',')+','+a+')');b.style.setProperty('--ta',Math.min(1,a+.15));
+ b.classList.toggle('see',a<1);b.classList.toggle('cdk',lum(c)<.45);
+ if(TAPI&&TAPI.theme)TAPI.theme(lum(t)<.55?'#e6efe9':'#16241e')}
+function lookDraw(){var el=$('cwst'),L=look(),sw=function(list,k,cur){return list.map(function(x){return '<button type="button" class="sw" data-lk="'+k+'" data-v="'+x+'" style="background:'+x+'" aria-pressed="'+(x.toLowerCase()===cur.toLowerCase())+'" aria-label="'+x+'"></button>'}).join('')+'<input type="color" data-lk="'+k+'" value="'+cur+'" aria-label="Another colour">'};
+ el.innerHTML='<h5>Messages background</h5><div class="row">'+sw(LOOKC,'chat',L.chat)+'</div><h5>Terminal background</h5><div class="row">'+sw(LOOKT,'term',L.term)+'</div>'+
+  '<h5>Opacity of both</h5><div class="row"><input type="range" min="40" max="100" step="5" value="'+Math.round(L.alpha*100)+'" data-lk="alpha" aria-label="Opacity"><span class="pc">'+Math.round(L.alpha*100)+'%</span></div><button type="button" class="rs" data-lk="reset">Back to the default look</button>'}
+function lookSet(k,v){var l=CHAT.box.look=CHAT.box.look||{};if(k==='reset')delete CHAT.box.look;else l[k]=v;boxSave();lookApply()}
 function boxApply(){setTimeout(noteTop,0);var b=$('cwb'),o=CHAT.box,wide=!!o.wide&&CHAT.open;$('cw').classList.toggle('wide',wide);$('cwsd').hidden=wide;setTimeout(boxPlace,0);
  b.style.width=!wide&&o.w?o.w+'px':'';b.style.height=wide?(o.hw?o.hw+'px':'min(46vh,460px)'):(o.h?o.h+'px':'');
  var d=$('cwd');d.innerHTML=o.wide?'<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M13 6.5H9.5V3M9.5 6.5 14 2M3 9.5h3.5V13M6.5 9.5 2 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>':'<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';d.title=o.wide?'Back to a window in the corner':'Stretch along the bottom of the screen';d.setAttribute('aria-label',o.wide?'Compact window':'Full width');
@@ -871,6 +892,13 @@ function pollChat(){if(!CHAT.sid)return;var sid=CHAT.sid;fetch('/api/chat?sessio
  if(sid!==CHAT.sid)return;var k=JSON.stringify(j.items||[]);if(k===CHAT.key)return;CHAT.key=k;CHAT.items=j.items||[];chatDraw();lastMsg()}).catch(function(){})}
 function chatOpen(on,quiet){CHAT.open=on;keepOpen();CHAT.lkey='';lastMsg();modeApply(!quiet);if(on){if(tmode()==='term'){if(TAPI&&!quiet)TAPI.focus()}else{var l=$('cwl');l.scrollTop=l.scrollHeight;chatFit();if(!quiet)$('cwi').focus()}}else{var o=$('cwp');if(o)o.focus()}}
 function chatFit(){var t=$('cwi');t.style.height='auto';t.style.height=Math.min(180,t.scrollHeight+2)+'px';$('cws').disabled=CHAT.busy||!t.value.trim()}
+if($('cwg')){lookApply();
+ $('cwg').onclick=function(e){e.stopPropagation();var m=$('cwst'),on=m.hidden;if(on)lookDraw();m.hidden=!on;$('cwg').setAttribute('aria-expanded',on);if(on){var f=m.querySelector('[aria-pressed=true]')||m.querySelector('button');if(f)f.focus()}};
+ $('cwst').addEventListener('click',function(e){e.stopPropagation();var b=e.target.closest('button[data-lk]');if(!b)return;lookSet(b.dataset.lk,b.dataset.v);lookDraw();var f=$('cwst').querySelector('[data-lk="'+b.dataset.lk+'"][data-v="'+(b.dataset.v||'')+'"]')||$('cwst').querySelector('.rs');if(f)f.focus()});
+ $('cwst').addEventListener('input',function(e){var t=e.target;if(t.dataset.lk==='alpha'){lookSet('alpha',t.value/100);t.nextSibling.textContent=t.value+'%'}else if(t.type==='color')lookSet(t.dataset.lk,t.value)});
+ $('cwst').addEventListener('change',function(e){if(e.target.type==='color')lookDraw()});
+ $('cwst').addEventListener('keydown',function(e){if(e.key==='Escape'){e.stopPropagation();$('cwst').hidden=true;$('cwg').setAttribute('aria-expanded','false');$('cwg').focus()}});
+ document.addEventListener('click',function(e){var m=$('cwst');if(!m.hidden&&!e.target.closest('#cwst')){m.hidden=true;$('cwg').setAttribute('aria-expanded','false')}})}
 if($('cw')){// the window that was open on this page is open again when one comes back to it (the terminal view waits for the terminal script)
  setTimeout(function(){if(CHAT.box.open&&tmode()==='chat'&&!CHAT.open&&chatSes())chatOpen(true,true)},0);
  $('cwb').addEventListener('pointerdown',boxDrag);$('cwu').onclick=function(){chatOpen(true)};$('cwu').onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();chatOpen(true)}};document.querySelector('#cwb .cwh').addEventListener('pointerdown',boxMove);window.addEventListener('resize',boxPlace);
@@ -889,7 +917,7 @@ if($('cw')){// the window that was open on this page is open again when one come
   // Cancel or Close of a terminal that did not open: back to the messages, not to an empty dark pane
   else if(e.target.closest('[data-x="stop"]'))setTimeout(function(){if(TAPI&&!TAPI.live()){TASK='';setMode('chat',true)}},0)});
  // the terminal module gets the place for its view from here, and tells when it is ready
- if(TOK)window.WN_EMBED={xt:$('cwtx'),msg:$('cwtg'),state:function(){var d=$('cwm');if(d)d.hidden=!(tmode()==='term'&&TAPI&&TAPI.cur())},ready:function(api){TAPI=api;if(CHAT.box.open&&tmode()==='term'&&!CHAT.open&&chatSes())chatOpen(true,true);else modeApply(false)},
+ if(TOK)window.WN_EMBED={xt:$('cwtx'),msg:$('cwtg'),state:function(){var d=$('cwm');if(d)d.hidden=!(tmode()==='term'&&TAPI&&TAPI.cur())},ready:function(api){TAPI=api;lookApply();if(CHAT.box.open&&tmode()==='term'&&!CHAT.open&&chatSes())chatOpen(true,true);else modeApply(false)},
   request:function(sid){TASK=sid;CHAT.box.modes=CHAT.box.modes||{};CHAT.box.modes[P.slug]='term';boxSave();chatOpen(true)}};
  $('cwp').onclick=function(){chatOpen(true)};$('cwx').onclick=function(){chatOpen(false)};$('cwi').addEventListener('input',function(){draftSoon('c:'+P.slug,$('cwi').value);chatFit()});$('cwi').value=draft('c:'+P.slug);setTimeout(chatFit,0);
  $('cwi').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!$('cws').disabled)$('cwf').requestSubmit()}else if(e.key==='Escape')chatOpen(false)});

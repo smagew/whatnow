@@ -84,7 +84,7 @@ function say(html){msg.hidden=!html;xt.hidden=!!html;msg.innerHTML=html||''}
 function show(t,isNew){var replay=!isNew,quiet=replay;S.cur=t.id;S.open=true;WAIT=null;save();say('');layout();var run=++RUN;
  lib().then(function(){if(run!==RUN)return;if(X){X.dispose();X=null}xt.innerHTML='';
   X=new Terminal({fontFamily:'ui-monospace,SFMono-Regular,Menlo,monospace',fontSize:13,cursorBlink:false /* a blinking cursor makes the browser restyle on every frame, all the time the terminal is open */,scrollback:5000,allowProposedApi:true,linkHandler:{activate:function(e,uri){link(uri)}},
-   theme:{background:'#16241e',foreground:'#e6efe9',cursor:'#e6efe9',selectionBackground:'#3b7be066'}});
+   allowTransparency:!!EMB,theme:{background:EMB?'rgba(0,0,0,0)':'#16241e',foreground:FG,cursor:FG,selectionBackground:'#3b7be066'}});   // in the window of the session its background shows through (the look is set there)
   FIT=new FitAddon.FitAddon();X.loadAddon(FIT);X.loadAddon(new WebLinksAddon.WebLinksAddon(function(e,uri){link(uri)}));X.open(xt);try{FIT.fit()}catch(e){}
   var q=Promise.resolve();                       // keys go out one request after another, in the order typed
   function send(d){if(quiet)return;for(var i=0;i<d.length;i+=4000)(function(part){q=q.then(function(){return post({op:'write',id:t.id,data:part})}).catch(function(){})})(d.slice(i,i+4000))}
@@ -140,7 +140,8 @@ gr.addEventListener('pointerdown',function(e){e.preventDefault();gr.setPointerCa
 gr.addEventListener('dblclick',function(){S.h=0;save();layout();fit()});
 window.addEventListener('resize',function(){layout()});
 
-window.wnTerm={open:open,has:has,show:showSes,detach:detach,leave:leave,fit:fit,tail:function(){return (X?tail():'')||LAST},focus:function(){if(X)X.focus()},
+var FG='#e6efe9';
+window.wnTerm={theme:function(fg){FG=fg;if(X)X.options.theme={background:EMB?'rgba(0,0,0,0)':'#16241e',foreground:fg,cursor:fg,selectionBackground:'#3b7be066'}},open:open,has:has,show:showSes,detach:detach,leave:leave,fit:fit,tail:function(){return (X?tail():'')||LAST},focus:function(){if(X)X.focus()},
  waiting:function(){return !!WAIT},live:function(){return !!X},stop:function(){WAIT=null;say('')},cur:function(){return ALL.filter(function(t){return t.id===S.cur})[0]||null}};
 if(window.WN_EMBED){EMB=window.WN_EMBED;xt=EMB.xt;msg=EMB.msg;msg.addEventListener('click',act);dock.hidden=true;pill.hidden=true;
  if(window.ResizeObserver)new ResizeObserver(function(){fit()}).observe(xt)}
