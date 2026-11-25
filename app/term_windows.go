@@ -124,7 +124,9 @@ func startPty(cmd *exec.Cmd, cols, rows int) (io.ReadWriteCloser, func(cols, row
 		return nil, nil, err
 	}
 	si := &windows.StartupInfoEx{
-		StartupInfo:             windows.StartupInfo{Cb: uint32(unsafe.Sizeof(windows.StartupInfoEx{}))},
+		// STARTF_USESTDHANDLES with empty handles: without it a program started from a process whose own output
+		// is a pipe or a file writes there, past the console (seen in the test on a Windows build machine)
+		StartupInfo:             windows.StartupInfo{Cb: uint32(unsafe.Sizeof(windows.StartupInfoEx{})), Flags: windows.STARTF_USESTDHANDLES},
 		ProcThreadAttributeList: al.List(),
 	}
 	line, err := windows.UTF16PtrFromString(commandLine(cmd))
