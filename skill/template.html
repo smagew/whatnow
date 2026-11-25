@@ -275,7 +275,7 @@ html.mo-off .cwu{animation:none}@media(prefers-reduced-motion:reduce){html.mo-sy
 .cwst h5{margin:0 0 6px;font-size:12px;font-weight:500;color:var(--mut)}.cwst .row{display:flex;gap:6px;align-items:center;margin-bottom:12px}
 .cwst .sw{all:unset;cursor:pointer;width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1px #00000026}.cwst .sw[aria-pressed=true]{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--live)}.cwst .sw:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
 .cwst input[type=color]{width:26px;height:24px;padding:0;border:0;background:none;cursor:pointer;margin-left:4px}.cwst input[type=range]{flex:1}.cwst .pc{width:38px;text-align:right;font-variant-numeric:tabular-nums;color:var(--mut)}
-.cwst .rs{all:unset;cursor:pointer;color:var(--live);font-weight:500}.cwst .rs:hover{text-decoration:underline}
+.cwst .bl{gap:8px;font-size:12.5px;cursor:pointer;flex-wrap:wrap}.cwst .bl small{flex-basis:100%;margin-left:22px;color:var(--mut);font-size:11.5px}.cwst .rs{all:unset;cursor:pointer;color:var(--live);font-weight:500}.cwst .rs:hover{text-decoration:underline}
 .cwl{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:12px 14px}
 .cb{max-width:88%;padding:8px 14px;overflow-wrap:anywhere;min-width:0}
 .cb>*{margin:0 0 7px}.cb>:last-child{margin-bottom:0}.cb .mdh{font-weight:600}.cb ul,.cb ol{padding-left:20px}.cb li{margin:2px 0}.cb li.in1{margin-left:16px}.cb li.in2{margin-left:32px}.cb li.in3{margin-left:48px}
@@ -772,14 +772,15 @@ function boxPlace(){var c=$('cw'),o=CHAT.box,wide=!!o.wide&&CHAT.open,l=o.ax==='
 var LOOKC=['#ffffff','#f6f2ea','#eef3f8','#22302a','#111614'],LOOKT=['#16241e','#0d1117','#1e1e1e','#000000','#002b36'];
 function hexRGB(h){h=String(h||'').replace('#','');if(h.length===3)h=h.replace(/./g,'$&$&');var n=parseInt(h,16);return isNaN(n)||h.length!==6?null:[n>>16&255,n>>8&255,n&255]}
 function lum(c){return (0.2126*c[0]+0.7152*c[1]+0.0722*c[2])/255}
-function look(){var l=CHAT.box.look||{};return{chat:hexRGB(l.chat)?l.chat:'#ffffff',term:hexRGB(l.term)?l.term:'#16241e',alpha:l.alpha>=.4&&l.alpha<=1?+l.alpha:1}}
+function look(){var l=CHAT.box.look||{};return{chat:hexRGB(l.chat)?l.chat:'#ffffff',term:hexRGB(l.term)?l.term:'#16241e',alpha:l.alpha>=.2&&l.alpha<=1?+l.alpha:1,blur:!!l.blur}}
 function lookApply(){var b=$('cwb');if(!b)return;var L=look(),c=hexRGB(L.chat),t=hexRGB(L.term),a=L.alpha;
  b.style.setProperty('--cbg','rgba('+c.join(',')+','+a+')');b.style.setProperty('--tbg','rgba('+t.join(',')+','+a+')');b.style.setProperty('--ta',Math.min(1,a+.15));
- b.classList.toggle('see',a<1);b.classList.toggle('cdk',lum(c)<.45);
+ b.classList.toggle('see',a<1&&L.blur);b.classList.toggle('cdk',lum(c)<.45);
  if(TAPI&&TAPI.theme)TAPI.theme(lum(t)<.55?'#e6efe9':'#16241e')}
 function lookDraw(){var el=$('cwst'),L=look(),sw=function(list,k,cur){return list.map(function(hx){return '<button type="button" class="sw" data-lk="'+k+'" data-v="'+hx+'" style="background:'+hx+'" aria-pressed="'+(hx.toLowerCase()===cur.toLowerCase())+'" aria-label="'+hx+'"></button>'}).join('')+'<input type="color" data-lk="'+k+'" value="'+cur+'" aria-label="Another colour">'};
  el.innerHTML='<h5>Messages background</h5><div class="row">'+sw(LOOKC,'chat',L.chat)+'</div><h5>Terminal background</h5><div class="row">'+sw(LOOKT,'term',L.term)+'</div>'+
-  '<h5>Opacity of both</h5><div class="row"><input type="range" min="40" max="100" step="5" value="'+Math.round(L.alpha*100)+'" data-lk="alpha" aria-label="Opacity"><span class="pc">'+Math.round(L.alpha*100)+'%</span></div><button type="button" class="rs" data-lk="reset">Back to the default look</button>'}
+  '<h5>Opacity of the background</h5><div class="row"><input type="range" min="20" max="100" step="5" value="'+Math.round(L.alpha*100)+'" data-lk="alpha" aria-label="Opacity of the background"><span class="pc">'+Math.round(L.alpha*100)+'%</span></div>'+
+  '<label class="row bl"><input type="checkbox" data-lk="blur"'+(L.blur?' checked':'')+'> Blur what shows through <small>prettier, but it hides what is behind</small></label><button type="button" class="rs" data-lk="reset">Back to the default look</button>'}
 function lookSet(k,v){var l=CHAT.box.look=CHAT.box.look||{};if(k==='reset')delete CHAT.box.look;else l[k]=v;boxSave();lookApply()}
 function boxApply(){setTimeout(noteTop,0);var b=$('cwb'),o=CHAT.box,wide=!!o.wide&&CHAT.open;$('cw').classList.toggle('wide',wide);$('cwsd').hidden=wide;setTimeout(boxPlace,0);
  b.style.width=!wide&&o.w?o.w+'px':'';b.style.height=wide?(o.hw?o.hw+'px':'min(46vh,460px)'):(o.h?o.h+'px':'');
@@ -898,7 +899,7 @@ function chatFit(){var t=$('cwi');t.style.height='auto';t.style.height=Math.min(
 if($('cwg')){lookApply();
  $('cwg').onclick=function(e){e.stopPropagation();var m=$('cwst'),on=m.hidden;if(on)lookDraw();m.hidden=!on;$('cwg').setAttribute('aria-expanded',on);if(on){var f=m.querySelector('[aria-pressed=true]')||m.querySelector('button');if(f)f.focus()}};
  $('cwst').addEventListener('click',function(e){e.stopPropagation();var b=e.target.closest('button[data-lk]');if(!b)return;lookSet(b.dataset.lk,b.dataset.v);lookDraw();var f=$('cwst').querySelector('[data-lk="'+b.dataset.lk+'"][data-v="'+(b.dataset.v||'')+'"]')||$('cwst').querySelector('.rs');if(f)f.focus()});
- $('cwst').addEventListener('input',function(e){var t=e.target;if(t.dataset.lk==='alpha'){lookSet('alpha',t.value/100);t.nextSibling.textContent=t.value+'%'}else if(t.type==='color')lookSet(t.dataset.lk,t.value)});
+ $('cwst').addEventListener('input',function(e){var t=e.target;if(t.dataset.lk==='blur'){lookSet('blur',t.checked);return}if(t.dataset.lk==='alpha'){lookSet('alpha',t.value/100);t.nextSibling.textContent=t.value+'%'}else if(t.type==='color')lookSet(t.dataset.lk,t.value)});
  $('cwst').addEventListener('change',function(e){if(e.target.type==='color')lookDraw()});
  $('cwst').addEventListener('keydown',function(e){if(e.key==='Escape'){e.stopPropagation();$('cwst').hidden=true;$('cwg').setAttribute('aria-expanded','false');$('cwg').focus()}});
  document.addEventListener('click',function(e){var m=$('cwst');if(!m.hidden&&!e.target.closest('#cwst')){m.hidden=true;$('cwg').setAttribute('aria-expanded','false')}})}
