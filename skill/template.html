@@ -249,6 +249,13 @@ body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes w
 .gcl .gs{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gcl .ga{flex:none;color:var(--mut);font-size:12px;white-space:nowrap}.gcl .tag{flex:none}
 .tag.live{background:var(--liveb);color:var(--live)}
 @media(max-width:860px){.gcl li{flex-wrap:wrap}.gcl .gs{flex-basis:100%;white-space:normal}}
+/* the Access tab (it shares the blocks of the Git tab) */
+.acm{margin-top:10px;padding:8px 12px;border-radius:8px;background:#e8eeea;font-size:13px}.acm.warn{background:var(--warnb);color:#5a4300}.acm.bad{background:var(--badb);color:var(--bad)}
+.acd{font-size:13px;color:var(--mut);line-height:1.5}.acd .dp{display:block;margin-top:4px}.acd b{color:var(--ink);font-weight:600}
+.acr{margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}.acr:first-of-type{border-top:0;padding-top:0}
+.gr p{margin:6px 0 0;font-size:13px}.gr p b.bad{color:var(--bad)}.gr p small,.acf small{color:var(--mut)}
+.acl{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:4px}.acl code{white-space:normal;word-break:break-all}.acl code.bad{background:var(--badb);color:var(--bad)}
+.acf{margin:4px 0 0;padding:0;list-style:none;font-size:13px}.acf li{margin-top:4px}
 /* the folders the sessions of the feature work in: a card under the stages */
 .dcard{margin:18px 0 4px 2px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:12px;font-size:13px;color:var(--mut);line-height:1.5}
 .dcard h4{margin:0 0 6px;font-size:13px;color:var(--ink)}.dcard .dp{display:block;margin-top:6px}.dcard .dn{margin-top:12px}.dcard code{white-space:normal;word-break:break-all}.dcard b{color:var(--ink);font-weight:600}
@@ -297,6 +304,8 @@ var problems=0;P.stages.forEach(function(s){s.facts.forEach(function(f){if(f[0]=
 var tabs=[['work','Progress'],['ov','What is left'],['dec','Decisions and questions']];
 // the Git tab exists only for a feature whose sessions work in a repository
 var HASGIT=P.live&&INIT.git&&INIT.git.repos&&INIT.git.repos.length>0;if(HASGIT)tabs.push(['git','Git']);
+// the Access tab exists for a feature that has a session: it says what that session may do and reach
+var HASACC=P.live&&INIT.ses&&(INIT.ses.bound||[]).length>0;if(HASACC)tabs.push(['acc','Access']);
 $('tabs').innerHTML=tabs.map(function(t,i){return '<button role="tab" id="tab-'+t[0]+'" aria-controls="p-'+t[0]+'" aria-selected="'+(i===0)+'" tabindex="'+(i?-1:0)+'">'+t[1]+(t[0]==='ov'&&P.blockers.length?'<span class="cnt'+(P.blockers.some(function(b){return b.who==='you'})?' bad':'')+'">'+P.blockers.length+'</span>':'')+'</button>'}).join('');
 function ul(a,c){return '<ul class="'+c+'">'+a+'</ul>'}
 var hi=P.blockers.filter(function(b){return b.sev==='high'}).length,mid=P.blockers.filter(function(b){return b.sev==='mid'}).length,lo=P.blockers.filter(function(b){return b.sev==='low'}).length,SV={high:'critical',mid:'important',low:'minor'};
@@ -309,11 +318,11 @@ var ov='<p class="why sum">'+rich(P.summary||'')+'</p><div class="chips">'+GROUP
 var w='<div class="md"><div class="rail" role="tablist" aria-orientation="vertical" aria-label="Stages" id="stl"></div><div class="det" id="det" role="tabpanel" tabindex="0"></div></div>';
 // dec
 var dc='<div class="two"><div class="det"><h2>Decided</h2><ul>'+P.decisions.map(function(x){return '<li>'+rich(x)+'</li>'}).join('')+'</ul></div><div class="det"><h2>Open</h2><ul>'+P.questions.map(function(x){return '<li>'+rich(x)+'</li>'}).join('')+'</ul></div></div>';
-$('main').innerHTML=[['work',w],['ov',ov],['dec',dc]].concat(HASGIT?[['git','<div class="gitw" id="gitl"></div>']]:[]).map(function(x,i){return '<section role="tabpanel" id="p-'+x[0]+'" aria-labelledby="tab-'+x[0]+'"'+(i?' hidden':'')+'>'+x[1]+'</section>'}).join('');
+$('main').innerHTML=[['work',w],['ov',ov],['dec',dc]].concat(HASGIT?[['git','<div class="gitw" id="gitl"></div>']]:[]).concat(HASACC?[['acc','<div class="gitw" id="accl"><p class="why">Reading what the sessions may do…</p></div>']]:[]).map(function(x,i){return '<section role="tabpanel" id="p-'+x[0]+'" aria-labelledby="tab-'+x[0]+'"'+(i?' hidden':'')+'>'+x[1]+'</section>'}).join('');
 // tabs behaviour
 var tb=[].slice.call(document.querySelectorAll('#tabs button'));
 var curTab='work';
-function show(k){curTab=k;tb.forEach(function(b){var on=b.id==='tab-'+k;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1});tabs.forEach(function(t){$('p-'+t[0]).hidden=t[0]!==k});if(k==='git'&&typeof gitShow==='function')gitShow();if(typeof keep==='function')keep()}
+function show(k){curTab=k;tb.forEach(function(b){var on=b.id==='tab-'+k;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1});tabs.forEach(function(t){$('p-'+t[0]).hidden=t[0]!==k});if(k==='git'&&typeof gitShow==='function')gitShow();if(k==='acc'&&typeof accShow==='function')accShow();if(typeof keep==='function')keep()}
 tb.forEach(function(b,i){b.addEventListener('click',function(){show(b.id.slice(4))});b.addEventListener('keydown',function(e){var n=e.key==='ArrowRight'?i+1:e.key==='ArrowLeft'?i-1:null;if(n===null)return;n=(n+tb.length)%tb.length;tb[n].focus();show(tb[n].id.slice(4))})});
 // stage detail
 var cur=0,CUR=Math.max(0,P.stages.map(function(s){return s.n}).indexOf(P.cur)),MORE=false;
@@ -568,6 +577,33 @@ if(HASGIT){gitUI();setTimeout(gitLoad,1200);   // the count on the tab needs the
  $('gitl').addEventListener('click',function(e){var b=e.target.closest('button[data-g]');if(!b||b.disabled)return;var path=b.closest('.gr').dataset.repo,r=(GIT.d.repos||[]).filter(function(x){return x.path===path})[0],s=agent()||chatSes();if(!r||!s)return;
   var L=gitLinks(r),txt=b.dataset.g==='push'?'Please push the commits of branch '+r.branch+' in '+r.path+' to origin, and tell me when it is done.':'Please open a '+(L.word||'pull request')+' for branch '+r.branch+' of '+r.path+' into '+r.base+', and tell me the link.';
   b.disabled=true;post({action:'tell',session:s.id,text:txt}).then(function(x){GIT.said[path]=x.ok?'Asked session '+sesName(s)+(b.dataset.g==='push'?' to push.':' to open the '+(L.word||'request')+'.'):'Could not send: '+((x.j&&x.j.error)||'unknown error');gitUI()}).catch(function(){GIT.said[path]='No connection to the server.';gitUI()})})}
+// The Access tab: for every session of the feature, what it may do and reach. The permission mode, the model, the
+// folders, the allow / ask / deny rules of the settings files that apply to it, the MCP servers it was given, the
+// instruction files it loaded and the tools it has used. Read from its transcript and the settings; shown only.
+var ACC={d:null,busy:false,timer:0};
+var MODES={'default':['','Asks before it edits a file or runs a command that no rule allows.'],acceptEdits:['','Edits files without asking; asks before a command that no rule allows.'],plan:['','Reads and plans only: it changes nothing until you approve the plan.'],
+ auto:['warn','Works without asking. A safety check looks at each action and stops the risky ones.'],bypassPermissions:['bad','Does everything without asking and without a safety check.'],dontAsk:['','Does what the rules allow and refuses the rest without asking.']};
+function accChips(l,cls){return '<span class="acl">'+l.map(function(x){return '<code'+(cls?' class="'+cls+'"':'')+'>'+esc(x)+'</code>'}).join('')+'</span>'}
+function accCard(s){var m=MODES[s.mode]||['','']
+ ,h='<section class="gr"><div class="grh"><h3>'+esc(s.name||s.id.slice(0,8))+'</h3><span class="tag '+(s.open?'ok':'no')+'">'+(s.open?(STX[s.state]||'open'):'closed')+'</span>'+(s.model?'<span class="gp">model '+esc(s.model)+'</span>':'')+'</div>';
+ h+='<div class="acm '+m[0]+'"><b>Permission mode: '+esc(s.mode||'not known')+'</b>'+(m[1]?' <span>'+m[1]+'</span>':s.mode?'':' <span>The transcript of this session does not say it.</span>')+'</div>';
+ h+='<h4>Folders</h4><div class="acd">'+(s.dirs&&(s.dirs.now||s.dirs.root)?dirsLine({dirs:s.dirs}):'<span class="gm">Not known.</span>')+'</div>';
+ var rl=s.rules||[],SRC={user:'your settings, for every project',project:'the project, shared with the team',local:'the project, only on this machine'};
+ h+='<h4>Rules from the settings files</h4>'+(rl.length?rl.map(function(r){return '<div class="acr"><p class="gm"><b>'+esc(r.source)+'</b>: '+SRC[r.source]+' <code>'+esc(r.file)+'</code>'+(r.mode?' · default mode <code>'+esc(r.mode)+'</code>':'')+'</p>'+
+   (r.deny.length?'<p><b class="bad">Never</b> <small>'+r.deny.length+'</small>'+accChips(r.deny,'bad')+'</p>':'')+(r.ask.length?'<p><b>Asks first</b> <small>'+r.ask.length+'</small>'+accChips(r.ask)+'</p>':'')+
+   (r.allow.length?'<p><b>Allowed without asking</b> <small>'+r.allow.length+'</small>'+accChips(r.allow)+'</p>':'')+(r.dirs.length?'<p><b>More folders</b>'+accChips(r.dirs)+'</p>':'')+'</div>'}).join(''):'<p class="gm">No allow, ask or deny rules in the settings files that apply to it (user, project, local).</p>');
+ // a server that offers only its two sign-in tools is not signed in yet; ids like claude_ai_Google_Drive are made readable
+ if(s.mcp){var nice=function(n){return n.indexOf(' ')>=0?n:n.replace(/^claude_ai_/,'claude.ai ').replace(/^plugin_([^_]+)_/,'plugin $1: ').replace(/_/g,' ')},on=s.mcp.filter(function(x){return x.tools>2}),off=s.mcp.filter(function(x){return x.tools<=2});
+  h+='<h4>Outside services (MCP servers) <small>'+s.mcp.length+'</small></h4>'+(s.mcp.length?(on.length?'<p><b>In use</b> <small>with the number of tools</small>'+accChips(on.map(function(x){return nice(x.name)+' · '+x.tools}))+'</p>':'')+(off.length?'<p><b>Offered, not signed in</b> <small>'+off.length+'</small>'+accChips(off.map(function(x){return nice(x.name)}))+'</p>':''):'<p class="gm">None.</p>');
+  h+='<h4>Instruction files it loaded</h4>'+(s.files.length?'<ul class="acf">'+s.files.map(function(f){return '<li><code>'+esc(f.path)+'</code>'+(f.type?' <small>'+esc(f.type)+'</small>':'')+'</li>'}).join('')+'</ul>':'<p class="gm">None seen in the transcript.</p>');
+  h+='<h4>Tools it has used <small>'+s.tools.length+'</small></h4>'+(s.tools.length?'<p>'+accChips(s.tools)+'</p>':'<p class="gm">None yet.</p>')}
+ else h+='<p class="gm">The transcript of this session was not found, so only the folders and the rules are known.</p>';
+ return h+'</section>'}
+function accUI(){var el=$('accl');if(!el||!ACC.d)return;var ss=ACC.d.sessions||[],h='<p class="why">What each session of this feature may do and reach, as Claude Code wrote it into the session and as the settings files say. Nothing is changed from here.</p>'+(ss.length?ss.map(accCard).join(''):'<p class="gm">No session of this feature is known.</p>');
+ if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h}}
+function accLoad(){if(ACC.busy)return;ACC.busy=true;fetch('/api/access?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){ACC.busy=false;if(j&&j.sessions){ACC.d=j;accUI()}}).catch(function(){ACC.busy=false})}
+function accShow(){accUI();accLoad();if(!ACC.timer)ACC.timer=setInterval(function(){if(curTab==='acc'&&document.visibilityState==='visible')accLoad()},20000)}
+if(HASACC&&location.hash==='#acc')show('acc');
 // Where the sessions of this feature work: the folder a session was started in (the agent reaches everything under
 // it), the folder it is in now, the folders added to it, and the others it worked in lately. A card under the stages.
 function dirsOf(s){var d=s.dirs||{};return{root:d.root||'',now:d.now||d.root||'',add:d.add||[],seen:(d.seen||[]).filter(function(x){return x!==d.root&&x!==d.now})}}

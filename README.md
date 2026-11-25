@@ -168,6 +168,20 @@ merge requests as `refs/merge-requests/N/head` and GitHub pull requests as `refs
 apart on a self-hosted server. The remote is asked at most once in two minutes per repository. The tab counts unpushed
 commits and repositories with uncommitted files.
 
+**The Access tab.** A feature that has a session gets an **Access** tab: for every session of the feature, what it may
+do and reach.
+- **Permission mode** (`default`, `acceptEdits`, `plan`, `auto`, `bypassPermissions`) with what it means, and the model.
+- **Folders**: where it works, where it was started (it reaches everything under that), added folders.
+- **Rules from the settings files** that apply to it: your settings (`~/.claude/settings.json`), the project's
+  (`.claude/settings.json`) and the local ones (`.claude/settings.local.json`) of the folder it was started in, as
+  "Never", "Asks first" and "Allowed without asking".
+- **Outside services (MCP servers)**: the ones in use with the number of their tools, and the ones offered but not
+  signed in.
+- **Instruction files it loaded** (`CLAUDE.md`, memory) and **the tools it has used**.
+
+The mode, the model, the servers, the files and the tools are what Claude Code itself wrote into the transcript of the
+session; the rules are read from the settings files. The tab only shows them, it changes nothing.
+
 **Background task running.** A session that ended its turn while a background command or agent is still running does
 not wait for you: it goes on by itself when the task ends. Claude Code reports such a session as busy, and the pages
 show it as "background task running" instead of "waiting for you".

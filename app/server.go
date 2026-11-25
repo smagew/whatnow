@@ -1168,6 +1168,10 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		default:
 			send(w, 200, []byte(page("vendor"+path)), "text/javascript; charset=utf-8")
 		}
+	case "/api/access": // the Access tab: what the sessions of the feature may do and reach
+		if s, ok := slugArg(); ok {
+			sendJSON(w, 200, accessState(s))
+		}
 	case "/api/git": // the Git tab; the remote is asked too (the page already has the local state)
 		if s, ok := slugArg(); ok {
 			sendJSON(w, 200, gitState(s, true))
