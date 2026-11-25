@@ -172,7 +172,9 @@ func latest(sid string) string {
 
 // termOpen gives the terminal of a session, starting it when the session can be attached. The answer says
 // what is missing when it cannot: {"need":"background"} — the session is open in another terminal.
-func termOpen(sid string, cols, rows int) (int, any) {
+// With running=true a closed session is left closed ({"need":"closed"}): the page asks this way when it opens a
+// terminal by itself after the app was started again, and must not bring back a session the user has ended.
+func termOpen(sid string, cols, rows int, running bool) (int, any) {
 	if !sidRe.MatchString(sid) {
 		return 400, map[string]any{"error": "bad session"}
 	}
@@ -205,6 +207,9 @@ func termOpen(sid string, cols, rows int) (int, any) {
 	case a != nil: // open in a terminal of its own
 		return 200, map[string]any{"need": "background", "session": sid, "name": name}
 	default: // closed: continue it in the background, under the same id
+		if running {
+			return 200, map[string]any{"need": "closed", "session": sid}
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
 		cmd := exec.CommandContext(ctx, claude, "--resume", sid, "--bg")

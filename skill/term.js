@@ -25,13 +25,18 @@ var CSS=
 ".wnp{all:unset;cursor:pointer;position:fixed;z-index:38;left:calc(var(--sw,0px) + 16px);bottom:16px;background:#0f1b16;color:#fff;font:600 12.5px Geologica,system-ui,sans-serif;padding:7px 14px;border-radius:99px;box-shadow:0 6px 20px #0005}"+
 ".wnp[hidden]{display:none}.wnp i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2f9e6a;margin-right:8px}"+
 "body.tm .cw:not(.wide){bottom:calc(var(--th) + 16px)}body.tm .cw.wide{bottom:var(--th)}"+
-"button[data-term].on{background:#2f9e6a!important;border-color:#2f9e6a!important;color:#fff!important}";
+"button[data-term].on{background:#2f9e6a!important;border-color:#2f9e6a!important;color:#fff!important}"+
+"button[data-term] .tgi{font:700 11px ui-monospace,SFMono-Regular,Menlo,monospace;margin-right:6px;letter-spacing:-.5px;opacity:.8}";
 var st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
 // SCOPE: the feature of this page, '' on the home page. What is open and which tab is shown is kept per scope.
 var SCOPE=(function(){var m=/^\/f\/([^/]+)/.exec(location.pathname);return m?decodeURIComponent(m[1]):''})();
-var ST={o:{},c:{},h:0};try{var sv=JSON.parse(localStorage.getItem('wn-term')||'{}');ST.o=sv.o||{};ST.c=sv.c||{};ST.h=sv.h||0}catch(e){}
+// Kept too: the session that was in the terminal of each scope (s). The terminals end when the app is closed (the
+// sessions go on in the background); the next time the page is opened, a terminal that was open here is opened
+// again for the same session, at the same height.
+var ST={o:{},c:{},s:{},h:0};try{var sv=JSON.parse(localStorage.getItem('wn-term')||'{}');ST.o=sv.o||{};ST.c=sv.c||{};ST.s=sv.s||{};ST.h=sv.h||0}catch(e){}
 var S={open:ST.o[SCOPE]!==false,cur:ST.c[SCOPE]||'',h:ST.h};   // open unless it was hidden here: a feature with a terminal shows it
-function save(){ST.o[SCOPE]=S.open;ST.c[SCOPE]=S.cur;ST.h=S.h;try{localStorage.setItem('wn-term',JSON.stringify(ST))}catch(e){}}
+function save(){ST.o[SCOPE]=S.open;ST.c[SCOPE]=S.cur;ST.h=S.h;var t=ALL.filter(function(x){return x.id===S.cur})[0];if(t)ST.s[SCOPE]=t.session;try{localStorage.setItem('wn-term',JSON.stringify(ST))}catch(e){}}
+function forget(){delete ST.s[SCOPE];try{localStorage.setItem('wn-term',JSON.stringify(ST))}catch(e){}}   // the user left the terminal: it is not opened again by itself
 function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function post(body){return fetch('/api/term',{method:'POST',headers:{'Content-Type':'application/json','X-Whatnow':'1'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})}
 
@@ -58,7 +63,7 @@ function layout(){TERMS=mine();var on=S.open&&(TERMS.length||WAIT);dock.hidden=!
  dock.querySelector('[data-x=leave]').hidden=!!WAIT||!TERMS.length;mark();if(on&&X)fit()}
 function has(sid){return ALL.some(function(t){return t.session===sid})}
 // the buttons "Terminal" on the page: green while that session is in this terminal
-function mark(){document.querySelectorAll('button[data-term]').forEach(function(b){var on=has(b.dataset.term);if(b.classList.contains('on')!==on)b.classList.toggle('on',on);var tx=on?'In terminal':'Terminal';if(b.textContent!==tx)b.textContent=tx;
+function mark(){document.querySelectorAll('button[data-term]').forEach(function(b){var on=has(b.dataset.term);if(b.classList.contains('on')!==on)b.classList.toggle('on',on);var tx=on?'In terminal':'Terminal';if(b.dataset.tg!==tx){b.dataset.tg=tx;b.innerHTML='<span class="tgi" aria-hidden="true">&gt;_</span>'+tx}
  b.title=on?'This session is open in the terminal below':'Open this session in the terminal of the app'})}
 new MutationObserver(function(){mark()}).observe(document.body,{childList:true,subtree:true});
 
@@ -89,13 +94,15 @@ function read(t,off,run,first){if(run!==RUN)return;
  fetch('/api/term/read?id='+t.id+'&off='+off,{cache:'no-store'}).then(function(r){if(r.status===404)throw 404;return r.json()}).then(function(j){if(run!==RUN)return;
   if(j.reset&&X)X.reset();if(j.data&&X)X.write(bytes(j.data),first);else if(first)first();
   if(j.done){gone(t);return}read(t,j.off,run)}).catch(function(e){if(run!==RUN)return;if(e===404){gone(t);return}setTimeout(function(){read(t,off,run,first)},1000)})}
-function gone(t){ALL=ALL.filter(function(x){return x.id!==t.id});TERMS=mine();if(S.cur===t.id){RUN++;if(X){X.dispose();X=null}xt.innerHTML='';
+function gone(t){ALL=ALL.filter(function(x){return x.id!==t.id});TERMS=mine();if(t.session===ST.s[SCOPE])forget();if(S.cur===t.id){RUN++;if(X){X.dispose();X=null}xt.innerHTML='';
   if(TERMS.length)show(TERMS[0]);else{S.cur='';save();layout()}}else layout()}
-function leave(){var t=TERMS.filter(function(x){return x.id===S.cur})[0];if(!t)return;post({op:'close',id:t.id}).catch(function(){});gone(t)}
+function leave(){var t=TERMS.filter(function(x){return x.id===S.cur})[0];if(!t)return;post({op:'close',id:t.id}).catch(function(){});gone(t);forget()}
 
 // open the terminal of a session; a session that is open in another terminal has to be moved to the background there
-function open(sid,cancelled){var d=X?{cols:X.cols,rows:X.rows}:{cols:Math.max(60,Math.floor((window.innerWidth-300)/8)),rows:Math.max(12,Math.floor(height()/17)-3)};
- post({op:'open',session:sid,cols:d.cols,rows:d.rows}).then(function(r){if(cancelled&&cancelled())return;var j=r.j||{};
+// quiet: the page opens it by itself (it was open before the app was closed); if the session cannot be attached
+// now, nothing is shown and the user is not asked for anything
+function open(sid,cancelled,quiet){var d=X?{cols:X.cols,rows:X.rows}:{cols:Math.max(60,Math.floor((window.innerWidth-300)/8)),rows:Math.max(12,Math.floor(height()/17)-3)};
+ post({op:'open',session:sid,cols:d.cols,rows:d.rows,running:quiet?1:0}).then(function(r){if(cancelled&&cancelled())return;var j=r.j||{};if(quiet&&!j.term)return;
   if(j.term){HERE[j.term.id]=1;if(!ALL.some(function(x){return x.id===j.term.id}))ALL.push(j.term);show(j.term,!!j.fresh);return}
   if(j.need==='background'){var first=!WAIT||WAIT.sid!==sid;WAIT={sid:sid,name:j.name,t:first?Date.now():WAIT.t};S.open=true;save();RUN++;
    say('<h3>'+esc(j.name||'This session')+' is open in another terminal</h3><p>A terminal cannot be taken over from outside. In that terminal type <code>/background</code> and press Enter: the session moves to the background and opens here by itself. You can attach to it from any terminal later with <code>claude attach</code>.</p><p><button type="button" class="wta" data-x="copy">Copy /background</button> <button type="button" class="wta" data-x="stop">Cancel</button></p><p><small>Waiting for the session to move…</small></p>');
@@ -123,5 +130,6 @@ window.addEventListener('resize',function(){layout()});
 window.wnTerm={open:open,has:has};
 // a page opened while terminals run (another feature, the home page): connect to them again
 fetch('/api/term/list',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){ALL=(j.terms||[]).filter(function(t){return !t.done});TERMS=mine();
- if(!TERMS.length){layout();return}var t=TERMS.filter(function(q){return q.id===S.cur})[0]||TERMS[0];if(S.open)show(t);else{S.cur=t.id;layout()}}).catch(function(){});
+ if(!TERMS.length){layout();if(ST.o[SCOPE]===true&&ST.s[SCOPE])open(ST.s[SCOPE],null,true);return}   // it was open here before the app was closed
+ var t=TERMS.filter(function(q){return q.id===S.cur})[0]||TERMS[0];if(S.open)show(t);else{S.cur=t.id;layout()}}).catch(function(){});
 })();

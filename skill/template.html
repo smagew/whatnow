@@ -133,6 +133,11 @@ body{--sw:0px}
 .fr .ld{background:#7fb0ff}.fr.wait .ld{background:#e8b13a}.fr.old .ld{background:transparent;box-shadow:inset 0 0 0 2px #8c9a92}.fr.old{color:#a9bdb2}
 .fr small{font-weight:400;color:#cfe3d8;font-size:12px}
 @media(max-width:1560px){.fr small{display:none}}
+.rr .cn{font-variant-numeric:tabular-nums;white-space:nowrap}.rr .cn.rc::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--live);margin-right:6px;vertical-align:1px}
+.fline.old{color:var(--mut)}.fline.old b{font-weight:600;color:var(--ink)}
+/* the right column of an item (what it changed to, and when) keeps its width: a time that grows from "now" to
+   "12 min" must not push the text of the item into another line */
+.fi .ag{min-width:112px;justify-content:flex-end}
 .agechip{font-size:11.5px;font-weight:600;color:var(--live);background:var(--liveb);border-radius:999px;padding:0 8px;white-space:nowrap}
 .here{font-size:11.5px;font-weight:600;color:#fff;background:var(--live);border-radius:999px;padding:0 8px;white-space:nowrap;align-self:flex-start}
 .here.wait{background:#e8b13a;color:#2b2000}.here.idle{background:var(--nob);color:var(--no)}
@@ -257,6 +262,9 @@ body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes w
 .act{display:flex;gap:8px;align-items:center;min-height:18px;margin-top:8px;font-size:12.5px;color:var(--mut);font-weight:400}.act:empty{display:none}.act .at{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .eq{flex:none;display:inline-flex;gap:2px;align-items:flex-end;height:12px}.eq i{width:3px;height:3px;background:var(--live);border-radius:1px;animation:eq 1.1s ease-in-out infinite}.eq i:nth-child(2){animation-delay:-.35s}.eq i:nth-child(3){animation-delay:-.7s}
 @keyframes eq{0%,100%{height:3px}50%{height:12px}}.act .sw{animation:chin .3s ease-out both}
+html.mo-off .sent.sw{animation:none}
+.sent.sw{animation:chin .35s ease-out both}.sent .eq{margin-right:8px;vertical-align:-1px}.sent .okm{display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:50%;background:#dff3e8;color:var(--ok);font-size:11px;font-weight:700;margin-right:8px}
+.chn.ans{background:#e6f4ec;border-color:#a9d8bd;color:#0b3a2a;margin-bottom:8px}.chn.ans button{border-color:#0b3a2a66}.chn.ans button.go{background:var(--ok);border-color:var(--ok);color:#fff}.chn.ans.bad{background:var(--badb);border-color:#e6b0ab;color:var(--bad)}.chn.ans .x{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 @media(prefers-reduced-motion:reduce){html.mo-sys .an1b,html.mo-sys .an2a,html.mo-sys .an2t,html.mo-sys .sg i.an3a::after,html.mo-sys .roll>span,html.mo-sys .p6b,html.mo-sys .eq i,html.mo-sys .act .sw{animation:none}html.mo-sys .roll .old{display:none}html.mo-sys .eq i{height:8px}}
 html.mo-off .an1b,html.mo-off .an1m,html.mo-off .an2a,html.mo-off .an2t,html.mo-off .sg i.an3a::after,html.mo-off .roll>span,html.mo-off .p6b,html.mo-off .eq i,html.mo-off .act .sw{animation:none}html.mo-off .roll .old{display:none}html.mo-off .eq i{height:8px}
 .chgt{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;line-height:1.5;padding:0 6px;border-radius:99px;background:#f3d36b;color:#3a2a00;white-space:nowrap;vertical-align:1px}
@@ -398,7 +406,9 @@ function renderRail(){var el=$('stl');if(!el)return;var S=P.stages,a=P.live?agen
     '<span class="here'+(st==='work'||st==='bg'?'':st==='wait'?' wait':' idle')+'"'+(a?tipA('Session '+sesName(a),'It is '+STX[a.state]+'. Last activity '+age(a.t)+'.'):tipA('The work is at this stage','No session of this feature is open right now.'))+'>'+(st==='work'?'agent is here':st==='bg'?'background task running':st==='wait'?'agent waits for you':'current stage')+'</span>'+
     '<span class="tt">'+kmark(s)+rich(s.title)+'</span>'+(wf?'<span class="nw"><i class="ico w'+(st==='work'?' on':'')+'"></i><span>'+rich(wf[1])+'</span></span>':'')+segs(s)+
     '<span class="ft2"><span>'+s.dn+' of '+s.tot+' done</span>'+(l?'<span'+tipA('Last change '+exact(l.ts),l.t)+'>changed '+ts(l.ts)+'</span>':'')+'</span><span class="act" id="act"></span></span></button>';return}
-  var chip=l&&Date.now()-l.ts<D1?'<span class="agechip"'+tipA('Changed '+exact(l.ts),chText(l)+': '+l.t+(recent(s.n,D1)>1?' (and '+(recent(s.n,D1)-1)+' more in the last day)':''))+'>'+ts(l.ts,1)+'</span>':(s.tot?'<small>'+s.dn+' of '+s.tot+'</small>':'');
+  // every stage says the same thing here: how many of its items are done. A time that keeps counting said nothing
+  // about a stage nobody works on; when the stage last changed is in the tooltip, and a dot marks the last hour.
+  var chip=s.tot?'<small class="cn'+(l&&Date.now()-l.ts<H1?' rc':'')+'"'+(l?tipA(s.dn+' of '+s.tot+' items done','Last change '+exact(l.ts)+': '+l.t):tipA(s.dn+' of '+s.tot+' items done'))+'>'+s.dn+' of '+s.tot+'</small>':'';
   h+='<button class="rr'+(i>CUR?' next':'')+(s.state==='no'?' fut':'')+end+'"'+sel+'><i class="rd '+s.state+'"'+tipA(t[0],t[1])+'>'+(s.state==='ok'?'✓':s.n)+'</i><span class="nm">'+kmark(s)+rich(s.title)+'</span>'+chip+'</button>'});
  if(S.length-tail>4)h+='<button class="rr more next end" data-more="1" aria-expanded="'+!fold+'"><i class="rd no">'+(fold?'…':'–')+'</i><span>'+(fold?'Show '+(S.length-tail-3)+' more stages':'Hide later stages')+'</span></button>';
  el.innerHTML=h;tipGone()}
@@ -409,7 +419,16 @@ function routeText(r){if(!r)return ['b','Finding where to send this…'];
  if(r.route==='active')return ['a','Open session:'+(r.name?' <b>'+esc(r.name)+'</b>':'')+(r.project?' ('+esc(r.project)+')':'')+'. If it is waiting for input, the message wakes it; if it is busy, the message arrives as soon as it is free.'];
  if(r.route==='bg')return ['b','No session is open. A closed session of this feature will be resumed in the background with its previous context and receive the message. To watch it: <code>claude attach</code>.'];
  return ['b','No session is linked to this feature yet, so nobody will receive this. <button type="button" class="lnk" data-ses="open">Choose a session</button> and it goes there right away. Or send it anyway: it waits for the first session that starts working on this feature.']}
-function statusLine(e){if(!e)return '';var st=e.state,when=hm(e.ts),who=e.sessionName||'';
+// The state of a message under its item. When the state changes (sent, delivered, answered) the line fades in
+// instead of being swapped at once, and while the session works on it three small bars move in front of it.
+var STSEEN={},STAT={},PAGE0=Date.now();
+function statusLine(e){var h=statusLine0(e);if(!h)return h;var k=e.state+(e.asleep?'a':'')+(e.deliveredAt||'');
+ if(STSEEN[e.id]!==k){if(STSEEN[e.id]!==undefined||Date.now()-PAGE0>1500)STAT[e.id]=Date.now();STSEEN[e.id]=k}
+ if(Date.now()-(STAT[e.id]||0)<700)h=h.replace(/^<div class="sent/,'<div class="sent sw');
+ if(e.state==='delivered')h=h.replace(/^(<div class="[^"]*">)/,'$1<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>');
+ else if(e.state==='done')h=h.replace(/^(<div class="[^"]*">)/,'$1<span class="okm" aria-hidden="true">✓</span>');
+ return h}
+function statusLine0(e){if(!e)return '';var st=e.state,when=hm(e.ts),who=e.sessionName||'';
  if(st==='done')return '<div class="sent done">Done'+(e.note?': '+esc(e.note):'')+'</div>';
  if(st==='failed')return '<div class="sent failed">Not delivered: '+esc(e.error||'error')+'</div>';
  if(st==='delivered')return '<div class="sent">'+(e.route==='bg'?'Sent at '+when+'. The session is running in the background, waiting for the reply. To watch it: <code>claude attach</code>.':'Delivered at '+hm(e.deliveredAt||e.ts)+(who?' to session '+esc(who):'')+', waiting for the reply.')+'</div>';
@@ -454,8 +473,13 @@ function factLi(s,f,fi){var fid=(s.fids||[])[fi],kind=f[0],live=P.live&&fid,skip
  return '<li class="fi'+(live&&!DONE_K[kind]&&!skipped?' todo':'')+(skipped?' skipped':'')+(open?' open':'')+(kind==='w'?' nowr':'')+'" data-fid="'+esc(fid||'')+'"'+(fresh?' data-cts="'+c.ts+'"':'')+'><i class="ico '+kind+(kind==='w'&&on?' on':'')+'"'+tipA(KT[kind]||'')+'>'+(IC[kind]==null?'—':IC[kind])+'</i><span class="ft"><span class="t">'+rich(f[1])+'</span>'+factGit(f,kind)+(f[2]?'<button type="button" class="dtl" data-dt="'+esc(fid||('i'+fi))+'" aria-expanded="'+!!OPENF[fid||('i'+fi)]+'">'+(OPENF[fid||('i'+fi)]?'Hide the details':'How it ended')+'</button>':'')+(skipped?'<em class="why">not needed: '+esc((s.reasons||{})[fi]||'no reason given')+'</em>':'')+(kind==='w'?'<em class="sub2">'+(on?'The agent is working on this':'In work')+(c&&c.now==='w'?', started '+ts(c.ts):'')+'</em>':'')+'</span>'+(fresh&&kind!=='w'?'<span class="ag" tabindex="0"'+tipA(chText(c),'Changed '+exact(c.ts)+', '+age(c.ts))+'>'+trn(c)+ts(c.ts,1)+'</span>':'')+acts+(f[2]&&OPENF[fid||('i'+fi)]?'<div class="dtx">'+richBlock(f[2])+'</div>':'')+form+(live?statusLine(INBOX[fid]):'')+'</li>'}
 function queue(){var n=0;Object.keys(INBOX).forEach(function(k){var e=INBOX[k];if(e.state==='new'||e.state==='delivered')n++});var q=$('qb');if(q)q.textContent=n?'Waiting for a reply: '+n:''}
 function fline(s){var l=lastIn(s.n),wi=-1;s.facts.forEach(function(f,i){if(f[0]==='w')wi=i});
- if(!(l&&Date.now()-l.ts<D1)&&wi<0)return '';var ag=P.live?agent():null,n=recent(s.n,H1);
- return '<p class="fline"><i class="ld'+(ag&&ag.state==='work'?' pl':'')+'"></i><span>'+(l?'<b>Last change here '+ts(l.ts)+'.</b> '+(n?n+' change'+(n>1?'s':'')+' in the last hour':'Nothing in the last hour'):'<b>No changes recorded yet.</b>')+(wi>=0?(l?', ':' ')+'item '+(wi+1)+' of '+s.tot+' is in work':'')+'.</span></p>'}
+ if(!l&&wi<0)return '';var ag=P.live?agent():null,n=recent(s.n,H1),fresh=l&&Date.now()-l.ts<D1;
+ // how long the work on the stage went on: from the first change the page recorded to the last. A stage nobody
+ // works on shows the date of its last change, which does not move, instead of an age that keeps growing.
+ var cs=CHS[s.n]||[],first=cs.length?Math.min.apply(null,cs.map(function(c){return c.ts})):0,took=l&&first&&l.ts-first>=6e4?' The work on it went on for <b>'+spanTxt(l.ts-first)+'</b>, from its first recorded change to its last.':'';
+ if(!fresh&&wi<0)return '<p class="fline old"><span>Last change here '+exact(l.ts)+'.'+took+'</span></p>';
+ return '<p class="fline"><i class="ld'+(ag&&ag.state==='work'?' pl':'')+'"></i><span>'+(l?'<b>Last change here '+ts(l.ts)+'.</b> '+(n?n+' change'+(n>1?'s':'')+' in the last hour':'Nothing in the last hour'):'<b>No changes recorded yet.</b>')+(wi>=0?(l?', ':' ')+'item '+(wi+1)+' of '+s.tot+' is in work':'')+'.'+took+'</span></p>'}
+function spanTxt(ms){var m=Math.max(1,Math.round(ms/6e4));return m<60?m+' min':m<1440?Math.floor(m/60)+' h'+(m%60?' '+(m%60)+' min':''):Math.floor(m/1440)+' d'+(Math.floor(m%1440/60)?' '+Math.floor(m%1440/60)+' h':'')}
 function renderStage(i){cur=i;if(typeof keep==='function')keep();var s=P.stages[i];
  if(!s){$('det').innerHTML='<p class="why">No stages yet.</p>';queue();renderOv();return}
  renderRail();
@@ -499,8 +523,23 @@ function onAct(e){var b=e.target.closest('button');if(!b||b.dataset.stage)return
    if(r.j.entry)INBOX[r.j.entry.fid]=r.j.entry;FORM=null;renderStage(cur)}).catch(function(){BUSY=false;FORM.err='no connection to the server';renderStage(cur)})}}
 $('det').addEventListener('click',onAct);if($('ovl'))$('ovl').addEventListener('click',onAct);
 function pollInbox(){if(INIT.inbox){var j0=INIT.inbox;INIT.inbox=null;gotInbox(j0);return}fetch('/api/inbox',{cache:'no-store'}).then(function(r){return r.json()}).then(gotInbox).catch(function(){})}
-function gotInbox(j){var m={};(j.entries||[]).filter(function(e){return e.feature===P.slug}).forEach(function(e){m[e.fid]=e});
- if(JSON.stringify(m)!==JSON.stringify(INBOX)){INBOX=m;if(!FORM)renderStage(cur);else queue()}}
+// REN: an item the agent rewrote in place has a new id; a message sent about the old text stays with the item.
+var REN={};try{REN=JSON.parse(sessionStorage.getItem('wn-ren-'+P.slug)||'{}')||{}}catch(e){}
+function renOf(id){for(var i=0;i<6&&REN[id];i++)id=REN[id];return id}
+function gotInbox(j){var m={},ans=null;(j.entries||[]).filter(function(e){return e.feature===P.slug}).forEach(function(e){var k=renOf(e.fid);
+   var was=INBOX[k];if(was&&was.id===e.id&&was.state!=='done'&&was.state!=='failed'&&(e.state==='done'||e.state==='failed'))ans=e;   // the session has just answered
+   m[k]=e});
+ if(JSON.stringify(m)!==JSON.stringify(INBOX)){INBOX=m;if(!FORM)renderStage(cur);else queue()}
+ if(ans)ansNote(ans)}
+// The answer of the session is said on top, where it cannot be missed, and leads to the item it is about: the
+// reply used to appear only under the item, which may have moved or be on another stage.
+function ansNote(e){var w=document.querySelector('.chw');if(!w)return;var el=$('ans');if(!el){el=document.createElement('div');el.id='ans';el.className='chn ans';el.setAttribute('role','status');w.insertBefore(el,w.firstChild)}
+ var ok=e.state==='done';el.className='chn ans'+(ok?'':' bad');el.hidden=false;
+ el.innerHTML='<b>'+(ok?'The session answered':'The message was not delivered')+'</b> <span class="x">'+(e.item?'about «'+esc(String(e.item).slice(0,70))+(String(e.item).length>70?'…':'')+'»'+(ok&&e.note?': ':''):'')+(ok?esc(e.note||''):esc(e.error||''))+'</span><button type="button" class="go" data-an="show">Show the item</button><button type="button" data-an="x">Got it</button>';
+ el.onclick=function(x){var b=x.target.closest('button');if(!b)return;if(b.dataset.an==='x'){el.hidden=true;return}
+  var id=renOf(e.fid),si=-1;P.stages.forEach(function(s,i){if((s.fids||[]).indexOf(id)>=0)si=i});
+  if(si>=0){show('work');renderStage(si);setTimeout(function(){glowAt(document.querySelector('#det li[data-fid="'+id+'"]'))},80)}
+  else{show('ov');OVG=(P.closedBlockers||[]).some(function(c){return c.bid===id})?'shut':OVG;renderOv();setTimeout(function(){glowAt(document.querySelector('#ovl li[data-fid="'+id+'"]'))},80)}}}
 $('stl').addEventListener('click',function(e){var b=e.target.closest('.rr');if(!b)return;
  if(b.dataset.more){MORE=!MORE;if(!MORE&&cur>CUR)cur=CUR;renderStage(cur);var mb=document.querySelector('#stl .more');if(mb)mb.focus();return}
  renderStage(+b.dataset.i)});
@@ -552,15 +591,20 @@ function chNote(){var el=$('chn');if(!el||!(CG.n||CG.nb))return;var st=Object.ke
 if(P.live){chNote();chMark();new MutationObserver(function(){chMark()}).observe($('main'),{childList:true,subtree:true})}
 // When feature.json changes the page is not loaded again: it takes the new data and redraws in place, so nothing
 // flashes and the place on the page is kept. What is new or changed glows, and the note on top says what it was.
-function applyData(N){var old=snapOf(),was=P.stages[cur]?P.stages[cur].n:null,y=window.scrollY;
+function applyData(N){var old=snapOf(),was=P.stages[cur]?P.stages[cur].n:null,y=window.scrollY,ids={},ren=[];
+ P.stages.forEach(function(s){ids[s.n]=(s.fids||[]).slice()});
  Object.keys(P).forEach(function(k){delete P[k]});Object.keys(N).forEach(function(k){P[k]=N[k]});
+ // an item rewritten in place (same stage, same position, a text that is new and an old text that is gone) is the
+ // same item: it is shown as changed, not as a new one, and what was sent about it stays under it
+ P.stages.forEach(function(s){var o=ids[s.n]||[],n=s.fids||[];n.forEach(function(id,i){if(o[i]&&o[i]!==id&&n.indexOf(o[i])<0&&o.indexOf(id)<0){REN[o[i]]=id;ren.push(id);if(INBOX[o[i]]){INBOX[id]=INBOX[o[i]];delete INBOX[o[i]]}}})});
+ if(ren.length)try{sessionStorage.setItem('wn-ren-'+P.slug,JSON.stringify(REN))}catch(e){}
  CH=P.changes||[];CHF={};CHS={};CH.forEach(function(c){CHF[c.fid]=c;(CHS[c.stage]=CHS[c.stage]||[]).push(c)});VER=P.ver;
  $('t').textContent=P.title;$('t').title=P.title;$('sub').innerHTML=rich(P.sub)+(P.updated&&!P.updatedTs?' Updated '+esc(P.updated)+'.':'');$('sub').title=$('sub').textContent;document.title=document.title.replace(/^(\(\d+\) )?.*$/,'$1'+P.title);
  CUR=Math.max(0,P.stages.map(function(s){return s.n}).indexOf(P.cur));var at=P.stages.map(function(s){return s.n}).indexOf(was);
  var follow=cur===OLDCUR;cur=at<0||follow?CUR:at;OLDCUR=CUR;   // the reader stays on the stage they opened; if they were on the current one, they follow it
  var sm=document.querySelector('#p-ov .sum');if(sm)sm.innerHTML=rich(P.summary||'');if($('p-dec'))$('p-dec').innerHTML=decHTML();
  var tb0=$('tab-ov');if(tb0){var c0=tb0.querySelector('.cnt'),before=c0?c0.textContent:'';if(c0)c0.remove();if(P.blockers.length){c0=document.createElement('span');c0.className='cnt'+(P.blockers.some(function(b){return b.who==='you'})?' bad':'')+(before!==String(P.blockers.length)?' p6b':'');c0.textContent=P.blockers.length;tb0.appendChild(c0)}}   // a counter that changed gives one pulse
- cgDiff(old);CG.now=true;renderStage(cur);freshBar();var el=$('chn');if(el)el.hidden=true;chNote();chMark();SEENDUE=true;seenSave();if(typeof gitUI==='function'&&HASGIT)gitLoad();window.scrollTo(0,y)}
+ cgDiff(old);ren.forEach(function(id){if(CG.f[id]==='new')CG.f[id]='changed'});CG.now=true;renderStage(cur);freshBar();var el=$('chn');if(el)el.hidden=true;chNote();chMark();SEENDUE=true;seenSave();if(typeof gitUI==='function'&&HASGIT)gitLoad();window.scrollTo(0,y)}
 var OLDCUR=CUR,RELOADING=false;
 function softReload(){if(RELOADING)return;RELOADING=true;fetch('/api/panel?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){RELOADING=false;if(!j||!j.stages)throw 0;applyData(j)}).catch(function(){RELOADING=false;location.reload()})}
 (function(){var m=/^#work\/(\d+)(?:\/([0-9a-f]{10}):(do|ask|skip))?$/.exec(location.hash);if(!m)return;var idx=P.stages.map(function(s){return s.n}).indexOf(+m[1]);if(idx<0)return;

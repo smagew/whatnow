@@ -1261,7 +1261,7 @@ func (h handler) post(w http.ResponseWriter, r *http.Request) {
 		code, obj := 400, any(map[string]any{"error": "bad op"})
 		switch str(body, "op") {
 		case "open":
-			code, obj = termOpen(str(body, "session"), n("cols"), n("rows"))
+			code, obj = termOpen(str(body, "session"), n("cols"), n("rows"), n("running") == 1)
 		case "write":
 			code, obj = termWrite(str(body, "id"), str(body, "data"))
 		case "resize":
