@@ -1192,7 +1192,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		default:
 			send(w, 200, []byte(page("vendor"+path)), "text/javascript; charset=utf-8")
 		}
-	case "/demo/motion", "/demo/talk", "/demo/ask", "/demo/reply", "/demo/bar": // examples of the interface to choose from (skill/demo)
+	case "/demo/motion", "/demo/talk", "/demo/ask", "/demo/reply", "/demo/bar", "/demo/font": // examples of the interface to choose from (skill/demo)
 		send(w, 200, []byte(page("demo"+strings.TrimPrefix(path, "/demo")+".html")), "text/html; charset=utf-8")
 	case "/api/spawn": // what a new session would get: started from a feature, or in a folder
 		if dir := q.Get("dir"); dir != "" {

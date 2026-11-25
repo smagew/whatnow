@@ -1,0 +1,37 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>whatnow: the pages in the type of the bar</title>
+<style>
+/* A demo, not a page of its own: the real page of a piece of work in a frame, drawn three ways. "Now" is the page as
+   it is. "Like the bar" is what the new bar on the left does, applied to the whole page: the thin, crisp smoothing
+   and every weight one step lighter (700 -> 600, 600 -> 500). "Like the bar, system font" also swaps the font of
+   the text for the system one, the font of the app you showed. The data in the frame is live. */
+html,body{margin:0;height:100%}body{display:grid;grid-template-rows:auto 1fr;font:13px/1.4 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:#0b1410}
+.demo{color:#dfe9e3;padding:9px 16px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}.demo b{color:#fff}
+.demo .g{display:flex;gap:6px}.demo button{all:unset;cursor:pointer;padding:3px 12px;border-radius:99px;border:1px solid #ffffff45;font-weight:600;font-size:12.5px;color:#fff}
+.demo button[aria-pressed=true]{background:#fff;color:#0b1410}.demo button:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}.demo p{flex-basis:100%;margin:0;color:#b9c9c0}
+.demo select{font:inherit;border-radius:7px;padding:2px 6px}
+iframe{border:0;width:100%;height:100%;background:#eef1ee}
+</style></head><body>
+<div class="demo"><b>The pages in the type of the bar</b>
+ <span class="g" id="vs"><button type="button" data-v="now" aria-pressed="true">Now</button><button type="button" data-v="bar" aria-pressed="false">Like the bar</button><button type="button" data-v="sys" aria-pressed="false">Like the bar, system font</button></span>
+ <label>Page <select id="pg"></select></label>
+ <p id="why"></p></div>
+<iframe id="f" title="A page of whatnow"></iframe>
+<script>
+var WHY={now:'The page as it is: Geologica at 600–700 in headings, tabs, labels and the chips, with the default smoothing that macOS draws heavier on dark backgrounds.',
+ bar:'Like the bar on the left: the same font, the thin crisp smoothing, and every weight one step lighter (700 becomes 600, 600 becomes 500). Headings stay headings; the page stops shouting.',
+ sys:'As "Like the bar", and the text in the system font (San Francisco on a Mac), the font of the app you showed. Headings keep Geologica, so the page keeps its own face.'};
+var V='now',F=document.getElementById('f');
+function weights(doc,on){[].forEach.call(doc.querySelectorAll('body *'),function(e){if(e.dataset.fw0===undefined){var w=parseInt(getComputedStyle(e).fontWeight,10)||400;e.dataset.fw0=w}var w0=+e.dataset.fw0;
+ e.style.fontWeight=on&&w0>=600?String(w0-100):''})}
+function apply(){var d=F.contentDocument;if(!d||!d.body)return;var st=d.getElementById('demo-type');if(!st){st=d.createElement('style');st.id='demo-type';d.head.appendChild(st)}
+ st.textContent=V==='now'?'':'html,body,*{-webkit-font-smoothing:antialiased!important;-moz-osx-font-smoothing:grayscale!important}'+
+  (V==='sys'?'body,button,input,textarea,select,.cb,.fi,.sent,.tabs button{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif!important}h1,h2,h3{font-family:Geologica,system-ui,sans-serif!important}':'');
+ weights(d,V!=='now')}
+function pick(v){V=v;document.getElementById('why').textContent=WHY[v];[].forEach.call(document.getElementById('vs').children,function(b){b.setAttribute('aria-pressed',b.dataset.v===v)});apply()}
+document.getElementById('vs').onclick=function(e){var b=e.target.closest('button');if(b)pick(b.dataset.v)};
+F.addEventListener('load',function(){apply();var d=F.contentDocument;if(d&&d.body)new MutationObserver(function(){clearTimeout(apply.t);apply.t=setTimeout(apply,60)}).observe(d.body,{childList:true,subtree:true})});
+fetch('/api/features').then(function(r){return r.json()}).then(function(j){var s=document.getElementById('pg');s.innerHTML='<option value="/">Home page</option>'+(j.features||[]).map(function(f){return '<option value="/f/'+encodeURIComponent(f.id)+'/">'+f.name.replace(/</g,'&lt;')+'</option>'}).join('');
+ var first=(j.features||[]).filter(function(f){return f.state})[0]||(j.features||[])[0];if(first)s.value='/f/'+encodeURIComponent(first.id)+'/';F.src=s.value;s.onchange=function(){F.src=s.value}});
+pick(/[#&]v=(now|bar|sys)/.test(location.hash)?RegExp.$1:'now');
+</script></body></html>
