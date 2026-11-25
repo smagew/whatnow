@@ -234,6 +234,8 @@ html.mo-off .swB::before,html.mo-off .swB i{transition:none}
 .cwtg .wta{all:unset;cursor:pointer;color:#cfe3d8;font-size:12.5px;font-weight:600;padding:3px 10px;border-radius:99px;border:1px solid #ffffff3d;white-space:nowrap}.cwtg .wta:hover{background:#ffffff1f}
 .cwb{position:relative;max-width:calc(100vw - 24px);max-height:calc(100vh - 40px);min-width:320px;min-height:260px}
 .cwr{position:absolute;z-index:2;touch-action:none}.cwr.l{left:0;top:14px;bottom:0;width:7px;cursor:ew-resize}.cwr.t{top:0;left:14px;right:0;height:7px;cursor:ns-resize}.cwr.c{left:0;top:0;width:14px;height:14px;cursor:nwse-resize}
+.cw.lft .cwr.l{left:auto;right:0}.cw.lft .cwr.c{left:auto;right:0;cursor:nesw-resize}.cw.lft .cwr.t{left:0;right:14px}.cw.lft .cwr.c:hover,.cw.lft .cwr.c.on{border-radius:0 16px 0 8px}
+.cwh button.ib[hidden]{display:none}.cw:not(.wide) .cwh{cursor:grab;user-select:none;-webkit-user-select:none}.cw.mvg .cwh{cursor:grabbing}.cw.mvg .cwb{box-shadow:0 14px 40px rgba(22,36,30,.34)}.cwh button.flip svg{transform:scaleX(-1)}
 .cwr:hover,.cwr.on{background:var(--livel)}.cwr.c:hover,.cwr.c.on{border-radius:16px 0 8px 0}
 .cw.wide{left:var(--sw);right:0;bottom:0}
 .cw.wide .cwb{width:auto!important;max-width:none;min-width:0;border-radius:0;border-width:1px 0 0;box-shadow:0 -6px 24px rgba(22,36,30,.16)}
@@ -269,7 +271,8 @@ body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes w
 /* The notes float over the page, in the bottom right corner above the line of the chat: they take no room in the
    page, so nothing moves when one appears or goes. (They used to be put above the content, and pushed all of it down.) */
 .chw{position:fixed;z-index:41;right:var(--nr,20px);top:var(--nt,172px);width:min(560px,calc(100vw - var(--sw,0px) - 40px));display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.chn{pointer-events:auto;box-sizing:border-box;background:#fff6d6;border:1px solid #ecd27a;border-radius:12px;padding:10px 14px;display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center;font-size:13px;color:#4a3800;box-shadow:0 10px 30px rgba(22,36,30,.22);animation:chin .4s ease-out}
+.chn{pointer-events:auto;box-sizing:border-box;background:#fff6d6;border:1px solid #ecd27a;border-radius:12px;padding:10px 14px;display:flex;gap:6px 12px;flex-wrap:wrap;align-items:flex-start;font-size:13px;line-height:20px;color:#4a3800;box-shadow:0 10px 30px rgba(22,36,30,.22);animation:chin .4s ease-out;transition:opacity .22s ease-in,transform .22s ease-in}
+.chn.out{opacity:0;transform:translateY(-6px);pointer-events:none}html.mo-off .chn{transition:none}
 .chn[hidden]{display:none}.chn b{font-weight:600}.chn .x{flex:1}
 .chn button{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;padding:2px 10px;border-radius:99px;border:1px solid #4a380066}.chn button.go{background:#4a3800;color:#fff;border-color:#4a3800}.chn button:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
 /* The motion of the page, chosen from the examples in /demo/motion. Each answers one event, in 0.2 to 0.4 s,
@@ -362,7 +365,7 @@ html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
 <div class="chw"><div class="chn" id="chn" role="status" hidden></div></div>
 <main id="main"></main>
 <aside class="cw" id="cw" aria-label="The session: messages and terminal" hidden><div class="cl1 cwp" id="cwp" role="button" tabindex="0"></div>
-<div class="cwb" id="cwb" hidden><i class="cwr t" data-r="t"></i><i class="cwr l" data-r="l"></i><i class="cwr c" data-r="c"></i><div class="cwh"><span id="cwsw"><i class="lma" aria-hidden="true">C</i></span><span id="cwt"></span><button type="button" class="ib" id="cwm" hidden aria-haspopup="menu" aria-expanded="false" aria-label="More" title="More"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="3" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="13" cy="8" r="1.5" fill="currentColor"/></svg></button><button type="button" class="ib" id="cwd"></button><button type="button" class="ib" id="cwx" aria-label="Fold" title="Fold to a line in the corner. Nothing is closed: a terminal stays connected."><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="cwmn" id="cwmn" role="menu" hidden><button type="button" role="menuitem" id="cwdc">Disconnect the terminal<small>The session keeps running in the background</small></button></div></div>
+<div class="cwb" id="cwb" hidden><i class="cwr t" data-r="t"></i><i class="cwr l" data-r="l"></i><i class="cwr c" data-r="c"></i><div class="cwh"><span id="cwsw"><i class="lma" aria-hidden="true">C</i></span><span id="cwt"></span><button type="button" class="ib" id="cwm" hidden aria-haspopup="menu" aria-expanded="false" aria-label="More" title="More"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="3" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="13" cy="8" r="1.5" fill="currentColor"/></svg></button><button type="button" class="ib" id="cwsd"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 2.5v11M13 8H5.5M8.5 5l-3 3 3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" class="ib" id="cwd"></button><button type="button" class="ib" id="cwx" aria-label="Fold" title="Fold to a line in the corner. Nothing is closed: a terminal stays connected."><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="cwmn" id="cwmn" role="menu" hidden><button type="button" role="menuitem" id="cwdc">Disconnect the terminal<small>The session keeps running in the background</small></button></div></div>
 <div class="cwl" id="cwl" aria-live="polite"></div>
 <div class="cwtm" id="cwtm" hidden><div class="cwtx" id="cwtx"></div><div class="cwtg" id="cwtg" hidden></div></div>
 <form class="cwf" id="cwf"><textarea id="cwi" rows="1" placeholder="Write to Claude…" aria-label="Message to Claude"></textarea><button type="submit" id="cws" disabled>Send</button></form>
@@ -585,11 +588,13 @@ function gotInbox(j){var m={},ans=null;(j.entries||[]).filter(function(e){return
 // session, and they covered each other there. When the page is scrolled the notes go up to the edge with it.
 // A tall session window reaches up to them: then they stand to the left of it.
 function noteTop(){var h=document.querySelector('header'),b=h?h.getBoundingClientRect().bottom:0,top=Math.max(12,Math.round(b)+12),st=document.documentElement.style,w=$('cwb'),r=w&&!w.hidden?w.getBoundingClientRect():null;
- st.setProperty('--nt',top+'px');st.setProperty('--nr',(r&&r.width<innerWidth*.7&&r.top<top+180?Math.round(innerWidth-r.left)+12:20)+'px')}
+ st.setProperty('--nt',top+'px');st.setProperty('--nr',(r&&r.width<innerWidth*.7&&r.top<top+180&&r.right>innerWidth-600&&r.left>600?Math.round(innerWidth-r.left)+12:20)+'px')}
 noteTop();window.addEventListener('scroll',noteTop,{passive:true});window.addEventListener('resize',noteTop);
+function noteGo(el,ms){clearTimeout(el._t);el.classList.remove('out');el._t=setTimeout(function w(){if(el.matches(':hover')){el._t=setTimeout(w,2000);return}
+ el.classList.add('out');el._t=setTimeout(function(){el.hidden=true;el.classList.remove('out')},240)},ms)}
 function ansNote(e){var w=document.querySelector('.chw');if(!w)return;var el=$('ans');if(!el){el=document.createElement('div');el.id='ans';el.className='chn ans';el.setAttribute('role','status');w.insertBefore(el,w.firstChild)}
  var ok=e.state==='done';el.className='chn ans'+(ok?'':' bad');el.hidden=false;ANSID=renOf(e.fid);if(sameAsAnswer()&&$('chn'))$('chn').hidden=true;
- el.title=(ok?e.note:e.error)||'';clearTimeout(ansNote.t);ansNote.t=setTimeout(function(){if(!el.matches(':hover'))el.hidden=true},60000);   // the answer stays under its item too
+ el.title=(ok?e.note:e.error)||'';noteGo(el,30000);   // the answer stays under its item too
  el.innerHTML='<b>'+(ok?'The session answered':'The message was not delivered')+'</b> <span class="x">'+(e.item?'about «'+esc(String(e.item).slice(0,70))+(String(e.item).length>70?'…':'')+'»'+(ok&&e.note?': ':''):'')+(ok?esc(e.note||''):esc(e.error||''))+'</span><button type="button" class="go" data-an="show">Show the item</button><button type="button" data-an="x">Got it</button>';
  el.onclick=function(x){var b=x.target.closest('button');if(!b)return;if(b.dataset.an==='x'){el.hidden=true;return}
   var id=renOf(e.fid),si=-1;P.stages.forEach(function(s,i){if((s.fids||[]).indexOf(id)>=0)si=i});
@@ -645,7 +650,7 @@ function chNote(){var el=$('chn');if(el&&sameAsAnswer()){el.hidden=true;return}i
  var h='<b>'+(CG.now?'The plan has just changed.':'The plan changed since you last looked.')+'</b> <span class="x">'+(CG.n?CG.n+' new or changed item'+(CG.n>1?'s':'')+(f?' in stage '+f.n+' «'+esc(f.title)+'»'+(st.length>1?' and '+(st.length-1)+' more':''):''):'')+(CG.n&&CG.nb?', ':'')+(CG.nb?CG.nb+' new open item'+(CG.nb>1?'s':''):'')+'</span><button type="button" class="go" data-ch="show">Show</button><button type="button" data-ch="x" aria-label="Hide this note">Got it</button>';
  el.innerHTML=h;el.hidden=false;
  // it goes by itself after a while; the marks on the stages and on the items stay, they are the lasting record
- clearTimeout(CG.hide);CG.hide=setTimeout(function(){if(!el.matches(':hover'))el.hidden=true},14000);
+ noteGo(el,10000);
  el.onclick=function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.ch==='x'){CG.off=true;el.hidden=true;[].forEach.call(document.querySelectorAll('.chgt,.chb'),function(x){x.remove()});return}
   CG.t0=Date.now();[].forEach.call(document.querySelectorAll('[data-ch]'),function(x){if(x.tagName==='LI'){delete x.dataset.ch;x.classList.remove('chg','an1b','an1m');var t=x.querySelector('.chgt');if(t)t.remove()}});
   if(CG.n&&CG.first>=0){show('work');renderStage(CG.first)}else show('ov');
@@ -685,15 +690,29 @@ var CHAT={open:false,items:[],key:'',lkey:'',sid:'',busy:false,err:'',seen:0,box
 try{CHAT.box=JSON.parse(localStorage.getItem('wn-chat')||'{}')||{}}catch(e){}
 // the window can be dragged by its top and left edges, and stretched along the bottom of the screen with one click
 function boxSave(){try{localStorage.setItem('wn-chat',JSON.stringify(CHAT.box))}catch(e){}}
-function boxApply(){setTimeout(noteTop,0);var b=$('cwb'),o=CHAT.box,wide=!!o.wide&&CHAT.open;$('cw').classList.toggle('wide',wide);
+function boxSw(){return parseFloat(getComputedStyle($('cw')).getPropertyValue('--sw'))||0}
+function boxPlace(){var c=$('cw'),o=CHAT.box,wide=!!o.wide&&CHAT.open,l=o.ax==='l';c.classList.toggle('lft',l&&!wide);
+ if(wide){c.style.left=c.style.right='';return}
+ var w=($('cwb').hidden?$('cwp'):$('cwb')).offsetWidth||400,x=Math.max(8,Math.min(o.x==null?20:o.x,innerWidth-boxSw()-w-8));
+ c.style.left=l?boxSw()+x+'px':'auto';c.style.right=l?'auto':x+'px';
+ var d=$('cwsd');d.hidden=wide;d.classList.toggle('flip',l);d.title=l?'Move the window to the right side':'Move the window to the left side';d.setAttribute('aria-label',d.title)}
+function boxApply(){setTimeout(noteTop,0);var b=$('cwb'),o=CHAT.box,wide=!!o.wide&&CHAT.open;$('cw').classList.toggle('wide',wide);$('cwsd').hidden=wide;setTimeout(boxPlace,0);
  b.style.width=!wide&&o.w?o.w+'px':'';b.style.height=wide?(o.hw?o.hw+'px':'min(46vh,460px)'):(o.h?o.h+'px':'');
  var d=$('cwd');d.innerHTML=o.wide?'<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M13 6.5H9.5V3M9.5 6.5 14 2M3 9.5h3.5V13M6.5 9.5 2 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>':'<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';d.title=o.wide?'Back to a window in the corner':'Stretch along the bottom of the screen';d.setAttribute('aria-label',o.wide?'Compact window':'Full width');
  document.body.style.paddingBottom=wide?b.offsetHeight+20+'px':''}
 function boxDrag(e){var k=e.target.dataset.r;if(!k)return;e.preventDefault();var h=e.target,b=$('cwb'),r=b.getBoundingClientRect(),x0=e.clientX,y0=e.clientY,o=CHAT.box;
  h.classList.add('on');h.setPointerCapture(e.pointerId);
- function mv(ev){if(k!=='t'&&!o.wide)o.w=Math.round(Math.max(320,Math.min(innerWidth-24,r.width+x0-ev.clientX)));
+ function mv(ev){if(k!=='t'&&!o.wide)o.w=Math.round(Math.max(320,Math.min(innerWidth-24,r.width+(o.ax==='l'?ev.clientX-x0:x0-ev.clientX))));
   if(k!=='l')o[o.wide?'hw':'h']=Math.round(Math.max(260,Math.min(innerHeight-40,r.height+y0-ev.clientY)));boxApply()}
  function up(){h.classList.remove('on');h.removeEventListener('pointermove',mv);h.removeEventListener('pointerup',up);h.removeEventListener('pointercancel',up);boxSave()}
+ h.addEventListener('pointermove',mv);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up)}
+// The compact window is moved along the bottom by its title row. Where it is let go decides the edge it keeps
+// its distance from, so it stays in place when the app window is resized.
+function boxMove(e){if(CHAT.box.wide||e.button||e.target.closest('button,[data-sw],.cwr,.cwmn'))return;var c=$('cw'),b=$('cwb'),r=b.getBoundingClientRect(),x0=e.clientX,h=e.currentTarget,on=false,sw=boxSw(),left=r.left;
+ function mv(ev){var dx=ev.clientX-x0;if(!on&&Math.abs(dx)<4)return;if(!on){on=true;h.setPointerCapture(e.pointerId);c.classList.add('mvg')}
+  left=Math.max(sw+8,Math.min(innerWidth-8-r.width,r.left+dx));c.style.left=left+'px';c.style.right='auto';noteTop()}
+ function up(){h.removeEventListener('pointermove',mv);h.removeEventListener('pointerup',up);h.removeEventListener('pointercancel',up);if(!on)return;c.classList.remove('mvg');
+  var o=CHAT.box,mid=left+r.width/2,l=mid<sw+(innerWidth-sw)/2;o.ax=l?'l':'r';o.x=Math.round(l?left-sw:innerWidth-left-r.width);boxSave();boxPlace();noteTop()}
  h.addEventListener('pointermove',mv);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up)}
 try{CHAT.seen=+localStorage.getItem('wn-seen-'+P.slug)||0}catch(e){}
 function md(t){return esc(t).replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>').replace(/^#{1,6} +(.+)$/gm,'<b>$1</b>')}
@@ -756,7 +775,8 @@ function pollChat(){if(!CHAT.sid)return;var sid=CHAT.sid;fetch('/api/chat?sessio
  if(sid!==CHAT.sid)return;var k=JSON.stringify(j.items||[]);if(k===CHAT.key)return;CHAT.key=k;CHAT.items=j.items||[];chatDraw();lastMsg()}).catch(function(){})}
 function chatOpen(on,quiet){CHAT.open=on;keepOpen();CHAT.lkey='';lastMsg();modeApply(!quiet);if(on){if(tmode()==='term'){if(TAPI)TAPI.focus()}else{var l=$('cwl');l.scrollTop=l.scrollHeight;$('cwi').focus()}}else{var o=$('lmo');if(o)o.focus()}}
 function chatFit(){var t=$('cwi');t.style.height='auto';t.style.height=Math.min(180,t.scrollHeight+2)+'px';$('cws').disabled=CHAT.busy||!t.value.trim()}
-if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);
+if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);document.querySelector('#cwb .cwh').addEventListener('pointerdown',boxMove);window.addEventListener('resize',boxPlace);
+ $('cwsd').onclick=function(){var o=CHAT.box;o.ax=o.ax==='l'?'r':'l';o.x=20;boxSave();boxPlace();setTimeout(noteTop,0);if(tmode()==='term'&&TAPI)TAPI.focus()};
  $('cwb').addEventListener('dblclick',function(e){if(!e.target.dataset.r)return;var o=CHAT.box;if(o.wide)delete o.hw;else{delete o.w;delete o.h}boxSave();boxApply()});
  $('cwd').onclick=function(){CHAT.box.wide=!CHAT.box.wide;boxSave();boxApply();if(tmode()==='term'){if(TAPI){TAPI.fit();TAPI.focus()}}else{var l=$('cwl');l.scrollTop=l.scrollHeight;$('cwi').focus()}};
  // the switch between the two views, on the folded line and in the title of the window
