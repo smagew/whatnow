@@ -25,6 +25,13 @@ The dashboard's own labels are English. Text fields may contain `<code>…</code
   "plan":  ["what the stage was supposed to include"],
   "facts": [ ["y","done"], ["fixed","problem found and already fixed"], ["bad","open problem"], ["p","partly done"], ["q","not done"], ["w","being worked on right now"] ] }
 ```
+**The detail of an item.** A fact may have a third element, the detail: `["y", "short line", "the detail"]`. The short
+line names the item; the detail says how it ended, the way you would sum it up in the terminal: what was done, the
+important details and numbers, what was checked and how, what did not work, commit hashes. It can be several paragraphs
+(separate them with an empty line) and lists (lines that start with `- `). The page shows it when the item is opened.
+A stage may have `"result": "…"` in the same form: how the whole stage ended. Write a detail for every finished item
+that is more than a trivial step, and a result for every finished stage.
+
 `n` is an integer, strictly increasing. `kind` is optional: `plan | research | code | test | review | deploy | docs`; the page marks the stage with an icon (without it the title is read for a hint). The percent of a feature is the share of its plan that is done: every stage weighs the same and counts by the share of its items done (`p` = half, "not needed" is left out). Stage colour is derived and says how worried to be: all `q` = grey, any `bad` = red, everything done = green, 80% or more done = light green ("almost"), otherwise amber. `fixed` counts as done: the mistake stays visible in the list but does not colour the stage. Use `bad` only for a problem that is still open; change it to `fixed` once it is solved. `unplanned: true` marks work that was not in the plan.
 
 `w` marks the one item being worked on right now. The Progress tab shows that stage as the current one, with the item named on it. It counts as not done. Without a `w` item the current stage is the furthest stage that was started.

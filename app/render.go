@@ -243,8 +243,19 @@ func prepare(d map[string]any, overrides map[string]any) (err error) {
 		facts := s["facts"].([]any)
 		for _, f := range facts {
 			l, ok := f.([]any)
-			if !ok || len(l) != 2 || !in(factKinds, l[0]) {
+			if !ok || (len(l) != 2 && len(l) != 3) || !in(factKinds, l[0]) {
 				fail("stage %d: each fact is [kind, text], kind in %s", n, pyTuple(factKinds))
+			}
+			// an optional third element is the detail: what was done and how it ended, as long as it needs
+			if len(l) == 3 {
+				if _, ok := l[2].(string); !ok {
+					fail(`stage %d: the detail of an item ("%v") must be text`, n, l[1])
+				}
+			}
+		}
+		if r, has := s["result"]; has {
+			if _, ok := r.(string); !ok {
+				fail(`stage %d: "result" must be text`, n)
 			}
 		}
 		// ids of facts, and the user's "not needed" decisions (overrides.json, never written by Claude)
@@ -254,7 +265,7 @@ func prepare(d map[string]any, overrides map[string]any) (err error) {
 			fids[i] = fid
 			if o, ok := overrides[fid].(map[string]any); ok && o["kind"] == "skip" {
 				if k := kindOf(f.([]any)[0]); k != "y" && k != "fixed" {
-					facts[i] = []any{"n", f.([]any)[1]}
+					facts[i] = append([]any{"n"}, f.([]any)[1:]...) // the text, and its detail when it has one
 					r, ok := o["reason"]
 					if !ok {
 						r = ""

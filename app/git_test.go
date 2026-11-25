@@ -115,6 +115,40 @@ func TestARepositoryWithoutARemote(t *testing.T) {
 	}
 }
 
+// An item of the plan that names a commit ("commit 3f2a9c1") is linked to that commit; a word or a number that only
+// looks like a hash is not.
+func TestThePlanNamesItsCommits(t *testing.T) {
+	e := withDemo(t)
+	repo := t.TempDir()
+	must(t, exec.Command("git", "init", "-q", "-b", "main", repo).Run())
+	writeFile(t, filepath.Join(repo, "a.txt"), []byte("x"))
+	gitDo(t, repo, "add", "a.txt")
+	gitDo(t, repo, "commit", "-q", "-m", "the work")
+	out, err := exec.Command("git", "-C", repo, "rev-parse", "HEAD").Output()
+	must(t, err)
+	full := strings.TrimSpace(string(out))
+	d := demoFeature()
+	st := d["stages"].([]any)[0].(map[string]any)
+	st["result"] = "The stage ended well.\n\n- one\n- two"
+	st["facts"] = []any{
+		[]any{"y", "Schema written, commit " + full[:8], "The detail: what was done.\n\nChecked with the tests, 1234567 rows, see deadbee."},
+		[]any{"q", "Not done yet"}}
+	writeFile(t, e.demoSrc(), encodeJSON(d))
+	loaded := e.loadDemo() // a detail and a result are accepted
+	eq(t, len(loaded["stages"].([]any)[0].(map[string]any)["facts"].([]any)[0].([]any)), 3, "the detail stays with the item")
+	refs := planRefs("demo-feature", []string{repo})
+	eq(t, len(refs), 1, "only the real commit")
+	c := refs[full[:7]].(map[string]any)
+	eq(t, c["hash"], any(full))
+	eq(t, c["subject"], any("the work"))
+	// a detail that is not text is refused with a message, like any other mistake in the file
+	st["facts"] = []any{[]any{"y", "x", 5}}
+	writeFile(t, e.demoSrc(), encodeJSON(d))
+	if _, err := load(e.demoSrc()); err == nil || !strings.Contains(err.Error(), "detail") {
+		t.Errorf("a detail that is not text was accepted: %v", err)
+	}
+}
+
 // A feature whose sessions never worked in a repository has no Git tab.
 func TestNoRepositoriesNoTab(t *testing.T) {
 	withDemo(t)

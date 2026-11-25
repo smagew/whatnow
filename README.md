@@ -151,6 +151,18 @@ works in, the folder it was started in (the agent reaches everything under it), 
 transcript. For an open session it also shows the CPU (percent of one core) and memory its process takes together with
 everything started under it; the Sessions list shows the same. Not read on Windows yet.
 
+**How a step ended.** An item of a stage can carry a detail, and a stage a result (see `skill/SCHEMA.md`): what was
+done, the important details and numbers, what was checked, what is left, the way an agent sums up its work in the
+terminal. On the Progress tab **How it ended** under an item opens its detail, and the result of the stage is shown on
+top of it. The agents are told to write them for every finished item and stage.
+
+**Plan and commits.** An item that names a commit (`commit 3f2a9c1`) gets a chip with that commit, which says whether
+it is pushed and leads to it on the Git tab; there the commit has a **stage N** link back to the item. An item that is
+not done and speaks of a commit, a push or a request is marked "planned".
+
+**What is left** shows one group of open items at a time: the groups ("wait for you", "need your look", "for the
+agent", "later", "closed by you") are sub-tabs with their counts.
+
 **The Git tab.** A feature whose sessions work in a repository gets a **Git** tab (a feature without one does not).
 It has a block per repository, found from the folders the sessions worked in and remembered in `repos.json` next to
 `feature.json`:

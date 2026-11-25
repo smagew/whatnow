@@ -363,6 +363,71 @@ func repoState(repo string, mine []string, remote bool) map[string]any {
 	return r
 }
 
+var (
+	hashRe     = regexp.MustCompile(`\b[0-9a-f]{7,40}\b`)
+	seenCommit = map[string]map[string]any{} // repository + hash as written -> the commit (nil: no such commit there)
+	seenAt     = map[string]time.Time{}
+	seenMu     sync.Mutex
+)
+
+// planRefs finds the commits the plan of a feature names (an item says "commit 3f2a9c1") in its repositories:
+// the hash as written, cut to 7 characters -> the commit. The page links the item to the commit and back.
+func planRefs(slug string, repos []string) map[string]any {
+	out := map[string]any{}
+	b, err := os.ReadFile(filepath.Join(featuresDir(), slug, "feature.json"))
+	if err != nil || len(repos) == 0 {
+		return out
+	}
+	for _, h := range hashRe.FindAllString(string(b), 400) {
+		if !strings.ContainsAny(h, "abcdef") || !strings.ContainsAny(h, "0123456789") {
+			continue // a number or a word, not a hash
+		}
+		key := runes(h, 7)
+		if _, done := out[key]; done {
+			continue
+		}
+		for _, repo := range repos {
+			if c := commitOf(repo, h); c != nil {
+				out[key] = c
+				break
+			}
+		}
+	}
+	return out
+}
+
+// commitOf looks one hash up in one repository. What is found stays found; "not pushed" and "no such commit"
+// are asked again after a while, since both can change.
+func commitOf(repo, h string) map[string]any {
+	key := repo + "\x00" + h
+	seenMu.Lock()
+	c, hit := seenCommit[key]
+	at := seenAt[key]
+	seenMu.Unlock()
+	if hit && (c != nil && c["pushed"] != false || time.Since(at) < time.Minute) {
+		return c
+	}
+	var found map[string]any
+	if full, ok := git(repo, gitFast, "rev-parse", "--verify", "--quiet", h+"^{commit}"); ok && full != "" {
+		if line, ok := git(repo, gitFast, "log", "-1", "--format=%ct%x1f%s", full); ok {
+			f := strings.SplitN(line, "\x1f", 2)
+			ts, _ := strconv.ParseInt(f[0], 10, 64)
+			found = map[string]any{"hash": full, "short": runes(full, 7), "repo": tilde(repo), "ts": ts * 1000}
+			if len(f) == 2 {
+				found["subject"] = f[1]
+			}
+			if _, hasOrigin := git(repo, gitFast, "remote", "get-url", "origin"); hasOrigin {
+				on, _ := git(repo, gitFast, "branch", "-r", "--contains", full)
+				found["pushed"] = strings.TrimSpace(on) != ""
+			}
+		}
+	}
+	seenMu.Lock()
+	seenCommit[key], seenAt[key] = found, time.Now()
+	seenMu.Unlock()
+	return found
+}
+
 type gitCacheItem struct {
 	at time.Time
 	v  map[string]any
@@ -432,7 +497,7 @@ func gitState(slug string, remote bool) map[string]any {
 		}
 		repos = append(repos, r)
 	}
-	v := map[string]any{"repos": repos, "remote": remote}
+	v := map[string]any{"repos": repos, "remote": remote, "refs": planRefs(slug, featureRepos(slug))}
 	gitCacheMu.Lock()
 	gitCache[key] = gitCacheItem{time.Now(), v}
 	gitCacheMu.Unlock()

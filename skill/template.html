@@ -60,6 +60,9 @@ main{max-width:1228px;margin:0 auto;padding:22px 24px 70px}
 .why{margin:0 0 14px;font-size:16px;max-width:40em}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
 .chip{display:flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:13px}
+.chips button.chip{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:8px;padding:5px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:13px}
+.chips button.chip:hover{border-color:var(--ink)}.chips button.chip[aria-selected=true]{background:var(--side);border-color:var(--side);color:#fff}.chips button.chip:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
+.dt.shut{background:#8c9a92}
 .chip b{font-weight:700}.dt{width:10px;height:10px;border-radius:50%;flex:none}.dt.h{background:var(--bad)}.dt.m{background:#e8b13a}.dt.l{background:#8c9a92}.dt.k{background:var(--ok)}
 .why.sum{max-width:62em}#ovl{max-width:900px}
 .bl{list-style:none;margin:0;padding:0;display:grid;gap:8px}
@@ -234,6 +237,19 @@ body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes w
 .chb{display:inline-block;margin-right:6px;font-size:11px;font-weight:700;line-height:1.5;padding:0 6px;border-radius:99px;background:#f3d36b;color:#3a2a00;vertical-align:1px;animation:chb .6s ease-in-out 4}
 /* with "reduce motion" nothing moves; the glow stays, it is a change of colour, not a movement */
 @media(prefers-reduced-motion:reduce){.chn,.chb{animation:none}}
+/* the detail of an item (how it ended), the result of a stage, and the commits an item names */
+.dtl{all:unset;cursor:pointer;display:inline-block;margin:3px 0 0;font-size:12px;font-weight:600;color:var(--acc)}.dtl::after{content:' ▾'}.dtl[aria-expanded=true]::after{content:' ▴'}
+.dtl:hover{text-decoration:underline}.dtl:focus-visible,.grc:focus-visible,.gst:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
+.dtx,.res{margin:6px 0 2px;padding:10px 14px;border-left:3px solid var(--ok);background:#f4f8f5;border-radius:0 8px 8px 0;font-size:13.5px;line-height:1.55;color:var(--ink)}
+.dtx p,.res p{margin:0 0 8px}.dtx p:last-child,.res p:last-child,.dtx ul:last-child,.res ul:last-child{margin-bottom:0}.dtx ul,.res ul{margin:0 0 8px;padding-left:20px}.dtx li,.res li{margin:3px 0}
+.res{margin:12px 0 4px}.res>b{display:block;margin-bottom:6px;font-size:12.5px;color:var(--ok)}
+.ft .dtl{display:inline-block}.fi>.dtx{flex-basis:100%;order:2;margin:6px 0 4px 30px}
+.dtx ul,.res ul{list-style:disc}.dtx ul li,.res ul li{display:list-item}
+.grf{display:inline-flex;flex-wrap:wrap;gap:4px;margin-left:8px;vertical-align:1px}
+.grc,.gst{all:unset;cursor:pointer;font:600 11.5px ui-monospace,Menlo,monospace;padding:0 7px;border-radius:99px;background:var(--liveb);color:var(--live);white-space:nowrap;line-height:1.6}
+.grc.np{background:var(--warnb);color:#5a4300}.grc:hover,.gst:hover{box-shadow:0 0 0 1px currentColor}
+.grp{font:600 11.5px ui-monospace,Menlo,monospace;padding:0 7px;border-radius:99px;border:1px dashed #8c9a92;color:var(--mut);white-space:nowrap;line-height:1.6}
+.gst{flex:none;font-family:inherit}
 /* the Git tab: a block per repository */
 .gitw{display:flex;flex-direction:column;gap:14px}.gitw>.why{margin:0}
 .gr{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 18px 10px}
@@ -312,7 +328,8 @@ var hi=P.blockers.filter(function(b){return b.sev==='high'}).length,mid=P.blocke
 var GROUPS=[['you','Waits for you','only you can do this','wait for you'],['look','Needs your look','check or decide','need your look'],['agent','Agent can do it','nothing else is needed first','for the agent'],['later','Later','next phases','later'],['none','Not sorted yet','the agent has not said who acts','not sorted']];
 function grpOf(b){return GROUPS.some(function(g){return g[0]===b.who})?b.who:'none'}
 function grpItems(k){return P.blockers.filter(function(b){return grpOf(b)===k}).sort(function(a,b){return a.stage-b.stage})}
-var ov='<p class="why sum">'+rich(P.summary||'')+'</p><div class="chips">'+GROUPS.filter(function(g){return grpItems(g[0]).length}).map(function(g){return '<span class="chip"><i class="dt '+g[0]+'"></i><b>'+grpItems(g[0]).length+'</b> '+g[3]+'</span>'}).join('')+'</div>'+
+// the groups of open items are sub-tabs: one group on screen at a time, not one long list
+var ov='<p class="why sum">'+rich(P.summary||'')+'</p><div class="chips" id="ovt" role="tablist" aria-label="Who has to act"></div>'+
 '<div id="ovl"></div>';
 // work
 var w='<div class="md"><div class="rail" role="tablist" aria-orientation="vertical" aria-label="Stages" id="stl"></div><div class="det" id="det" role="tabpanel" tabindex="0"></div></div>';
@@ -372,18 +389,35 @@ function blCard(b){var fid=b.bid,g=grpOf(b),open=FORM&&FORM.fid===fid,live=P.liv
  var mine=g==='you'||g==='look';   // what waits for a person: that person can say "done" or "not needed"
  var acts=live&&g!=='later'?'<div class="acts">'+(mine?'<button type="button" class="dn" data-a="done" title="You did this yourself: close it and tell the session">✓ Done</button><button type="button" data-a="skip" title="This is not needed: close it and tell the session">Not needed</button>':'')+(g==='you'?'':'<button type="button" data-a="do">Do it</button>')+'<button type="button" data-a="ask">Ask</button></div>':'';
  return '<li class="bk '+g+'" data-fid="'+fid+'" data-kind="blocker"><h3>'+rich(b.t)+b.proj.map(function(p){return '<span class="pj">'+esc(p)+'</span>'}).join('')+'</h3><p>'+rich(b.why)+'</p><div class="td"><b>To do</b>'+rich(b.todo)+'<button type="button" data-stage="'+b.stage+'">stage '+b.stage+'</button></div>'+acts+(open?formHtml():'')+(live?statusLine(INBOX[fid]):'')+'</li>'}
+var OVG='';try{OVG=sessionStorage.getItem('wn-ovg-'+P.slug)||''}catch(e){}
+if($('ovt'))$('ovt').addEventListener('click',function(e){var b=e.target.closest('button[data-g]');if(!b)return;OVG=b.dataset.g;try{sessionStorage.setItem('wn-ovg-'+P.slug,OVG)}catch(x){}FORM=null;renderOv();var n=$('ovt').querySelector('[aria-selected=true]');if(n)n.focus()});
 function renderOv(){var el=$('ovl');if(!el)return;var keep=document.activeElement&&document.activeElement.id==='ftext'&&el.contains(document.activeElement);
- var cl=P.closedBlockers||[];
- el.innerHTML=(GROUPS.map(function(g){var it=grpItems(g[0]);return it.length?'<h3 class="gh">'+g[1]+' <small>'+g[2]+'</small><span class="c">'+it.length+'</span></h3><ol class="bl">'+it.map(blCard).join('')+'</ol>':''}).join('')||'<p class="why">Nothing is left.</p>')+
-  (cl.length?'<h3 class="gh">Closed by you <small>the session is told and takes them out of the list</small><span class="c">'+cl.length+'</span></h3><ol class="bl">'+cl.map(function(b){return '<li class="bk shut" data-fid="'+b.bid+'" data-kind="blocker"><h3><s>'+rich(b.t)+'</s></h3><p><b>'+(b.closed==='done'?'Done, you said':'Not needed, you said')+(b.closedTs?' '+ts(b.closedTs):'')+(b.reason?':</b> '+esc(b.reason):'</b>')+'</p>'+(P.live?'<div class="acts"><button type="button" data-a="unskip">Restore</button></div>'+statusLine(INBOX[b.bid]):'')+'</li>'}).join('')+'</ol>':'');
+ var cl=P.closedBlockers||[],gs=GROUPS.filter(function(g){return grpItems(g[0]).length}).map(function(g){return [g[0],g[1],g[2],grpItems(g[0]).length,g[3]]});
+ if(cl.length)gs.push(['shut','Closed by you','the session is told and takes them out of the list',cl.length,'closed by you']);
+ if(!gs.some(function(g){return g[0]===OVG}))OVG=gs.length?gs[0][0]:'';
+ var tb2=$('ovt');if(tb2)tb2.innerHTML=gs.map(function(g){return '<button type="button" role="tab" class="chip" data-g="'+g[0]+'" aria-selected="'+(g[0]===OVG)+'" title="'+esc(g[1]+': '+g[2])+'"><i class="dt '+g[0]+'"></i><b>'+g[3]+'</b> '+g[4]+'</button>'}).join('');
+ el.innerHTML=(GROUPS.map(function(g){var it=grpItems(g[0]);return it.length&&g[0]===OVG?'<h3 class="gh">'+g[1]+' <small>'+g[2]+'</small><span class="c">'+it.length+'</span></h3><ol class="bl">'+it.map(blCard).join('')+'</ol>':''}).join('')||(gs.length?'':'<p class="why">Nothing is left.</p>'))+
+  (cl.length&&OVG==='shut'?'<h3 class="gh">Closed by you <small>the session is told and takes them out of the list</small><span class="c">'+cl.length+'</span></h3><ol class="bl">'+cl.map(function(b){return '<li class="bk shut" data-fid="'+b.bid+'" data-kind="blocker"><h3><s>'+rich(b.t)+'</s></h3><p><b>'+(b.closed==='done'?'Done, you said':'Not needed, you said')+(b.closedTs?' '+ts(b.closedTs):'')+(b.reason?':</b> '+esc(b.reason):'</b>')+'</p>'+(P.live?'<div class="acts"><button type="button" data-a="unskip">Restore</button></div>'+statusLine(INBOX[b.bid]):'')+'</li>'}).join('')+'</ol>':'');
  if(keep){var x=$('ftext');if(x){x.focus();x.setSelectionRange(x.value.length,x.value.length)}}}
+// The detail of an item (how it ended) opens under it; paragraphs are separated by an empty line, "- " starts a list.
+var OPENF={};
+function richBlock(t){return String(t).split(/\n\s*\n/).map(function(par){var ls=par.split('\n'),out='',li=[];
+  function flush(){if(li.length){out+='<ul>'+li.map(function(x){return '<li>'+rich(x)+'</li>'}).join('')+'</ul>';li=[]}}
+  ls.forEach(function(l){var m=/^\s*[-•]\s+(.*)$/.exec(l);if(m)li.push(m[1]);else{flush();if(l.trim())out+='<p>'+rich(l)+'</p>'}});flush();return out}).join('')}
+// The commits an item names ("commit 3f2a9c1"): a chip that leads to the commit on the Git tab and says whether it
+// is pushed. An item that is not done and speaks of a commit, a push or a request is marked as planned git work.
+var HASH=/\b[0-9a-f]{7,40}\b/g,GITWORD=/\b(commit|push|merge request|pull request)\b|коммит|запуш|пуш(?![а-я]*к)/i;
+function gitRefsOf(f){var r=(GIT&&GIT.d&&GIT.d.refs)||{},seen={},out=[];((f[1]||'')+' '+(f[2]||'')).replace(HASH,function(h){var c=r[h.slice(0,7)];if(c&&!seen[c.hash]){seen[c.hash]=1;out.push(c)}return h});return out}
+function factGit(f,kind){if(typeof GIT==='undefined'||!GIT||!HASGIT)return '';var cs=gitRefsOf(f);
+ if(cs.length)return '<span class="grf">'+cs.map(function(c){return '<button type="button" class="grc'+(c.pushed===false?' np':'')+'" data-gc="'+c.hash+'" title="'+esc((c.subject||'')+'\n'+c.repo+(c.pushed===false?'\nNot pushed yet':c.pushed?'\nPushed':'')+'\nOpens the commit on the Git tab')+'">⎇ '+c.short+(c.pushed===false?' · not pushed':'')+'</button>'}).join('')+'</span>';
+ return !DONE_K[kind]&&kind!=='n'&&GITWORD.test(f[1])?'<span class="grf"><span class="grp" title="This item is about a commit, a push or a request that is not done yet">⎇ planned</span></span>':''}
 function factLi(s,f,fi){var fid=(s.fids||[])[fi],kind=f[0],live=P.live&&fid,skipped=kind==='n',open=FORM&&FORM.fid===fid;
  var c=CHF[fid],fresh=c&&Date.now()-c.ts<D1,ag=P.live?agent():null,on=ag&&ag.state==='work';
  var acts='';
  if(live){if(skipped)acts='<span class="acts"><button type="button" data-a="unskip">Restore</button></span>';
   else acts='<span class="acts">'+(DONE_K[kind]||kind==='w'?'':'<button type="button" data-a="do">Do it</button>')+'<button type="button" data-a="ask">Ask</button>'+(DONE_K[kind]?'':'<button type="button" data-a="skip">Not needed</button>')+'</span>'}
  var form=open?formHtml():'';
- return '<li class="fi'+(live&&!DONE_K[kind]&&!skipped?' todo':'')+(skipped?' skipped':'')+(open?' open':'')+(kind==='w'?' nowr':'')+'" data-fid="'+esc(fid||'')+'"'+(fresh?' data-cts="'+c.ts+'"':'')+'><i class="ico '+kind+(kind==='w'&&on?' on':'')+'"'+tipA(KT[kind]||'')+'>'+(IC[kind]==null?'—':IC[kind])+'</i><span class="ft"><span class="t">'+rich(f[1])+'</span>'+(skipped?'<em class="why">not needed: '+esc((s.reasons||{})[fi]||'no reason given')+'</em>':'')+(kind==='w'?'<em class="sub2">'+(on?'The agent is working on this':'In work')+(c&&c.now==='w'?', started '+ts(c.ts):'')+'</em>':'')+'</span>'+(fresh&&kind!=='w'?'<span class="ag" tabindex="0"'+tipA(chText(c),'Changed '+exact(c.ts)+', '+age(c.ts))+'>'+trn(c)+ts(c.ts,1)+'</span>':'')+acts+form+(live?statusLine(INBOX[fid]):'')+'</li>'}
+ return '<li class="fi'+(live&&!DONE_K[kind]&&!skipped?' todo':'')+(skipped?' skipped':'')+(open?' open':'')+(kind==='w'?' nowr':'')+'" data-fid="'+esc(fid||'')+'"'+(fresh?' data-cts="'+c.ts+'"':'')+'><i class="ico '+kind+(kind==='w'&&on?' on':'')+'"'+tipA(KT[kind]||'')+'>'+(IC[kind]==null?'—':IC[kind])+'</i><span class="ft"><span class="t">'+rich(f[1])+'</span>'+factGit(f,kind)+(f[2]?'<button type="button" class="dtl" data-dt="'+esc(fid||('i'+fi))+'" aria-expanded="'+!!OPENF[fid||('i'+fi)]+'">'+(OPENF[fid||('i'+fi)]?'Hide the details':'How it ended')+'</button>':'')+(skipped?'<em class="why">not needed: '+esc((s.reasons||{})[fi]||'no reason given')+'</em>':'')+(kind==='w'?'<em class="sub2">'+(on?'The agent is working on this':'In work')+(c&&c.now==='w'?', started '+ts(c.ts):'')+'</em>':'')+'</span>'+(fresh&&kind!=='w'?'<span class="ag" tabindex="0"'+tipA(chText(c),'Changed '+exact(c.ts)+', '+age(c.ts))+'>'+trn(c)+ts(c.ts,1)+'</span>':'')+acts+(f[2]&&OPENF[fid||('i'+fi)]?'<div class="dtx">'+richBlock(f[2])+'</div>':'')+form+(live?statusLine(INBOX[fid]):'')+'</li>'}
 function queue(){var n=0;Object.keys(INBOX).forEach(function(k){var e=INBOX[k];if(e.state==='new'||e.state==='delivered')n++});var q=$('qb');if(q)q.textContent=n?'Waiting for a reply: '+n:''}
 function fline(s){var l=lastIn(s.n),wi=-1;s.facts.forEach(function(f,i){if(f[0]==='w')wi=i});
  if(!(l&&Date.now()-l.ts<D1)&&wi<0)return '';var ag=P.live?agent():null,n=recent(s.n,H1);
@@ -392,7 +426,7 @@ function renderStage(i){cur=i;if(typeof keep==='function')keep();var s=P.stages[
  if(!s){$('det').innerHTML='<p class="why">No stages yet.</p>';queue();renderOv();return}
  renderRail();
  var tg={ok:['ok','Done'],almost:['ok','Almost done'],part:['part','Partly done'],bad:['bad','Has an open problem'],no:['no','Not started']}[s.state];
- $('det').innerHTML='<h2>'+s.n+'. '+rich(s.title)+'</h2><p class="vv"><span class="tag '+tg[0]+'">'+tg[1]+'</span>'+(KI[s.kind]?'<span class="tag no">'+KI[s.kind][0]+' '+KI[s.kind][1]+'</span>':'')+(s.unplanned?'<span class="tag bad">not in the plan</span>':'')+rich(s.verdict)+'</p>'+fline(s)+'<div class="pf"><div><h3>What the stage included</h3>'+(s.plan.length?ul(s.plan.map(function(p){return '<li>'+rich(p)+'</li>'}).join(''),'plan'):'<div class="empty">This stage was not in the plan</div>')+'</div><div><h3>What was done, what was not</h3>'+ul(s.facts.map(function(f,fi){return factLi(s,f,fi)}).join(''),'fact')+'</div></div><div class="nav"><button id="pv"'+(i===0?' disabled':'')+'>← '+(i?'Stage '+P.stages[i-1].n:'')+'</button><button id="nx"'+(i===P.stages.length-1?' disabled':'')+'>'+(i<P.stages.length-1?'Stage '+P.stages[i+1].n:'')+' →</button></div>';
+ $('det').innerHTML='<h2>'+s.n+'. '+rich(s.title)+'</h2><p class="vv"><span class="tag '+tg[0]+'">'+tg[1]+'</span>'+(KI[s.kind]?'<span class="tag no">'+KI[s.kind][0]+' '+KI[s.kind][1]+'</span>':'')+(s.unplanned?'<span class="tag bad">not in the plan</span>':'')+rich(s.verdict)+'</p>'+fline(s)+(s.result?'<div class="res"><b>How the stage ended</b>'+richBlock(s.result)+'</div>':'')+'<div class="pf"><div><h3>What the stage included</h3>'+(s.plan.length?ul(s.plan.map(function(p){return '<li>'+rich(p)+'</li>'}).join(''),'plan'):'<div class="empty">This stage was not in the plan</div>')+'</div><div><h3>What was done, what was not</h3>'+ul(s.facts.map(function(f,fi){return factLi(s,f,fi)}).join(''),'fact')+'</div></div><div class="nav"><button id="pv"'+(i===0?' disabled':'')+'>← '+(i?'Stage '+P.stages[i-1].n:'')+'</button><button id="nx"'+(i===P.stages.length-1?' disabled':'')+'>'+(i<P.stages.length-1?'Stage '+P.stages[i+1].n:'')+' →</button></div>';
  $('pv').onclick=function(){renderStage(cur-1)};$('nx').onclick=function(){renderStage(cur+1)};tick();queue();renderOv();}
 // freshness in the header: when the feature was last updated and what its session does
 function freshBar(){var el=$('fr');if(!el||!P.updatedTs)return;var a=P.live?agent():null,st=a?a.state:'',old=Date.now()-P.updatedTs>H1,n=CH.filter(function(c){return c.ts>=Date.now()-H1}).length;
@@ -416,7 +450,9 @@ document.addEventListener('focusin',function(e){var el=tipOf(e);if(el)tipShow(el
 document.addEventListener('focusout',tipHide);document.addEventListener('scroll',tipHide,true);
 document.addEventListener('keydown',function(e){if(e.key==='Escape')tipHide()});
 function post(body){return fetch('/api/act',{method:'POST',headers:{'Content-Type':'application/json','X-Whatnow':'1'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})}
-function onAct(e){var b=e.target.closest('button');if(!b||b.dataset.stage)return;if(b.dataset.ses==='open'){SES.pick=true;SES.err='';sesBar();window.scrollTo({top:0,behavior:'smooth'});return}var li=b.closest('[data-fid]');
+function onAct(e){var b=e.target.closest('button');if(!b||b.dataset.stage)return;
+ if(b.dataset.dt){OPENF[b.dataset.dt]=!OPENF[b.dataset.dt];renderStage(cur);var nb=document.querySelector('#det button[data-dt="'+b.dataset.dt+'"]');if(nb)nb.focus();return}
+ if(b.dataset.gc){gitGo(b.dataset.gc);return}if(b.dataset.ses==='open'){SES.pick=true;SES.err='';sesBar();window.scrollTo({top:0,behavior:'smooth'});return}var li=b.closest('[data-fid]');
  var back=function(k){location.hash=k==='blocker'?'ov':'work/'+P.stages[cur].n;location.reload()};
  if(b.dataset.a==='unskip'){var k0=li.dataset.kind||'';post({feature:P.slug,fid:li.dataset.fid,action:'unskip',kind:k0}).then(function(r){if(r.ok)back(k0)});return}
  if(b.dataset.a){FORM={fid:li.dataset.fid,a:b.dataset.a,text:'',kind:li.dataset.kind||''};ROUTE=null;renderStage(cur);var t=$('ftext');if(t)t.focus();
@@ -564,17 +600,31 @@ function gitCard(r){var L=gitLinks(r),onBase=r.branch&&r.branch===r.base,chips=[
  var push=P.live&&r.remote&&(r.ahead||r.noUpstream)?'<button type="button" data-g="push"'+(s?'':' disabled title="No session of this feature is known"')+'>Ask the session to push</button>':'';
  var oth=(r.others||[]).length?'<p class="go" role="note">Also in this repository right now: '+r.others.map(function(o){return '<b>'+esc(o.name)+'</b>'+(o.feature?' (feature '+esc(o.feature)+')':'')}).join(', ')+'. Two sessions in one folder change the same files and the same branch.</p>':'';
  var cm=r.commits||[],head=onBase||!r.base?'Latest commits':'Commits of this branch that <code>'+esc(r.base)+'</code> does not have';
+ // a commit the plan names: a link to the stage it belongs to; older commits the plan names are listed after the others
+ var IX=planIndex(),have={};cm.forEach(function(c){have[c.hash]=1});
+ var refs=(GIT.d.refs||{}),old=Object.keys(refs).map(function(k){return refs[k]}).filter(function(c){return c.repo===r.path&&!have[c.hash]}).sort(function(a,b){return b.ts-a.ts});
+ function row(c){var st=IX[c.short]||[],seen={};return '<li data-c="'+c.hash+'">'+(L.commit?'<a href="'+esc(L.commit+c.hash)+'" target="_blank" rel="noopener"><code>'+c.short+'</code></a>':'<code>'+c.short+'</code>')+'<span class="gs">'+esc(c.subject||'')+'</span>'+
+   st.filter(function(x){if(seen[x.n])return false;seen[x.n]=1;return true}).map(function(x){return '<button type="button" class="gst" data-ps="'+x.si+'" data-pf="'+esc(x.fid||'')+'" title="The step of the plan that names this commit">stage '+x.n+'</button>'}).join('')+
+   (c.pushed===false?'<span class="tag part" title="The remote does not have this commit yet">not pushed</span>':'')+(c.mine?'<span class="tag live" title="Made by a session of this feature">this feature</span>':'')+'<span class="ga">'+(c.author?esc(c.author)+' · ':'')+ts(c.ts)+'</span></li>'}
  return '<section class="gr" data-repo="'+esc(r.path)+'"><div class="grh"><h3>'+esc(r.name)+(r.worktree?' <span class="tag no">worktree '+esc(r.worktree)+'</span>':'')+'</h3><code class="gb" title="Branch">'+esc(r.branch||('detached at '+r.detached))+'</code><span class="gp">'+esc(r.path)+'</span><span class="gx"></span>'+(r.web?'<a href="'+esc(r.web)+'" target="_blank" rel="noopener">Open'+(L.site?' on '+L.site:'')+' ↗</a>':'')+(L.list?'<a href="'+esc(L.list)+'" target="_blank" rel="noopener">All '+L.word+'s ↗</a>':'')+'</div>'+
   '<div class="gc">'+chips.map(function(c){return '<span class="gch '+c[0]+'" title="'+esc(c[2])+'">'+c[1]+'</span>'}).join('')+push+'</div>'+(req?'<div class="grq">'+req+'</div>':'')+oth+(GIT.said[r.path]?'<p class="gsaid">'+esc(GIT.said[r.path])+'</p>':'')+
-  '<h4>'+head+(cm.length?' <small>'+cm.length+(cm.length>=15?', the latest':'')+'</small>':'')+'</h4>'+(cm.length?'<ol class="gcl">'+cm.map(function(c){return '<li>'+(L.commit?'<a href="'+esc(L.commit+c.hash)+'" target="_blank" rel="noopener"><code>'+c.short+'</code></a>':'<code>'+c.short+'</code>')+'<span class="gs">'+esc(c.subject)+'</span>'+(c.pushed===false?'<span class="tag part" title="The remote does not have this commit yet">not pushed</span>':'')+(c.mine?'<span class="tag live" title="Made by a session of this feature">this feature</span>':'')+'<span class="ga">'+esc(c.author)+' · '+ts(c.ts)+'</span></li>'}).join('')+'</ol>':'<p class="gm">'+(onBase?'No commits.':'None: everything of this branch is already in <code>'+esc(r.base)+'</code>.')+'</p>')+'</section>'}
+  '<h4>'+head+(cm.length?' <small>'+cm.length+(cm.length>=15?', the latest':'')+'</small>':'')+'</h4>'+(cm.length?'<ol class="gcl">'+cm.map(row).join('')+'</ol>'+(old.length?'<h4>Earlier commits the plan names <small>'+old.length+'</small></h4><ol class="gcl">'+old.map(row).join('')+'</ol>':''):old.length?'<ol class="gcl">'+old.map(row).join('')+'</ol>':'<p class="gm">'+(onBase?'No commits.':'None: everything of this branch is already in <code>'+esc(r.base)+'</code>.')+'</p>')+'</section>'}
+// the items of the plan that name a commit: commit (first 7 characters) -> [{stage index, stage number, item id}]
+function planIndex(){var ix={};P.stages.forEach(function(s,si){s.facts.forEach(function(f,fi){((f[1]||'')+' '+(f[2]||'')).replace(HASH,function(h){var k=h.slice(0,7);(ix[k]=ix[k]||[]).push({si:si,n:s.n,fid:(s.fids||[])[fi]});return h})})});return ix}
+// from an item of the plan to its commit on the Git tab, and from a commit to the item that names it
+function glowAt(el){if(!el)return;el.classList.remove('chg');void el.offsetWidth;el.style.animationDelay='0s';el.classList.add('chg');if(el.scrollIntoView)el.scrollIntoView({block:'center',behavior:'smooth'})}
+function gitGo(hash){show('git');setTimeout(function(){glowAt(document.querySelector('#gitl li[data-c="'+hash+'"]'))},80)}
+function planGo(si,fid){show('work');renderStage(si);setTimeout(function(){glowAt(document.querySelector('#det li[data-fid="'+fid+'"]'))},80)}
 function gitUI(){var el=$('gitl');if(!el)return;var rs=GIT.d.repos||[],h='<p class="why">The repositories the sessions of this feature work in. Read with git on this machine; nothing is changed there.</p>'+rs.map(gitCard).join('');
  if(el.dataset.h!==h){el.dataset.h=h;el.innerHTML=h}
  var up=0;rs.forEach(function(r){up+=(r.ahead||0)+(r.dirty?1:0)});var tbn=$('tab-git');if(tbn){var c=tbn.querySelector('.cnt');if(up&&!c){c=document.createElement('span');c.className='cnt';tbn.appendChild(c)}if(c){if(up){c.textContent=up;c.title='Unpushed commits and repositories with uncommitted files'}else c.remove()}}}
-function gitLoad(){if(GIT.busy)return;GIT.busy=true;fetch('/api/git?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){GIT.busy=false;if(j&&j.repos){GIT.d=j;gitUI()}}).catch(function(){GIT.busy=false})}
+function gitLoad(){if(GIT.busy)return;GIT.busy=true;fetch('/api/git?feature='+encodeURIComponent(P.slug),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){GIT.busy=false;if(j&&j.repos){var before=JSON.stringify(GIT.d.refs||{});GIT.d=j;gitUI();if(JSON.stringify(j.refs||{})!==before&&!FORM)renderStage(cur)}}).catch(function(){GIT.busy=false})}
 function gitShow(){gitUI();gitLoad();if(!GIT.timer)GIT.timer=setInterval(function(){if(curTab==='git'&&document.visibilityState==='visible')gitLoad()},20000)}
 if(HASGIT){gitUI();setTimeout(gitLoad,1200);   // the count on the tab needs the state even while another tab is open
  if(location.hash==='#git')show('git');
- $('gitl').addEventListener('click',function(e){var b=e.target.closest('button[data-g]');if(!b||b.disabled)return;var path=b.closest('.gr').dataset.repo,r=(GIT.d.repos||[]).filter(function(x){return x.path===path})[0],s=agent()||chatSes();if(!r||!s)return;
+ renderStage(cur);   // the items of the plan get their commit chips now that the commits are known
+ $('gitl').addEventListener('click',function(e){var p=e.target.closest('button[data-ps]');if(p){planGo(+p.dataset.ps,p.dataset.pf);return}
+  var b=e.target.closest('button[data-g]');if(!b||b.disabled)return;var path=b.closest('.gr').dataset.repo,r=(GIT.d.repos||[]).filter(function(x){return x.path===path})[0],s=agent()||chatSes();if(!r||!s)return;
   var L=gitLinks(r),txt=b.dataset.g==='push'?'Please push the commits of branch '+r.branch+' in '+r.path+' to origin, and tell me when it is done.':'Please open a '+(L.word||'pull request')+' for branch '+r.branch+' of '+r.path+' into '+r.base+', and tell me the link.';
   b.disabled=true;post({action:'tell',session:s.id,text:txt}).then(function(x){GIT.said[path]=x.ok?'Asked session '+sesName(s)+(b.dataset.g==='push'?' to push.':' to open the '+(L.word||'request')+'.'):'Could not send: '+((x.j&&x.j.error)||'unknown error');gitUI()}).catch(function(){GIT.said[path]='No connection to the server.';gitUI()})})}
 // The Access tab: for every session of the feature, what it may do and reach. The permission mode, the model, the
