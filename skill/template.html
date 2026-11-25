@@ -563,6 +563,13 @@ document.addEventListener('mouseover',function(e){var el=tipOf(e);if(el){if(el!=
 document.addEventListener('focusin',function(e){var el=tipOf(e);if(el)tipShow(el)});
 document.addEventListener('focusout',tipHide);document.addEventListener('scroll',tipHide,true);
 document.addEventListener('keydown',function(e){if(e.key==='Escape')tipHide()});
+// A text that is typed and not sent yet is kept (in this browser), per field: going to another page and back, or
+// closing the app, must not lose it. It is dropped when the text is sent.
+var DRAFT={};try{DRAFT=JSON.parse(localStorage.getItem('wn-draft')||'{}')||{}}catch(e){}
+function draft(k,v){if(v===undefined)return DRAFT[k]||'';try{DRAFT=JSON.parse(localStorage.getItem('wn-draft')||'{}')||{}}catch(e){}
+ if(v)DRAFT[k]=String(v).slice(0,20000);else delete DRAFT[k];try{localStorage.setItem('wn-draft',JSON.stringify(DRAFT))}catch(e){}}
+function fkey(){return 'i:'+P.slug+':'+FORM.fid+':'+FORM.a}
+document.addEventListener('input',function(e){if(e.target.id==='ftext'&&FORM){FORM.text=e.target.value;draft(fkey(),e.target.value)}});
 function post(body){return fetch('/api/act',{method:'POST',headers:{'Content-Type':'application/json','X-Whatnow':'1'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})}
 function onAct(e){var b=e.target.closest('button');if(!b||b.dataset.stage)return;
  if(b.dataset.mm){var on=MSGOPEN[b.dataset.mm]=!MSGOPEN[b.dataset.mm];b.closest('.yq').classList.toggle('all',on);b.textContent=on?'Fold':'Show all';b.setAttribute('aria-expanded',on);return}
@@ -570,12 +577,13 @@ function onAct(e){var b=e.target.closest('button');if(!b||b.dataset.stage)return
  if(b.dataset.gc){gitGo(b.dataset.gc);return}if(b.dataset.ses==='open'){SES.pick=true;SES.err='';sesBar();window.scrollTo({top:0,behavior:'smooth'});return}var li=b.closest('[data-fid]');
  var back=function(k){FORM=null;softReload()};   // the page takes the new data in place, on the tab it is on
  if(b.dataset.a==='unskip'){var k0=li.dataset.kind||'';post({feature:P.slug,fid:li.dataset.fid,action:'unskip',kind:k0}).then(function(r){if(r.ok)back(k0)});return}
- if(b.dataset.a){FORM={fid:li.dataset.fid,a:b.dataset.a,text:'',kind:li.dataset.kind||''};ROUTE=null;renderStage(cur);var t=$('ftext');if(t)t.focus();
+ if(b.dataset.a){FORM={fid:li.dataset.fid,a:b.dataset.a,text:'',kind:li.dataset.kind||''};FORM.text=draft(fkey());ROUTE=null;renderStage(cur);var t=$('ftext');if(t)t.focus();
   if(b.dataset.a!=='skip'&&b.dataset.a!=='done')fetch('/api/route?feature='+encodeURIComponent(P.slug)).then(function(r){return r.json()}).then(function(r){ROUTE=r;if(FORM){FORM.text=($('ftext')||{}).value||FORM.text;renderStage(cur);var t2=$('ftext');if(t2)t2.focus()}}).catch(function(){});return}
  if(b.dataset.cx){FORM=null;renderStage(cur);return}
  if(b.dataset.go&&!BUSY){var txt=($('ftext').value||'').trim();BUSY=true;FORM.text=txt;FORM.err='';renderStage(cur);
   post({feature:P.slug,fid:FORM.fid,action:FORM.a,text:txt,kind:FORM.kind||''}).then(function(r){BUSY=false;
    if(!r.ok){FORM.err=(r.j&&r.j.error)||'could not send';renderStage(cur);return}
+   draft(fkey(),'');
    if(FORM.a==='skip'||FORM.a==='done'){back(FORM.kind);return}
    if(r.j.entry)INBOX[r.j.entry.fid]=r.j.entry;FORM=null;renderStage(cur)}).catch(function(){BUSY=false;FORM.err='no connection to the server';renderStage(cur)})}}
 $('det').addEventListener('click',onAct);if($('ovl'))$('ovl').addEventListener('click',onAct);
@@ -790,7 +798,7 @@ function chatDraw(){var l=$('cwl'),low=l.scrollHeight-l.scrollTop-l.clientHeight
  if(low)l.scrollTop=l.scrollHeight}
 function pollChat(){if(!CHAT.sid)return;var sid=CHAT.sid;fetch('/api/chat?session='+encodeURIComponent(sid),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){
  if(sid!==CHAT.sid)return;var k=JSON.stringify(j.items||[]);if(k===CHAT.key)return;CHAT.key=k;CHAT.items=j.items||[];chatDraw();lastMsg()}).catch(function(){})}
-function chatOpen(on,quiet){CHAT.open=on;keepOpen();CHAT.lkey='';lastMsg();modeApply(!quiet);if(on){if(tmode()==='term'){if(TAPI)TAPI.focus()}else{var l=$('cwl');l.scrollTop=l.scrollHeight;$('cwi').focus()}}else{var o=$('cwp');if(o)o.focus()}}
+function chatOpen(on,quiet){CHAT.open=on;keepOpen();CHAT.lkey='';lastMsg();modeApply(!quiet);if(on){if(tmode()==='term'){if(TAPI)TAPI.focus()}else{var l=$('cwl');l.scrollTop=l.scrollHeight;chatFit();$('cwi').focus()}}else{var o=$('cwp');if(o)o.focus()}}
 function chatFit(){var t=$('cwi');t.style.height='auto';t.style.height=Math.min(180,t.scrollHeight+2)+'px';$('cws').disabled=CHAT.busy||!t.value.trim()}
 if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);$('cwu').onclick=function(){chatOpen(true)};$('cwu').onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();chatOpen(true)}};document.querySelector('#cwb .cwh').addEventListener('pointerdown',boxMove);window.addEventListener('resize',boxPlace);
  $('cwsd').onclick=function(){var o=CHAT.box;o.ax=o.ax==='l'?'r':'l';o.x=20;boxSave();boxPlace();setTimeout(noteTop,0);if(tmode()==='term'&&TAPI)TAPI.focus()};
@@ -810,12 +818,12 @@ if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);$('cwu').onclick=fu
  // the terminal module gets the place for its view from here, and tells when it is ready
  if(TOK)window.WN_EMBED={xt:$('cwtx'),msg:$('cwtg'),state:function(){var d=$('cwm');if(d)d.hidden=!(tmode()==='term'&&TAPI&&TAPI.cur())},ready:function(api){TAPI=api;if((CHAT.box.opens||{})[P.slug]&&tmode()==='term'&&!CHAT.open&&chatSes())chatOpen(true,true);else modeApply(false)},
   request:function(sid){TASK=sid;CHAT.box.modes=CHAT.box.modes||{};CHAT.box.modes[P.slug]='term';boxSave();chatOpen(true)}};
- $('cwp').onclick=function(){chatOpen(true)};$('cwx').onclick=function(){chatOpen(false)};$('cwi').addEventListener('input',chatFit);
+ $('cwp').onclick=function(){chatOpen(true)};$('cwx').onclick=function(){chatOpen(false)};$('cwi').addEventListener('input',function(){draft('c:'+P.slug,$('cwi').value);chatFit()});$('cwi').value=draft('c:'+P.slug);setTimeout(chatFit,0);
  $('cwi').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!$('cws').disabled)$('cwf').requestSubmit()}else if(e.key==='Escape')chatOpen(false)});
  $('cwf').addEventListener('submit',function(e){e.preventDefault();var t=$('cwi'),txt=t.value.trim();if(!txt||CHAT.busy||!CHAT.sid)return;CHAT.busy=true;CHAT.err='';chatFit();
   function fail(m){CHAT.busy=false;CHAT.err=m;$('cwn').className='cwn err';$('cwn').textContent=m;chatFit()}
   post({action:'tell',session:CHAT.sid,text:txt}).then(function(r){if(!r.ok)return fail((r.j&&r.j.error)||'could not send');
-   CHAT.busy=false;t.value='';chatFit();CHAT.lkey='';var l=$('cwl');l.scrollTop=l.scrollHeight;pollChat();lastMsg()}).catch(function(){fail('no connection to the server')})});
+   CHAT.busy=false;t.value='';draft('c:'+P.slug,'');chatFit();CHAT.lkey='';var l=$('cwl');l.scrollTop=l.scrollHeight;pollChat();lastMsg()}).catch(function(){fail('no connection to the server')})});
  if(P.live)setInterval(pollChat,3000)}
 // The Git tab: one block per repository the sessions of the feature work in. What is committed and pushed, how far
 // the branch is from the main one, the pull request (GitHub) or merge request (GitLab) of the branch, the commits

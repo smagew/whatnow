@@ -201,9 +201,14 @@ function paintS(D){if(!D.live)return;var all=D.sessions||[];var vis=all.filter(f
  if(ta){var x=$('stext');if(x){x.focus();x.setSelectionRange(x.value.length,x.value.length)}}
  if(D.live)$('sub').textContent=nv+' session'+(nv===1?'':'s')+' open, '+waitN+' waiting for you, '+work+' working now.'}
 $('fl').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.f==='hidden')SF.showHidden=!SF.showHidden;else SF.f=b.dataset.f;paintS(window.IDX_DATA)});
-$('sess').addEventListener('input',function(e){if(e.target.id==='stext'&&SF.form)SF.form.text=e.target.value});
+// A text that is typed and not sent yet is kept (in this browser), per field: going to another page and back, or
+// closing the app, must not lose it. It is dropped when the text is sent.
+var DRAFT={};try{DRAFT=JSON.parse(localStorage.getItem('wn-draft')||'{}')||{}}catch(e){}
+function draft(k,v){if(v===undefined)return DRAFT[k]||'';try{DRAFT=JSON.parse(localStorage.getItem('wn-draft')||'{}')||{}}catch(e){}
+ if(v)DRAFT[k]=String(v).slice(0,20000);else delete DRAFT[k];try{localStorage.setItem('wn-draft',JSON.stringify(DRAFT))}catch(e){}}
+$('sess').addEventListener('input',function(e){if(e.target.id==='stext'&&SF.form){SF.form.text=e.target.value;draft('s:'+SF.form.id,e.target.value)}});
 $('sess').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||!b.dataset.a)return;var li=b.closest('.s'),id=li.dataset.id,a=b.dataset.a,D=window.IDX_DATA;SF.err[id]='';
- if(a==='ask'){SF.form={id:id,text:''};paintS(D);var t=$('stext');if(t)t.focus();return}
+ if(a==='ask'){SF.form={id:id,text:draft('s:'+id)};paintS(D);var t=$('stext');if(t)t.focus();return}
  if(a==='cancel'){SF.form=null;paintS(D);return}
  if(a==='more'){SF.menu=SF.menu===id?null:id;if(SF.attach===id)SF.attach=null;paintS(D);return}
  if(a==='copy'){var cmd='claude --resume '+id;(navigator.clipboard?navigator.clipboard.writeText(cmd):Promise.reject()).then(function(){SF.copied=id;paintS(D);setTimeout(function(){SF.copied='';paintS(window.IDX_DATA)},1500)}).catch(function(){SF.err[id]='Copy this: '+cmd;paintS(D)});return}
@@ -215,7 +220,7 @@ $('sess').addEventListener('click',function(e){var b=e.target.closest('button');
  if(a==='hide'||a==='unhide'){post({action:a,session:id}).then(function(){pollNow()});return}
  if(a==='send'&&SF.form&&!SF.form.busy){var txt=($('stext').value||'').trim();if(!txt){SF.err[id]='Write the message first';paintS(D);return}
   SF.form.busy=true;SF.form.text=txt;paintS(D);
-  post({action:'tell',session:id,text:txt}).then(function(r){SF.form=null;if(!r.ok)SF.err[id]=(r.j&&r.j.error)||'could not send';else SF.sent[id]=r.j.entry;paintS(window.IDX_DATA)}).catch(function(){SF.form.busy=false;SF.err[id]='no connection to the server';paintS(window.IDX_DATA)})}});
+  post({action:'tell',session:id,text:txt}).then(function(r){SF.form=null;if(!r.ok)SF.err[id]=(r.j&&r.j.error)||'could not send';else{SF.sent[id]=r.j.entry;draft('s:'+id,'')}paintS(window.IDX_DATA)}).catch(function(){SF.form.busy=false;SF.err[id]='no connection to the server';paintS(window.IDX_DATA)})}});
 function pollInboxS(){if(!Object.keys(SF.sent).length)return;fetch('/api/inbox',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){var m={};(j.entries||[]).forEach(function(e){m[e.id]=e});var ch=false;Object.keys(SF.sent).forEach(function(k){var n=m[SF.sent[k].id];if(n&&JSON.stringify(n)!==JSON.stringify(SF.sent[k])){SF.sent[k]=n;ch=true}});if(ch&&!SF.form)paintS(window.IDX_DATA)}).catch(function(){})}
 // ---------------------------------------------------------------- Favorites
 function isFav(k){return (window.IDX_DATA.favorites||[]).indexOf(k)>=0}
