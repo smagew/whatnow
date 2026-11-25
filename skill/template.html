@@ -606,8 +606,12 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')tipHide()});
 var DRAFT={};try{DRAFT=JSON.parse(localStorage.getItem('wn-draft')||'{}')||{}}catch(e){}
 function draft(k,v){if(v===undefined)return DRAFT[k]||'';try{DRAFT=JSON.parse(localStorage.getItem('wn-draft')||'{}')||{}}catch(e){}
  if(v)DRAFT[k]=String(v).slice(0,20000);else delete DRAFT[k];try{localStorage.setItem('wn-draft',JSON.stringify(DRAFT))}catch(e){}}
+// while one types: kept in memory at once, written a moment after the last key (and when the page is left)
+var DRAFTQ={},DRAFTT=0;function draftSoon(k,v){DRAFTQ[k]=v;clearTimeout(DRAFTT);DRAFTT=setTimeout(draftFlush,400)}
+function draftFlush(){clearTimeout(DRAFTT);var q=DRAFTQ;DRAFTQ={};Object.keys(q).forEach(function(k){draft(k,q[k])})}
+window.addEventListener('pagehide',draftFlush);document.addEventListener('visibilitychange',function(){if(document.visibilityState!=='visible')draftFlush()});
 function fkey(){return 'i:'+P.slug+':'+FORM.fid+':'+FORM.a}
-document.addEventListener('input',function(e){if(e.target.id==='ftext'&&FORM){FORM.text=e.target.value;draft(fkey(),e.target.value)}});
+document.addEventListener('input',function(e){if(e.target.id==='ftext'&&FORM){FORM.text=e.target.value;draftSoon(fkey(),e.target.value)}});
 function post(body){return fetch('/api/act',{method:'POST',headers:{'Content-Type':'application/json','X-Whatnow':'1'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})}
 function onAct(e){var b=e.target.closest('button');if(!b||b.dataset.stage)return;
  if(b.dataset.mm){var on=MSGOPEN[b.dataset.mm]=!MSGOPEN[b.dataset.mm];b.closest('.yq').classList.toggle('all',on);b.textContent=on?'Fold':'Show all';b.setAttribute('aria-expanded',on);return}
@@ -622,7 +626,7 @@ function onAct(e){var b=e.target.closest('button');if(!b||b.dataset.stage)return
  if(b.dataset.go&&!BUSY){var txt=($('ftext').value||'').trim();BUSY=true;FORM.text=txt;FORM.err='';renderStage(cur);
   post({feature:P.slug,fid:FORM.fid,action:FORM.a,text:txt,kind:FORM.kind||''}).then(function(r){BUSY=false;
    if(!r.ok){FORM.err=(r.j&&r.j.error)||'could not send';renderStage(cur);return}
-   draft(fkey(),'');
+   delete DRAFTQ[fkey()];draft(fkey(),'');
    if(FORM.a==='skip'||FORM.a==='done'){back(FORM.kind);return}
    if(r.j.entry)INBOX[r.j.entry.fid]=r.j.entry;FORM=null;renderStage(cur)}).catch(function(){BUSY=false;FORM.err='no connection to the server';renderStage(cur)})}}
 $('det').addEventListener('click',onAct);if($('ovl'))$('ovl').addEventListener('click',onAct);
@@ -827,7 +831,7 @@ function modeApply(user){var term=tmode()==='term',b=$('cwb');if(!b)return;b.cla
  else if(!term||!CHAT.open)TAPI.detach()}
 // the terminal view that was open is opened again when the page (or the app) is opened next time
 function menuShut(){var m=$('cwmn');if(m&&!m.hidden){m.hidden=true;$('cwm').setAttribute('aria-expanded','false')}}
-function keepOpen(){var o=CHAT.box.opens=CHAT.box.opens||{};if(CHAT.open&&tmode()==='term')o[P.slug]=1;else delete o[P.slug];boxSave()}
+function keepOpen(){CHAT.box.open=!!CHAT.open;delete CHAT.box.opens;boxSave()}   // one setting for every work: the window stays open as one goes from work to work
 function setMode(m,user){CHAT.box.modes=CHAT.box.modes||{};CHAT.box.modes[P.slug]=m;keepOpen();CHAT.lkey='';lastMsg();modeApply(user)}
 function lastMsg(){var cw=$('cw');if(!cw||!P.live)return;var s=chatSes();
  if(!s){cw.hidden=true;CHAT.lkey='';return}
@@ -865,9 +869,11 @@ function chatDraw(){var l=$('cwl'),low=l.scrollHeight-l.scrollTop-l.clientHeight
  if(low)l.scrollTop=l.scrollHeight}
 function pollChat(){if(!CHAT.sid)return;var sid=CHAT.sid;fetch('/api/chat?session='+encodeURIComponent(sid),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){
  if(sid!==CHAT.sid)return;var k=JSON.stringify(j.items||[]);if(k===CHAT.key)return;CHAT.key=k;CHAT.items=j.items||[];chatDraw();lastMsg()}).catch(function(){})}
-function chatOpen(on,quiet){CHAT.open=on;keepOpen();CHAT.lkey='';lastMsg();modeApply(!quiet);if(on){if(tmode()==='term'){if(TAPI)TAPI.focus()}else{var l=$('cwl');l.scrollTop=l.scrollHeight;chatFit();$('cwi').focus()}}else{var o=$('cwp');if(o)o.focus()}}
+function chatOpen(on,quiet){CHAT.open=on;keepOpen();CHAT.lkey='';lastMsg();modeApply(!quiet);if(on){if(tmode()==='term'){if(TAPI&&!quiet)TAPI.focus()}else{var l=$('cwl');l.scrollTop=l.scrollHeight;chatFit();if(!quiet)$('cwi').focus()}}else{var o=$('cwp');if(o)o.focus()}}
 function chatFit(){var t=$('cwi');t.style.height='auto';t.style.height=Math.min(180,t.scrollHeight+2)+'px';$('cws').disabled=CHAT.busy||!t.value.trim()}
-if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);$('cwu').onclick=function(){chatOpen(true)};$('cwu').onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();chatOpen(true)}};document.querySelector('#cwb .cwh').addEventListener('pointerdown',boxMove);window.addEventListener('resize',boxPlace);
+if($('cw')){// the window that was open on this page is open again when one comes back to it (the terminal view waits for the terminal script)
+ setTimeout(function(){if(CHAT.box.open&&tmode()==='chat'&&!CHAT.open&&chatSes())chatOpen(true,true)},0);
+ $('cwb').addEventListener('pointerdown',boxDrag);$('cwu').onclick=function(){chatOpen(true)};$('cwu').onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();chatOpen(true)}};document.querySelector('#cwb .cwh').addEventListener('pointerdown',boxMove);window.addEventListener('resize',boxPlace);
  $('cwsd').onclick=function(){var o=CHAT.box;o.ax=o.ax==='l'?'r':'l';o.x=20;boxSave();boxPlace();setTimeout(noteTop,0);if(tmode()==='term'&&TAPI)TAPI.focus()};
  $('cwb').addEventListener('dblclick',function(e){if(!e.target.dataset.r)return;var o=CHAT.box;if(o.wide)delete o.hw;else{delete o.w;delete o.h}boxSave();boxApply()});
  $('cwd').onclick=function(){CHAT.box.wide=!CHAT.box.wide;boxSave();boxApply();if(tmode()==='term'){if(TAPI){TAPI.fit();TAPI.focus()}}else{var l=$('cwl');l.scrollTop=l.scrollHeight;$('cwi').focus()}};
@@ -883,14 +889,14 @@ if($('cw')){$('cwb').addEventListener('pointerdown',boxDrag);$('cwu').onclick=fu
   // Cancel or Close of a terminal that did not open: back to the messages, not to an empty dark pane
   else if(e.target.closest('[data-x="stop"]'))setTimeout(function(){if(TAPI&&!TAPI.live()){TASK='';setMode('chat',true)}},0)});
  // the terminal module gets the place for its view from here, and tells when it is ready
- if(TOK)window.WN_EMBED={xt:$('cwtx'),msg:$('cwtg'),state:function(){var d=$('cwm');if(d)d.hidden=!(tmode()==='term'&&TAPI&&TAPI.cur())},ready:function(api){TAPI=api;if((CHAT.box.opens||{})[P.slug]&&tmode()==='term'&&!CHAT.open&&chatSes())chatOpen(true,true);else modeApply(false)},
+ if(TOK)window.WN_EMBED={xt:$('cwtx'),msg:$('cwtg'),state:function(){var d=$('cwm');if(d)d.hidden=!(tmode()==='term'&&TAPI&&TAPI.cur())},ready:function(api){TAPI=api;if(CHAT.box.open&&tmode()==='term'&&!CHAT.open&&chatSes())chatOpen(true,true);else modeApply(false)},
   request:function(sid){TASK=sid;CHAT.box.modes=CHAT.box.modes||{};CHAT.box.modes[P.slug]='term';boxSave();chatOpen(true)}};
- $('cwp').onclick=function(){chatOpen(true)};$('cwx').onclick=function(){chatOpen(false)};$('cwi').addEventListener('input',function(){draft('c:'+P.slug,$('cwi').value);chatFit()});$('cwi').value=draft('c:'+P.slug);setTimeout(chatFit,0);
+ $('cwp').onclick=function(){chatOpen(true)};$('cwx').onclick=function(){chatOpen(false)};$('cwi').addEventListener('input',function(){draftSoon('c:'+P.slug,$('cwi').value);chatFit()});$('cwi').value=draft('c:'+P.slug);setTimeout(chatFit,0);
  $('cwi').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!$('cws').disabled)$('cwf').requestSubmit()}else if(e.key==='Escape')chatOpen(false)});
  $('cwf').addEventListener('submit',function(e){e.preventDefault();var t=$('cwi'),txt=t.value.trim();if(!txt||CHAT.busy||!CHAT.sid)return;CHAT.busy=true;CHAT.err='';chatFit();
   function fail(m){CHAT.busy=false;CHAT.err=m;$('cwn').className='cwn err';$('cwn').textContent=m;chatFit()}
   post({action:'tell',session:CHAT.sid,text:txt}).then(function(r){if(!r.ok)return fail((r.j&&r.j.error)||'could not send');
-   CHAT.busy=false;t.value='';draft('c:'+P.slug,'');chatFit();CHAT.lkey='';var l=$('cwl');l.scrollTop=l.scrollHeight;pollChat();lastMsg()}).catch(function(){fail('no connection to the server')})});
+   CHAT.busy=false;t.value='';delete DRAFTQ['c:'+P.slug];draft('c:'+P.slug,'');chatFit();CHAT.lkey='';var l=$('cwl');l.scrollTop=l.scrollHeight;pollChat();lastMsg()}).catch(function(){fail('no connection to the server')})});
  if(P.live){setInterval(pollChat,3000);
   // while the messages are in front of the reader, the chat is asked every second: a reply is in the transcript
   // only when Claude has finished writing it, and three more seconds on top of that were noticeable

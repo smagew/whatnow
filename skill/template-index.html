@@ -12,6 +12,7 @@ main{max-width:1148px;margin:0 auto;padding:20px 24px 70px}
 .cdot{width:9px;height:9px;border-radius:50%;background:#2f9e6a;display:inline-block}.cdot.off{background:#e0a21a}
 /* a pulse is a ring of transform and opacity: an animated box-shadow repaints on every frame */
 .cdot.pulse,.lv.work i{position:relative}.cdot.pulse::after,.lv.work i::after{content:'';position:absolute;inset:0;border-radius:50%;background:rgba(47,158,106,.55);pointer-events:none;animation:pulse 1.6s infinite;will-change:transform,opacity}.cdot.off::after{display:none}
+.smk{box-shadow:0 0 0 3px #1f5fd0!important;transition:box-shadow .3s}
 @keyframes pulse{0%{transform:scale(1);opacity:.55}70%,100%{transform:scale(2.8);opacity:0}}
 .list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
 .f{background:var(--paper);border:1px solid var(--line);border-left:6px solid #b7c0cd;border-radius:16px;overflow:hidden}
@@ -248,12 +249,16 @@ document.addEventListener('pointerup',released,true);document.addEventListener('
 
 // tabs
 window.wnShowTab=function(k){showTab(k);try{history.replaceState(null,'',k==='S'?'#sessions':k==='F'?'#features':'#favorites')}catch(e){}};
-window.addEventListener('hashchange',function(){var k={'#sessions':'S','#features':'F','#favorites':'V'}[location.hash];if(k)showTab(k)});
+window.addEventListener('hashchange',function(){var k={'#sessions':'S','#features':'F','#favorites':'V'}[location.hash.split('/')[0]];if(k)showTab(k);sesMark()});
+// #sessions/<id>: the session the link is about is scrolled to and marked for a few seconds
+function sesMark(){var m=/^#sessions\/(.+)$/.exec(location.hash);if(!m)return;var id=decodeURIComponent(m[1]),n=0;(function look(){var el=document.querySelector('[data-id="'+id.replace(/[^A-Za-z0-9_-]/g,'')+'"]');
+ if(!el){if(n++<20)setTimeout(look,300);return}el.scrollIntoView({block:'center'});el.classList.add('smk');setTimeout(function(){el.classList.remove('smk')},6000);try{history.replaceState(null,'','#sessions')}catch(e){}})()}
+sesMark();
 function showTab(k){window.WN_TAB=k;document.querySelector('h1').textContent={S:'Sessions',F:'Features',V:'Favorites'}[k]||'Work with Claude';if(window.wnSide)window.wnSide.refresh();$('pS').hidden=k!=='S';$('pF').hidden=k!=='F';$('pV').hidden=k!=='V';$('tS').setAttribute('aria-selected',k==='S');$('tF').setAttribute('aria-selected',k==='F');$('tV').setAttribute('aria-selected',k==='V');try{localStorage.setItem('whatnow-tab',k)}catch(e){}}
 $('tS').onclick=function(){showTab('S')};$('tF').onclick=function(){showTab('F')};$('tV').onclick=function(){showTab('V')};
 var pollNow=function(){};
 
-if(D.live&&location.protocol!=='file:'){var tab='S';try{tab=localStorage.getItem('whatnow-tab')||'S'}catch(e){}if(location.hash==='#features')tab='F';if(location.hash==='#sessions')tab='S';if(location.hash==='#favorites')tab='V';showTab(tab)}
+if(D.live&&location.protocol!=='file:'){var tab='S';try{tab=localStorage.getItem('whatnow-tab')||'S'}catch(e){}if(location.hash==='#features')tab='F';if(location.hash.indexOf('#sessions')===0)tab='S';if(location.hash==='#favorites')tab='V';showTab(tab)}
 paint(D);
 if(D.mock)$('mock').innerHTML='<div class="mockbanner">'+D.mock+'</div>';
 if(D.live&&location.protocol!=='file:'){

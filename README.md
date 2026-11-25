@@ -284,7 +284,8 @@ argument and is never concatenated into a command.
 - `skill/SKILL.md`: instructions for Claude: when and how to keep a dashboard, the honesty rules.
 - `skill/SCHEMA.md`: the `feature.json` format.
 - `skill/template.html` is the feature page, `skill/template-index.html` the home page, `skill/side.js` the bar on the left,
-  `skill/term.js` the terminal; `skill/vendor/` holds xterm.js (MIT).
+  `skill/term.js` the terminal; `skill/vendor/` holds xterm.js (MIT) and the Geologica font (SIL OFL 1.1): the pages take the font from the
+  program itself, so a page does not wait for another server.
   They are embedded into the program (`assets.go`).
 - `app/`: the program. `render.go` validation, derivation and page building; `server.go` the live pages and buttons;
   `hook.go` the hooks; `cli.go` the commands; `term.go` the terminal; `transcript.go` reading session transcripts; `main.go` the window.

@@ -34,6 +34,7 @@ const (
 
 var (
 	slugRe = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
+	fontRe = regexp.MustCompile(`^/font/geologica-[a-z-]+\.woff2$`)
 	fidRe  = regexp.MustCompile(`^[0-9a-f]{10}$`)
 	pageRe = regexp.MustCompile(`^/f/([^/]+)/?$`)
 	public = []string{"id", "kind", "feature", "fid", "action", "text", "item", "stage", "state", "route", "session",
@@ -1033,19 +1034,12 @@ func featuresList() map[string]any {
 		}
 		return 2
 	}
-	rank := func(f map[string]any) int {
-		if s := f["state"].(string); s != "" {
-			return idx(s)
-		}
-		return len(order)
-	}
+	// Inside a group the order is by name. It used to follow what the sessions do (working first, then waiting…),
+	// so the rows changed places by themselves every time a session started or finished a turn.
 	sort.SliceStable(out, func(i, j int) bool {
 		a, b := out[i], out[j]
 		if group(a) != group(b) {
 			return group(a) < group(b)
-		}
-		if rank(a) != rank(b) {
-			return rank(a) < rank(b)
 		}
 		return strings.ToLower(fmt.Sprint(a["name"])) < strings.ToLower(fmt.Sprint(b["name"]))
 	})
@@ -1066,6 +1060,8 @@ type handler struct {
 // A feature page also gets the first answers of its own polls (sessions, version) for the same reason.
 // The data goes into <head> and the bar's code is inline: nothing in <body> waits for the network or holds the
 // parser up, so WebKit (the app window) has no moment to show a half-built page.
+const fontLink = `<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@400;500;600;700&display=swap" rel="stylesheet">`
+
 func withSide(html string, init map[string]any, local bool) string {
 	data := "<script>window.WN_SIDE=" + blob(featuresList())
 	if init != nil {
@@ -1074,6 +1070,9 @@ func withSide(html string, init map[string]any, local bool) string {
 	if local && termSupported { // the terminal exists in the app window only
 		data += ";window.WN_TERM=1"
 	}
+	// A live page takes its font from this server. The stylesheet of Google Fonts held every page up until another
+	// server had answered: 0.4 s of the 0.5 s a page took to appear (and much longer without a network).
+	html = strings.Replace(html, fontLink, "<style>"+page("vendor/geologica.css")+"</style>", 1)
 	html = strings.Replace(html, "</head>", data+";</script></head>", 1)
 	html = strings.Replace(html, "<body>", "<body><script>"+page("side.js")+"</script>", 1)
 	if local && termSupported {
@@ -1229,6 +1228,15 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			sendJSON(w, 200, map[string]any{"route": route, "session": id, "name": name, "asleep": asleep, "project": project})
 		}
 	default:
+		if fontRe.MatchString(path) { // the font of the pages, from the program itself: a page does not wait for another server
+			if b, err := webFS.ReadFile("skill/vendor" + strings.TrimPrefix(path, "/font")); err == nil {
+				w.Header().Set("Content-Type", "font/woff2")
+				w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+				w.WriteHeader(200)
+				_, _ = w.Write(b)
+				return
+			}
+		}
 		if m := pageRe.FindStringSubmatch(path); m != nil {
 			slug, _ := url.PathUnescape(m[1])
 			src := filepath.Join(featuresDir(), slug, "feature.json")
