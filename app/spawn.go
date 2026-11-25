@@ -321,7 +321,9 @@ func spawnedNow() []any {
 	bound := bindings()
 	now := nowMs()
 	var agents agentMap
-	for _, r := range readSpawned() {
+	l := readSpawned()
+	changed := false
+	for _, r := range l {
 		sid := str(r, "session")
 		if now-num(r["ts"]) > spawnKeep || (sid != "" && str(bound, sid) != "") || str(r, "feature") != "" {
 			continue
@@ -342,11 +344,24 @@ func spawnedNow() []any {
 		if sid != "" && agents != nil && agents[sid] == nil && now-num(r["ts"]) > 60000 {
 			continue // it is gone (stopped, removed) and made no feature
 		}
+		// A session started before the dashboard opened the page itself (or one whose page could not be written):
+		// it gets its page now, so it leaves "Starting" and its window, with its question, is one click away.
+		if sid != "" && isDir(str(r, "root")) {
+			if slug, err := openWork(str(r, "root"), str(r, "task")); err == nil {
+				_ = bind(sid, slug)
+				r["feature"], r["session"] = slug, sid
+				changed = true
+				continue
+			}
+		}
 		row := map[string]any{"session": sid, "name": r["name"], "task": r["task"], "from": r["from"], "ts": r["ts"]}
 		if ses := findSession(sid); ses != nil { // what it does, so that "it asks for a permission" is not missed
 			row["state"], row["what"] = ses.State, ses.What
 		}
 		out = append(out, row)
+	}
+	if changed {
+		_ = atomicWriteJSON(spawnedPath(), l)
 	}
 	return out
 }
