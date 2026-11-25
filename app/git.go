@@ -10,6 +10,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net/url"
 	"os"
 	"os/exec"
@@ -454,7 +455,16 @@ func gitStateFast(slug string) map[string]any {
 	}
 	gitCacheMu.Unlock()
 	if !hit {
-		return gitState(slug, false)
+		// nothing in memory (the server has just started): what the last run of the server knew, from the disk
+		if v, ok := parseJSON(readFile(gitKept(slug))).(map[string]any); ok && v["repos"] != nil {
+			gitCacheMu.Lock()
+			if _, now := gitCache[key]; !now {
+				gitCache[key] = gitCacheItem{time.Time{}, v}
+			}
+			gitCacheMu.Unlock()
+			return gitStateFast(slug)
+		}
+		return gitState(slug, false) // the very first time: there is nothing to show yet
 	}
 	if stale {
 		go func() {
@@ -465,6 +475,14 @@ func gitStateFast(slug string) map[string]any {
 		}()
 	}
 	return c.v
+}
+
+// gitKept is the file the last local state of a feature is kept in, for the next start of the server.
+func gitKept(slug string) string { return filepath.Join(home(), "cache", "git-"+slug+".json") }
+
+func readFile(path string) []byte {
+	b, _ := os.ReadFile(path)
+	return b
 }
 
 // warmGit reads the state of every feature once when the server starts, one after another.
@@ -540,5 +558,13 @@ func gitState(slug string, remote bool) map[string]any {
 	gitCacheMu.Lock()
 	gitCache[key] = gitCacheItem{time.Now(), v}
 	gitCacheMu.Unlock()
+	if !remote {
+		if b, err := json.Marshal(v); err == nil && os.MkdirAll(filepath.Dir(gitKept(slug)), 0o755) == nil {
+			tmp := gitKept(slug) + ".tmp"
+			if os.WriteFile(tmp, b, 0o644) == nil {
+				_ = os.Rename(tmp, gitKept(slug))
+			}
+		}
+	}
 	return v
 }
