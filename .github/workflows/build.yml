@@ -53,6 +53,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      - name: the terminal (pseudo console) runs a program on a real Windows
+        run: go test ./app -run PseudoTerminal -count=1 -v
       - run: go install $env:WAILS
       - name: build
         working-directory: app

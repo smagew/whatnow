@@ -165,7 +165,8 @@ func childEnv(claude string) []string {
 	out := []string{"PATH=" + path}
 	hasHome := false
 	for _, kv := range env {
-		if strings.HasPrefix(kv, "PATH=") {
+		// Windows writes the name as Path, and names differ only by case there
+		if strings.HasPrefix(kv, "PATH=") || (os.PathListSeparator == ';' && len(kv) >= 5 && strings.EqualFold(kv[:5], "PATH=")) {
 			continue
 		}
 		// started from inside a Claude Code session (a terminal, a hook): claude must not take itself for a

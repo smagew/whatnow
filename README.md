@@ -162,7 +162,8 @@ Shift+Enter is a new line, as in a terminal set up for Claude Code. A web addres
 link on a page) opens in your browser.
 
 The terminal is full access to your machine, so it is never served on the 127.0.0.1 port: a browser tab does not get
-it. Not available on Windows yet.
+it. On Windows it runs in a pseudo console (ConPTY, Windows 10 1809 and newer); that part is covered by a test on a
+Windows build machine and has not been tried in the app window by a person yet.
 
 **Folders and resources.** Under the stages a feature page shows, for every session of the feature, the folder it
 works in, the folder it was started in (the agent reaches everything under it), the folders added to it (`--add-dir`,
