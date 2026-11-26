@@ -189,6 +189,12 @@ func readSessions(now int64, includeClosed, withHidden, details bool) []*session
 		}
 		_, listed := ag[sid]
 		isOpen := ag != nil && listed && state != "closed"
+		// Claude Code no longer lists it (read after its last activity): it ended without a word (closed with the
+		// terminal, crashed, a background session stopped). It is closed, kept like one for resuming, and its
+		// work still shows it; as "open but silent" it vanished after 6 h and the work said no session was linked.
+		if ag != nil && !listed && state != "closed" && agentsAt() > t+bgMargin {
+			state = "closed"
+		}
 		if state == "closed" && !isOpen {
 			if !includeClosed || age > historyMs {
 				continue
