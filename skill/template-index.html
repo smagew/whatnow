@@ -128,16 +128,18 @@ body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes w
 .wc.ok{background:#dff3e8;color:#0f6b40}
 .wt{font-size:12.5px;color:var(--mut);white-space:nowrap;font-variant-numeric:tabular-nums}
 .wb{list-style:none;margin:0;padding:0}
-.wb .star{position:absolute;right:12px;top:50%;transform:translateY(-50%)}
+.wb .star{position:absolute;right:10px;top:10px}
 .wb{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
 .wb li{position:relative;background:#fff;border:1px solid var(--line);border-radius:12px}
-.wb li.g-you{border-color:#e8c98a;box-shadow:inset 3px 0 0 #e0a21a}
 .wb li.g-done{opacity:.65}
 .wb a{display:flex;flex-direction:column;gap:6px;padding:12px 14px 12px 16px;color:inherit;text-decoration:none;min-height:118px}
 .wb a:hover{background:#f8faf9;border-radius:12px}
-.wb .wh{display:flex;gap:10px;align-items:baseline;padding-right:22px}
+.wb .wh{display:flex;gap:10px;align-items:baseline;padding-right:26px}
 .wb .wh b{font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wb .wm,.wb .wnx{font-size:12.5px;color:var(--mut)}
+.wb .wm{display:flex;flex-wrap:wrap;gap:4px 6px;min-width:0}
+.wpf{display:inline-flex;align-items:center;gap:4px;padding:1px 7px 1px 5px;border-radius:6px;background:#eef2ef;color:#3d4b44;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wpf svg{flex:none;color:#7d8c84}
+.wsr{display:flex;align-items:center;gap:8px;min-width:0}.wsr .wsg{flex:1;min-width:0;display:flex}.wsr .wsg i{flex:1 1 16px;max-width:16px;min-width:3px}.wpc{font-size:12.5px;color:var(--mut);flex:none;font-variant-numeric:tabular-nums}
 .wb .wnx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wb .wst{margin-top:auto}
 .wempty{color:var(--mut)}
@@ -246,7 +248,7 @@ function paintW(D){var all=D.features.map(function(f){return {f:f,i:winfo(f,D)}}
  var rows=all.filter(function(x){return wPass(x.f,x.i)});
  var bar='<div class="fl wfl"><span class="flr">'+WK.map(function(k){return '<button type="button" data-wk="'+k[0]+'" aria-pressed="'+(WF.k===k[0])+'">'+k[1]+' <small>'+cnt(k[0])+'</small></button>'}).join('')+'<span class="sp"></span><span class="hint">Asked you last first, then the latest activity</span></span>'+
   '<span class="flr tr"><span class="lb">Last active</span>'+TR.map(function(x){return '<button type="button" data-wt="'+x[0]+'" aria-pressed="'+(WF.t===x[0])+'">'+x[1]+'</button>'}).join('')+'</span></div>';
- var body='<ol class="wb">'+rows.map(function(x){var f=x.f,i=x.i;return '<li class="g-'+i.grp+'"><a href="'+esc(f.href)+'"><span class="wh"><b>'+esc(f.name)+'</b><span class="wt">'+agoL(i.lastT)+'</span></span><span class="wm">'+esc(f.projects.join(', '))+' · '+f.pct+'%</span>'+strip(f)+'<span class="wnx">'+nowStage(f)+'</span><span class="wst">'+stateChip(f,i)+'</span></a>'+starBtn('f:'+f.id)+'</li>'}).join('')+'</ol>';
+ var body='<ol class="wb">'+rows.map(function(x){var f=x.f,i=x.i;return '<li class="g-'+i.grp+'"><a href="'+esc(f.href)+'"><span class="wh"><b>'+esc(f.name)+'</b><span class="wt">'+agoL(i.lastT)+'</span></span><span class="wm">'+f.projects.map(function(p){return '<span class="wpf" title="Project (folder) '+esc(p)+'"><svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M2 5.2c0-.9.7-1.6 1.6-1.6h2.6l1.4 1.5h4.8c.9 0 1.6.7 1.6 1.6v4.7c0 .9-.7 1.6-1.6 1.6H3.6c-.9 0-1.6-.7-1.6-1.6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>'+esc(p)+'</span>'}).join('')+'</span><span class="wsr">'+strip(f)+'<span class="wpc">'+f.pct+'%</span></span>'+'<span class="wnx">'+nowStage(f)+'</span><span class="wst">'+stateChip(f,i)+'</span></a>'+starBtn('f:'+f.id)+'</li>'}).join('')+'</ol>';
  $('legend').hidden=true;$('legend').style.display='none';$('done').innerHTML='';$('list').innerHTML='';$('free').innerHTML=bar+(rows.length?body:'<p class="wempty">No work matches these filters.</p>')}
 $('free').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.wk)WF.k=b.dataset.wk;else if(b.dataset.wt)WF.t=b.dataset.wt;else return;try{localStorage.setItem('wn-wf',JSON.stringify(WF))}catch(x){}paintW(window.IDX_DATA)});
 $('list').addEventListener('click',function(e){var b=e.target.closest('.evb');if(!b)return;open[b.dataset.k]=!open[b.dataset.k];paint(window.IDX_DATA)});
