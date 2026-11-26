@@ -113,7 +113,7 @@ body{--sw:0px}
 .rr .cnw{display:inline-flex;align-items:center;white-space:nowrap}.rr .rm{flex:none;display:inline-grid;place-items:center;color:var(--live);margin:0 6px 0 4px;vertical-align:-2px}
 .ses{position:relative;font-size:13px;color:#cfe3d8;display:flex;flex-wrap:nowrap;white-space:nowrap;gap:6px 10px;align-items:center;min-width:0}
 .ses b{color:#fff;font-weight:500}.ses .st{font-size:12px;padding:1px 8px;border-radius:99px;background:#ffffff1f}
-.ses .st.work{background:#2f9e6a;color:#fff}.ses .st.bg{background:#3b7be0;color:#fff}.ses .st.wait{background:#e0a21a;color:#2b2000}
+.ses .st.work{background:#0f7a4a;color:#fff}.ses .st.bg{background:#3b7be0;color:#fff}.ses .st.wait{background:#e0a21a;color:#2b2000}
 .ses button{all:unset;cursor:pointer;font-size:12.5px;font-weight:500;color:#fff;border:1px solid #ffffff66;padding:2px 10px;border-radius:99px}
 .fmw{position:relative;display:inline-flex;flex:none;margin-left:auto}.ses{flex:none;max-width:60%}.ses button.sadd,.meta .qb{flex:none}.fmw[hidden]{display:none}.fmb{all:unset;cursor:pointer;color:#cfe3d8;width:24px;height:22px;text-align:center;border-radius:8px;font-size:16px;line-height:18px}.fmb:hover{background:#ffffff1f;color:#fff}.fmb:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}
 .fmn{position:absolute;z-index:30;top:calc(100% + 6px);right:0;background:var(--paper);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(22,36,30,.28);padding:4px}.fmn[hidden]{display:none}
@@ -180,11 +180,11 @@ body.sb header .sub{display:none}body.sb header .meta{margin-top:0}
 .rd{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:12.5px;position:relative;z-index:1;font-style:normal}
 .rd.ok{background:var(--ok);color:#fff}.rd.almost{background:#e2f3ea;color:#0f6b40;box-shadow:inset 0 0 0 2px #2f9e6a}
 .rd.part{background:#e8b13a;color:#2a1c00}.rd.bad{background:var(--bad);color:#fff}
-.rd.no{background:var(--bg);color:#7d8c84;box-shadow:inset 0 0 0 2px #b9c6bf}
+.rd.no{background:var(--bg);color:#586860;box-shadow:inset 0 0 0 2px #b9c6bf}
 .rd.cu{background:var(--live);color:#fff;align-self:start;margin-top:12px}
 .rr .nm{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rr[aria-selected=true] .nm{font-weight:500}
 .km{cursor:help;font-style:normal}
-.rr.fut .nm{color:#6c7b73;font-weight:400}
+.rr.fut .nm{color:#586860;font-weight:400}
 .rr small{color:var(--mut);font-size:12px;white-space:nowrap}
 .cc{grid-column:2/4;background:var(--paper);border:1.5px solid var(--livel);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .rr.cur:hover .cc{border-color:var(--live)}.rr.cur[aria-selected=true] .cc{border-color:var(--live);box-shadow:0 0 0 3px var(--liveb)}
@@ -407,6 +407,16 @@ html.mo-off .chn,html.mo-off .chb,html.mo-off .chg{animation:none}
 .axo>div{padding:0 0 12px 192px;font-size:13px}.axo>div p{margin:8px 0 0}.axo>div p:first-child{margin-top:0}
 @media(max-width:760px){.axo>summary b{width:auto}.axo>div{padding-left:0}}
 /* the folders the sessions of the feature work in: a card under the stages */
+
+/* Narrow windows. Up to 1280px the plan and what was done go one under the other instead of two thin columns; the
+   tabs scroll and fade at the edge, so a tab that does not fit is seen to be there; a repository chip keeps its name
+   (the branch is in its tooltip). The end of the page leaves room for the window of the session, so the last
+   buttons can be scrolled out from under it. On a phone the header wraps instead of pushing the page sideways. */
+body{padding-bottom:84px}
+@media(max-width:1280px){.pf{grid-template-columns:1fr}.pf>div+div{border-left:0;border-top:1px solid var(--line)}
+ .tabs{flex-wrap:nowrap;scrollbar-width:none;padding-right:40px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 48px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 48px),transparent)}.tabs::-webkit-scrollbar{display:none}.tabs button{flex:none}
+ .rps>button>span{display:none}.rps>button{min-width:0}}
+@media(max-width:860px){.meta{flex-wrap:wrap;row-gap:8px}.ses{flex-wrap:wrap;max-width:100%;row-gap:6px}.rps{flex-wrap:wrap;overflow:visible}.md>*{min-width:0}.rr{min-width:0}#det h2{text-wrap:balance}.cw{left:12px;right:12px}}
 </style>
 <script>window.PANEL=/*__DATA__*/null;</script></head><body>
 <header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="rps" id="rps"></span><span class="qb" id="qb"></span><span class="fmw" id="fmw" hidden><button type="button" class="fmb" id="fmb" aria-haspopup="menu" aria-expanded="false" aria-label="More for this work" title="More">⋮</button><span class="fmn" id="fmn" role="menu" hidden><button type="button" role="menuitem" id="fmnew">New work with the same access<small>A clean session: same folders and permissions, empty memory</small></button></span></span></div></div></div>

@@ -18,7 +18,8 @@ var CSS="body{--sw:0px}body.sb{--sw:256px;padding-left:var(--sw)}body.sb.sm{--sw
 ".wns a.wf{display:grid;grid-template-columns:10px 1fr auto;gap:2px 9px;align-items:baseline;padding:7px 8px;border-left:3px solid transparent}"+
 ".wns a.wf span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}"+
 ".wns a.wf small{grid-column:2/4;font-size:11.5px;color:#8ea398;font-weight:400}.wns a.wf[aria-current] small{color:#586860}"+
-".wns a.wdn:not([aria-current]){opacity:.55}"+
+/* a finished work is quieter by its colour, not by transparency: faded, its small text was unreadable */
+".wns a.wdn:not([aria-current]) span{color:#a3b0a9}"+
 /* the menu of a feature: three vertical dots at the right edge of its row, shown when the row is pointed at */
 ".wns .wr{position:relative}.wns .wr a.wf{padding-right:24px}.wns .wk{all:unset;cursor:pointer;position:absolute;right:3px;top:5px;width:20px;height:24px;text-align:center;border-radius:6px;color:#9fb3a8;font-size:16px;line-height:24px;opacity:0}"+
 ".wns .wr:hover .wk,.wns .wk:focus-visible,.wns .wk[aria-expanded=true]{opacity:1}.wns .wk:hover,.wns .wk[aria-expanded=true]{background:#ffffff26;color:#fff}.wns .wk:focus-visible{outline:3px solid #7ab8ff}"+
