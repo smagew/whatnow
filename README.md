@@ -216,6 +216,14 @@ Esc in their terminal does, after a confirmation that says what this cuts off; a
 cannot be stopped from here and gets the message when its turn ends. With *I am going to sleep* the form also asks
 how long the computer stays awake (8 hours unless you change it).
 
+**A work in a window of its own (app window).** *Open in a separate window* in the ⋮ menu of a work (in the bar
+or in the header of its page) opens that work in a second window, for another monitor: on macOS it has its own icon
+in the Dock. It shows only that work, with its session window, chat and terminal, and reads the same data as the main
+window. The bar of the main window marks the work with ⧉; a click on it brings its window to the front. **Back to the
+main window** (in the separate window, or in the ⋮ menu of the work in the bar) closes it and shows the work in the
+main window. Each separate window comes back where it stood and at its size. One session can be in the terminal of
+both windows at once: they show the same screen and type into the same session.
+
 **Stay awake.** At the bottom of the bar: the computer does not go to sleep by itself for 1, 2, 3 or 8 hours, or until
 you turn it off; the bar shows the time left. It is what a video player does while it plays: the screen may still go
 dark, the sessions go on. A laptop with its lid closed still sleeps, so leave it open. The hold ends with the app; the

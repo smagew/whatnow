@@ -83,7 +83,8 @@ function here(){var m=/^\/f\/([^/]+)/.exec(location.pathname);return m?decodeURI
 // for a feature whose window was never opened here: until its page was open after the reply
 function seen(id){try{return +localStorage.getItem('wn-read-'+id)||+localStorage.getItem('wn-visit-'+id)||0}catch(e){return 0}}
 function visit(){var c=here();if(c&&document.visibilityState==='visible')try{localStorage.setItem('wn-visit-'+c,Date.now())}catch(e){}}
-function draw(){if(!data)return;visit();var cur=here(),tab=cur?'':(window.WN_TAB||''),f=data.features||[],asks=0;
+function draw(){if(!data)return;visit();if(window.WN_SOLO){el.style.display='none';return}   // a separate window of one work has no bar
+var cur=here(),tab=cur?'':(window.WN_TAB||''),f=data.features||[],asks=0;
  document.body.classList.add('sb');document.body.classList.toggle('sm',small);
  var h='<div class="wtop"><b>whatnow</b><button type="button" aria-expanded="'+!small+'" aria-label="'+(small?'Show the names':'Collapse the bar')+'" title="'+(small?'Show the names':'Collapse the bar')+'">'+(small?'›':IC.side)+'</button></div>'+
   '<button type="button" class="wnew2" data-nw="1" data-ab="+" title="Start a new piece of work: a new Claude Code session in a folder you choose, or with the access of an existing one">'+IC.plus+'<span>New work</span></button>'+
@@ -94,9 +95,9 @@ function draw(){if(!data)return;visit();var cur=here(),tab=cur?'':(window.WN_TAB
  var st=data.starting||[];if(st.length)h+='<h4>Starting</h4>'+st.map(function(x){return '<a class="wf'+(x.what==='waiting for permission'?' wnew wperm':'')+'" href="/#sessions'+(x.session?'/'+encodeURIComponent(x.session):'')+'" data-ab="'+esc(abbr(x.name||'new'))+'" title="'+esc((x.name||'A new session')+'\nA new session, started from the dashboard; it has no page yet. A click shows it in the list of sessions: its terminal is there.\n\n'+(x.task||''))+'"><i class="'+(x.what==='waiting for permission'?'perm':(x.state||'work'))+'"></i><span>'+esc(x.name||'new session')+'</span><u>'+(x.what==='waiting for permission'?'asks':'new')+'</u><small>'+(x.what==='waiting for permission'?'asks for your permission: its terminal is in Sessions':'starting, no page yet'+(x.state==='wait'?' · waits for you':''))+'</small>'+'</a>'}).join('');
  var one=function(x){var mine=x.id===cur,ask=x.ask||'',fresh=!!ask&&x.saidT>seen(x.id);if(fresh)asks++;
    var perm=ask==='permission',sub=perm?'asks for your permission':ask?(fresh?'new reply, waits for your answer':'waits for your answer'):x.state?STX[x.state]:'no open session';
-   var meta=perm?'asks':fresh?'reply':x.state==='work'?'now':x.state==='bg'?'runs':x.days>0?x.days+'d':'today',dot=perm?'perm':fresh?'ask':(x.state||'');
-   var tip=x.name+'\n'+(perm?'Claude asks for a permission in the terminal.':ask?'Claude wrote something and waits for your answer.':x.state?'Its session: '+STX[x.state]+'.':'No open session.')+(x.waiting?'\n'+x.waiting+' open item'+(x.waiting>1?'s':'')+' only you can do.':'')+(x.done?'\nReady to release.':'')+(x.days>0?'\nLast update '+x.days+' day'+(x.days>1?'s':'')+' ago.':'');
-   return '<div class="wr"><a class="wf'+(x.done?' wdn':'')+(ask?' wask':'')+(fresh&&!perm?' wnew':'')+(perm?' wnew wperm':'')+'" href="/f/'+encodeURIComponent(x.id)+'/" data-ab="'+esc(abbr(x.name))+'"'+(mine?' aria-current="page"':'')+' title="'+esc(tip)+'"><i class="'+dot+'"></i><span>'+esc(x.name)+'</span><u>'+meta+'</u>'+
+   var meta=x.detached?'⧉':perm?'asks':fresh?'reply':x.state==='work'?'now':x.state==='bg'?'runs':x.days>0?x.days+'d':'today',dot=perm?'perm':fresh?'ask':(x.state||'');
+   var tip=x.name+'\n'+(perm?'Claude asks for a permission in the terminal.':ask?'Claude wrote something and waits for your answer.':x.state?'Its session: '+STX[x.state]+'.':'No open session.')+(x.waiting?'\n'+x.waiting+' open item'+(x.waiting>1?'s':'')+' only you can do.':'')+(x.done?'\nReady to release.':'')+(x.detached?'\nOpen in a separate window: a click brings it to the front.':'')+(x.days>0?'\nLast update '+x.days+' day'+(x.days>1?'s':'')+' ago.':'');
+   return '<div class="wr"><a class="wf'+(x.done?' wdn':'')+(ask?' wask':'')+(fresh&&!perm?' wnew':'')+(perm?' wnew wperm':'')+'" href="/f/'+encodeURIComponent(x.id)+'/"'+(x.detached?' data-det="'+esc(x.id)+'"':'')+' data-ab="'+esc(abbr(x.name))+'"'+(mine?' aria-current="page"':'')+' title="'+esc(tip)+'"><i class="'+dot+'"></i><span>'+esc(x.name)+'</span><u>'+meta+'</u>'+
     '<small>'+sub+(x.waiting?' · '+x.waiting+' item'+(x.waiting>1?'s':'')+' for you':'')+'</small></a><button type="button" class="wk" data-k="'+esc(x.id)+'" aria-haspopup="menu" aria-expanded="false" aria-label="More for '+esc(x.name)+'" title="More">⋮</button></div>'};
  h+='<div class="wgh"><span>'+(BYP?'Projects':'Work')+'</span><button type="button" data-gr="1" aria-pressed="'+BYP+'" aria-label="Group the work by project" title="'+(BYP?'The work is grouped by project. Click to list it all together, the active first.':'The work is listed together, the active first. Click to group it by project.')+'">'+IC.fold+'</button></div>';
  if(BYP){var ps=[];f.forEach(function(x){var p=x.project||'no project';if(ps.indexOf(p)<0)ps.push(p)});ps.sort(function(a,b){return a.toLowerCase()<b.toLowerCase()?-1:1});
@@ -116,7 +117,7 @@ function load(){focusSay();fetch('/api/features',{cache:'no-store'}).then(functi
 // system (a notification, a sound). The bar has the switch: with a sound, without, off.
 var AL=['sound','banner','off'],ALT={sound:'Alerts: with sound',banner:'Alerts: silent',off:'Alerts: off'},ALH={sound:'When a session answers while this window is not in front, the system shows a notification and plays a sound. Click for no sound.',banner:'When a session answers while this window is not in front, the system shows a notification, without a sound. Click to turn alerts off.',off:'No notifications. Click to turn them on.'};
 function tpost(b){return fetch('/api/app',{method:'POST',headers:{'Content-Type':'application/json','X-Whatnow':'1'},body:JSON.stringify(b)})}
-var FOC=null;function focusSay(){if(!window.WN_TERM)return;var on=document.visibilityState==='visible'&&document.hasFocus()?1:0;if(on===FOC&&Date.now()-focusSay.t<20000)return;FOC=on;focusSay.t=Date.now();tpost({op:'focus',on:on}).catch(function(){})}
+var FOC=null;function focusSay(){if(!window.WN_TERM||window.WN_SOLO)return;var on=document.visibilityState==='visible'&&document.hasFocus()?1:0;if(on===FOC&&Date.now()-focusSay.t<20000)return;FOC=on;focusSay.t=Date.now();tpost({op:'focus',on:on}).catch(function(){})}
 ['focus','blur','pageshow'].forEach(function(n){window.addEventListener(n,function(){setTimeout(focusSay,0)})});document.addEventListener('visibilitychange',focusSay);
 // Stay awake: the computer does not sleep by itself for the time chosen here (the server holds it; see awake.go).
 var AWT=[[60,'1 hour'],[120,'2 hours'],[180,'3 hours'],[480,'8 hours'],[-1,'Until I turn it off']],AWNOTE='A laptop with its lid closed still sleeps; leave it open. The screen may still go dark.';
@@ -133,9 +134,13 @@ function awOpen(b){kmShut();var au=+((data&&data.awake)||{}).until||0,aon=au===-
 // the menu of a feature in the bar
 var KM=null;function kmShut(){if(KM){KM.m.remove();var b=KM.b||el.querySelector('.wk[aria-expanded=true]');if(b)b.setAttribute('aria-expanded','false');KM=null}}
 function kmOpen(b){kmShut();var id=b.dataset.k,m=document.createElement('div'),r=b.getBoundingClientRect();m.className='wkm';m.setAttribute('role','menu');
- m.innerHTML='<button type="button" role="menuitem">New work with the same access<small>A clean session: same folders and permissions, empty memory</small></button>';
+ var fx=((data&&data.features)||[]).filter(function(f){return f.id===id})[0]||{},win=window.WN_TERM&&!window.WN_SOLO;
+ m.innerHTML='<button type="button" role="menuitem" data-km="new">New work with the same access<small>A clean session: same folders and permissions, empty memory</small></button>'+
+  (win?(fx.detached?'<button type="button" role="menuitem" data-km="front">Bring its window to the front<small>It is open in a separate window</small></button><button type="button" role="menuitem" data-km="back">Back to the main window<small>Its separate window closes</small></button>':'<button type="button" role="menuitem" data-km="solo">Open in a separate window<small>For another monitor; it has its own icon in the Dock</small></button>'):'');
  document.body.appendChild(m);m.style.left=Math.max(8,Math.min(r.left,innerWidth-m.offsetWidth-8))+'px';m.style.top=Math.min(r.bottom+4,innerHeight-m.offsetHeight-8)+'px';b.setAttribute('aria-expanded','true');KM={m:m,id:id};
- m.firstChild.onclick=function(){kmShut();nwOpen({from:id})};m.firstChild.focus();
+ m.addEventListener('click',function(e){var x=e.target.closest('button[data-km]');if(!x)return;var k=x.dataset.km;kmShut();
+  if(k==='new')nwOpen({from:id});else if(k==='solo'||k==='front')tpost({op:'detach',feature:id}).then(function(){setTimeout(load,300)}).catch(function(){});else if(k==='back')tpost({op:'reattach',feature:id}).then(function(){setTimeout(load,1500)}).catch(function(){})});
+ m.firstChild.focus();
  m.addEventListener('keydown',function(e){if(e.key==='Escape'){kmShut();b.focus()}})}
 document.addEventListener('click',function(e){if(KM&&!e.target.closest('.wkm')&&!e.target.closest('.wk')&&!e.target.closest('[data-aw]'))kmShut()});window.addEventListener('scroll',kmShut,true);
 // New work: a new Claude Code session in a folder the user names, or with the access of an existing piece of work
@@ -234,6 +239,7 @@ function bcOpen(){if(BC)bcClose();var w=document.createElement('div');w.classNam
  w.addEventListener('keydown',function(e){if(e.key==='Escape'){if(BC&&BC.confirm){BC.confirm=false;bcDraw()}else bcClose()}});
  bcDraw();fetch('/api/targets',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){if(BC){BC.list=j.sessions||[];bcDraw();var f=w.querySelector('#bct');if(f)f.focus()}}).catch(function(){if(BC){BC.err='no connection to the server';bcDraw()}})}
 el.addEventListener('click',function(e){if(e.target.closest('button[data-bc]')){bcOpen();return}
+ var da=e.target.closest('a[data-det]');if(da){e.preventDefault();tpost({op:'detach',feature:da.dataset.det}).catch(function(){});return}
  var gb=e.target.closest('button[data-gr]');if(gb){BYP=!BYP;try{localStorage.setItem('wn-bar-group',BYP?'project':'state')}catch(x){}draw();var g2=el.querySelector('button[data-gr]');if(g2)g2.focus();return}
  var nb=e.target.closest('button[data-nw]');if(nb){nwOpen();return}
  var kb=e.target.closest('button.wk');if(kb){e.preventDefault();if(KM&&KM.id===kb.dataset.k)kmShut();else kmOpen(kb);return}

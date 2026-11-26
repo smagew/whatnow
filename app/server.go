@@ -1027,6 +1027,7 @@ func featuresList() map[string]any {
 		fav[k] = true
 	}
 	out := []map[string]any{}
+	det := detachedSet()
 	for _, x := range feats {
 		f := x.(map[string]any)
 		id := fmt.Sprint(f["id"])
@@ -1036,7 +1037,7 @@ func featuresList() map[string]any {
 			project = fmt.Sprint(l[0])
 		}
 		out = append(out, map[string]any{"id": id, "name": f["name"], "done": f["done"], "waiting": f["waiting"], "fav": fav["f:"+id],
-			"state": best[id], "ask": a.kind, "saidT": a.t, "project": project, "days": f["days"]})
+			"state": best[id], "ask": a.kind, "saidT": a.t, "project": project, "days": f["days"], "detached": det[id]})
 	}
 	group := func(f map[string]any) int {
 		switch {
@@ -1084,6 +1085,9 @@ func withSide(html string, init map[string]any, local bool) string {
 	}
 	if local && termSupported { // the terminal exists in the app window only
 		data += ";window.WN_TERM=1"
+	}
+	if local && soloSlug != "" { // a separate window of one work: no bar, a way back to the main window
+		data += ";window.WN_SOLO=" + string(blob(soloSlug))
 	}
 	// A live page takes its font from this server. The stylesheet of Google Fonts held every page up until another
 	// server had answered: 0.4 s of the 0.5 s a page took to appear (and much longer without a network).
@@ -1156,6 +1160,10 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	switch path := r.URL.Path; path {
 	case "/":
+		if h.local && soloSlug != "" { // the separate window of a work has only that work
+			http.Redirect(w, r, "/f/"+soloSlug+"/", http.StatusFound)
+			return
+		}
 		send(w, 200, []byte(withSide(indexHTML(stateJSON()), nil, h.local)), "text/html; charset=utf-8")
 	case "/side.js":
 		send(w, 200, []byte(page("side.js")), "text/javascript; charset=utf-8")
@@ -1336,6 +1344,19 @@ func (h handler) post(w http.ResponseWriter, r *http.Request) {
 			sendJSON(w, 200, map[string]any{"ok": true})
 		case "alerts":
 			code, obj := setAlertMode(str(body, "mode"))
+			sendJSON(w, code, obj)
+		case "detach": // the work in a window of its own (or that window to the front)
+			code, obj := detach(str(body, "feature"))
+			sendJSON(w, code, obj)
+		case "reattach": // from the main window: the separate window of the work closes, the work is shown here
+			code, obj := reattach(str(body, "feature"))
+			sendJSON(w, code, obj)
+		case "back": // in a separate window: back to the main window
+			if soloSlug == "" {
+				sendJSON(w, 400, map[string]any{"error": "not a separate window"})
+				return
+			}
+			code, obj := backToMain(soloSlug)
 			sendJSON(w, code, obj)
 		case "shot": // a screenshot for the agent: the system selection of a part of the screen
 			name, err := takeShot(str(body, "feature"))

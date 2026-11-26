@@ -25,6 +25,7 @@ const cliPath = "~/.claude/skills/whatnow/whatnow"
 const usage = `usage:
   whatnow                               open the window
   whatnow serve [port]                  the pages for a browser on 127.0.0.1, no window
+  whatnow window <work>                 one work in a window of its own (for another monitor)
   whatnow render <feature.json> [--out file] [--open]
   whatnow render --index [features dir] [--open]
   whatnow inbox list [--all]
