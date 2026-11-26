@@ -97,8 +97,8 @@ func TestTheSeparateWindowGoesBack(t *testing.T) {
 	win := handler{local: true}
 	w := httptest.NewRecorder()
 	win.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "http://127.0.0.1:7777/", nil))
-	eq(t, w.Code, http.StatusFound, "the home page of a separate window")
-	eq(t, w.Header().Get("Location"), "/f/demo-feature/", "leads to its work")
+	eq(t, w.Code, 200, "the home page of a separate window (the window shows a redirect as it is: no 302)")
+	contains(t, w.Body.String(), `location.replace("/f/demo-feature/")`, "leads to its work")
 	w = httptest.NewRecorder()
 	win.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "http://127.0.0.1:7777/f/demo-feature/", nil))
 	contains(t, w.Body.String(), `window.WN_SOLO="demo-feature"`, "the page knows it is a separate window")

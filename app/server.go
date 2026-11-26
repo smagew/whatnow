@@ -1161,7 +1161,8 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch path := r.URL.Path; path {
 	case "/":
 		if h.local && soloSlug != "" { // the separate window of a work has only that work
-			http.Redirect(w, r, "/f/"+soloSlug+"/", http.StatusFound)
+			// not an HTTP redirect: the window (Wails) shows the answer of its first page as it is, "Found."
+			send(w, 200, []byte(`<!doctype html><meta charset="utf-8"><script>location.replace("/f/`+soloSlug+`/")</script>`), "text/html; charset=utf-8")
 			return
 		}
 		send(w, 200, []byte(withSide(indexHTML(stateJSON()), nil, h.local)), "text/html; charset=utf-8")
