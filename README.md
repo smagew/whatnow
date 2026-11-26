@@ -268,8 +268,11 @@ when you go to another page or close the app. The size and the place are remembe
 terminal view that was open is opened again when you come back, also after the app was closed.
 
 **Terminal (app window only).** On the page of a feature the terminal is the second view of the window of the
-session (the **>_** half of its switch). On the home page every session has a **Terminal** button; it opens a dock at
-the bottom of the window with all the terminals as tabs (the top edge resizes it, **Hide** keeps it connected). A terminal stays connected while you are on
+session (the **>_** half of its switch). On the home page every session has a **Terminal** button; it opens the terminal
+in a window in the corner, with the colour chosen for the session window (the top edge resizes it, **Hide** keeps it
+connected). The home page shows only what was opened on it, never a terminal by itself. A terminal that was already
+running elsewhere is asked to draw its screen again when it is shown, so you see its screen now rather than a replay
+of its history. A terminal stays connected while you are on
 other pages and in the other view. **Disconnect the terminal** (behind the three dots, so that it is not hit by
 accident) closes it; the session goes on
 either way. A session can be shown when it runs in the background:

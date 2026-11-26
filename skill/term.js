@@ -26,7 +26,12 @@ var CSS=
 ".wnp[hidden]{display:none}.wnp i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#2f9e6a;margin-right:8px}"+
 "body.tm .cw:not(.wide){bottom:calc(var(--th) + 16px)}body.tm .cw.wide{bottom:var(--th)}"+
 "button[data-term].on{background:#2f9e6a!important;border-color:#2f9e6a!important;color:#fff!important}"+
-"button[data-term] .tgi{font:600 11px ui-monospace,SFMono-Regular,Menlo,monospace;margin-right:6px;letter-spacing:-.5px;opacity:.8}";
+"button[data-term] .tgi{font:600 11px ui-monospace,SFMono-Regular,Menlo,monospace;margin-right:6px;letter-spacing:-.5px;opacity:.8}"+
+/* On the home page the terminal is a window like the window of a session on the page of a work (its terminal view):
+   in the corner, with its frame and its colour, not a strip across the bottom of the page. */
+".wnt{left:auto;right:20px;bottom:20px;width:min(760px,calc(100vw - var(--sw,0px) - 40px));border-radius:16px;overflow:hidden;background:var(--wtbg,#16241e);border:1px solid #2c4136;box-shadow:0 14px 40px rgba(22,36,30,.34)}"+
+".wnt .wth{background:#0f1b16;padding:6px 8px;border-bottom:1px solid #22352c}.wnt .wtt{border-radius:8px;padding:5px 12px}.wnt .wtt[aria-selected=true]{background:#ffffff1a}"+
+".wnt .wtb{background:transparent}.wnt .wtg{top:0;height:6px}.wnp{left:auto;right:20px;bottom:20px}body.tm{padding-bottom:calc(var(--th) + 40px)}";
 var st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
 // SCOPE: the feature of this page, '' on the home page. What is open and which tab is shown is kept per scope.
 var SCOPE=(function(){var m=/^\/f\/([^/]+)/.exec(location.pathname);return m?decodeURIComponent(m[1]):''})();
@@ -34,7 +39,7 @@ var SCOPE=(function(){var m=/^\/f\/([^/]+)/.exec(location.pathname);return m?dec
 // sessions go on in the background); the next time the page is opened, a terminal that was open here is opened
 // again for the same session, at the same height.
 var ST={o:{},c:{},s:{},h:0};try{var sv=JSON.parse(localStorage.getItem('wn-term')||'{}');ST.o=sv.o||{};ST.c=sv.c||{};ST.s=sv.s||{};ST.h=sv.h||0}catch(e){}
-var S={open:ST.o[SCOPE]!==false,cur:ST.c[SCOPE]||'',h:ST.h};   // open unless it was hidden here: a feature with a terminal shows it
+var S={open:SCOPE?ST.o[SCOPE]!==false:false,cur:ST.c[SCOPE]||'',h:ST.h};   // a feature with a terminal shows it; the home page only what was opened on it
 function save(){ST.o[SCOPE]=S.open;ST.c[SCOPE]=S.cur;ST.h=S.h;var t=ALL.filter(function(x){return x.id===S.cur})[0];if(t)ST.s[SCOPE]=t.session;try{localStorage.setItem('wn-term',JSON.stringify(ST))}catch(e){}}
 function forget(){delete ST.s[SCOPE];try{localStorage.setItem('wn-term',JSON.stringify(ST))}catch(e){}}   // the user left the terminal: it is not opened again by itself
 function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
@@ -52,7 +57,7 @@ var tabs=dock.querySelector('.wtl'),xt=dock.querySelector('.wtx'),msg=dock.query
 
 var ALL=[],HERE={},WAIT=null;      // every terminal of the window; the ones opened on this page; a session we wait for
 // the terminals this page shows: the ones of its feature (and what was opened right here), all of them on the home page
-function mine(){return SCOPE?ALL.filter(function(t){return t.feature===SCOPE||HERE[t.id]}):ALL}
+function mine(){return ALL.filter(function(t){return (SCOPE&&t.feature===SCOPE)||HERE[t.id]})}
 var TERMS=[];
 var X=null,FIT=null,RUN=0;         // the xterm on screen and the number of its read loop
 function height(){var max=Math.max(160,window.innerHeight-120);return Math.max(160,Math.min(max,S.h||Math.round(window.innerHeight*0.45)))}
@@ -84,7 +89,7 @@ function say(html){msg.hidden=!html;xt.hidden=!!html;msg.innerHTML=html||''}
 function show(t,isNew){var replay=!isNew,quiet=replay;S.cur=t.id;S.open=true;WAIT=null;save();say('');layout();var run=++RUN;
  lib().then(function(){if(run!==RUN)return;if(X){X.dispose();X=null}xt.innerHTML='';
   X=new Terminal({fontFamily:'ui-monospace,SFMono-Regular,Menlo,monospace',fontSize:13,cursorBlink:false /* a blinking cursor makes the browser restyle on every frame, all the time the terminal is open */,scrollback:5000,allowProposedApi:true,linkHandler:{activate:function(e,uri){link(uri)}},
-   allowTransparency:!!EMB,theme:{background:EMB?'rgba(0,0,0,0)':'#16241e',foreground:FG,cursor:FG,selectionBackground:'#3b7be066'}});   // in the window of the session its background shows through (the look is set there)
+   allowTransparency:!!EMB,theme:{background:EMB?'rgba(0,0,0,0)':termBg(),foreground:FG,cursor:FG,selectionBackground:'#3b7be066'}});   // in the window of the session its background shows through (the look is set there)
   FIT=new FitAddon.FitAddon();X.loadAddon(FIT);X.loadAddon(new WebLinksAddon.WebLinksAddon(function(e,uri){link(uri)}));X.open(xt);try{FIT.fit()}catch(e){}
   var q=Promise.resolve();                       // keys go out one request after another, in the order typed
   function send(d){if(quiet)return;for(var i=0;i<d.length;i+=4000)(function(part){q=q.then(function(){return post({op:'write',id:t.id,data:part})}).catch(function(){})})(d.slice(i,i+4000))}
@@ -93,7 +98,10 @@ function show(t,isNew){var replay=!isNew,quiet=replay;S.cur=t.id;S.open=true;WAI
   // Terminal send after /terminal-setup); xterm.js alone sends a plain Enter for both
   X.attachCustomKeyEventHandler(function(e){if(e.key==='Enter'&&e.shiftKey&&!e.ctrlKey&&!e.metaKey&&!e.altKey){if(e.type==='keydown')send('\x1b\r');e.preventDefault();return false}return true});
   SENT={cols:0,rows:0};fit();
-  X.focus();read(t,replay?0:t.off,run,function(){setTimeout(function(){quiet=false},150)})}).catch(function(){say('<p class="wte">Could not load the terminal.</p>')})}
+  X.focus();read(t,replay?0:t.off,run,function(){setTimeout(function(){quiet=false},150);if(replay)redraw(t,run)})}).catch(function(){say('<p class="wte">Could not load the terminal.</p>')})}
+// Claude Code draws its screen in pieces for the size it has; replayed into a terminal of another size, the pieces
+// fall over each other. A change of the width makes it clear the screen and draw all of it again.
+function redraw(t,run){if(!X||run!==RUN)return;var c=X.cols,r=X.rows;post({op:'resize',id:t.id,cols:Math.max(20,c-1),rows:r}).then(function(){setTimeout(function(){if(run!==RUN||!X)return;SENT={cols:X.cols,rows:X.rows};post({op:'resize',id:t.id,cols:X.cols,rows:X.rows}).catch(function(){})},150)}).catch(function(){})}
 function read(t,off,run,first){if(run!==RUN)return;
  fetch('/api/term/read?id='+t.id+'&off='+off,{cache:'no-store'}).then(function(r){if(r.status===404)throw 404;return r.json()}).then(function(j){if(run!==RUN)return;
   if(j.reset&&X)X.reset();if(j.data&&X)X.write(bytes(j.data),first);else if(first)first();
@@ -141,7 +149,9 @@ gr.addEventListener('dblclick',function(){S.h=0;save();layout();fit()});
 window.addEventListener('resize',function(){layout()});
 
 var FG='#e6efe9';
-window.wnTerm={type:function(d){var t=ALL.filter(function(x){return x.id===S.cur})[0];if(t)post({op:'write',id:t.id,data:d}).catch(function(){})},theme:function(fg){FG=fg;if(X)X.options.theme={background:EMB?'rgba(0,0,0,0)':'#16241e',foreground:fg,cursor:fg,selectionBackground:'#3b7be066'}},open:open,has:has,show:showSes,detach:detach,leave:leave,fit:fit,tail:function(){return (X?tail():'')||LAST},focus:function(){if(X)X.focus()},
+function termBg(){try{var l=(JSON.parse(localStorage.getItem('wn-chat')||'{}')||{}).look||{};if(/^#[0-9a-f]{6}$/i.test(l.term||''))return l.term}catch(e){}return '#16241e'}
+dock.style.setProperty('--wtbg',termBg());
+window.wnTerm={type:function(d){var t=ALL.filter(function(x){return x.id===S.cur})[0];if(t)post({op:'write',id:t.id,data:d}).catch(function(){})},theme:function(fg){FG=fg;if(X)X.options.theme={background:EMB?'rgba(0,0,0,0)':termBg(),foreground:fg,cursor:fg,selectionBackground:'#3b7be066'}},open:open,has:has,show:showSes,detach:detach,leave:leave,fit:fit,tail:function(){return (X?tail():'')||LAST},focus:function(){if(X)X.focus()},
  waiting:function(){return !!WAIT},live:function(){return !!X},stop:function(){WAIT=null;say('')},cur:function(){return ALL.filter(function(t){return t.id===S.cur})[0]||null}};
 if(window.WN_EMBED){EMB=window.WN_EMBED;xt=EMB.xt;msg=EMB.msg;msg.addEventListener('click',act);dock.hidden=true;pill.hidden=true;
  if(window.ResizeObserver)new ResizeObserver(function(){fit()}).observe(xt)}
@@ -152,6 +162,6 @@ xt.addEventListener('wheel',function(e){if(e.cancelable)e.preventDefault()},{pas
 // a page opened while terminals run (another feature, the home page): connect to them again
 fetch('/api/term/list',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){ALL=(j.terms||[]).filter(function(t){return !t.done});TERMS=mine();
  if(EMB){layout();if(EMB.ready)EMB.ready(window.wnTerm);return}
- if(!TERMS.length){layout();if(ST.o[SCOPE]===true&&ST.s[SCOPE])open(ST.s[SCOPE],null,true);return}   // it was open here before the app was closed
+ if(!TERMS.length){layout();return}   // the home page opens a terminal only when asked (Terminal at a session)
  var t=TERMS.filter(function(q){return q.id===S.cur})[0]||TERMS[0];if(S.open)show(t);else{S.cur=t.id;layout()}}).catch(function(){});
 })();
