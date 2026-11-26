@@ -105,6 +105,61 @@ header{padding-bottom:0}
 /* the page stays invisible until its script has drawn it: while a new page shows nothing, the browser keeps the old
    one on screen, so going from one page to another never shows a half-drawn page. Shown anyway after 1.5 s. */
 body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes wnshow{to{visibility:visible}}
+
+/* the lists of the home page: filters, the work as small cards, the sessions as a table */
+.fl .flr{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+.fl{flex-direction:column;align-items:stretch}
+.fl .flr.tr{gap:4px}
+.fl .flr.tr button{padding:2px 10px;font-size:12.5px}
+.fl .lb{font-size:12.5px;color:var(--mut);margin-right:6px}
+.fl button small{font-size:11.5px;opacity:.7;margin-left:2px}
+.fl .sp{flex:1}
+.wsg{display:inline-flex;gap:2px;align-items:center}
+.wsg i{width:16px;height:6px;border-radius:2px;background:#dfe6e1}
+.wsg i.ok{background:#0f7a4a}
+.wsg i.part,.wsg i.almost{background:#e0a21a}
+.wsg i.bad{background:#c3453d}
+.wsg i.cur{outline:1.5px solid #1f5fd0;outline-offset:1px}
+.wc{font-size:12px;font-weight:500;border-radius:99px;padding:1px 9px;white-space:nowrap}
+.wc.you{background:#fbeccb;color:#5a4300}
+.wc.work{background:#dff3e8;color:#0f6b40}
+.wc.bg{background:#e3ecfb;color:#1f4fa8}
+.wc.idle{background:#eef1ee;color:#586860}
+.wc.ok{background:#dff3e8;color:#0f6b40}
+.wt{font-size:12.5px;color:var(--mut);white-space:nowrap;font-variant-numeric:tabular-nums}
+.wb{list-style:none;margin:0;padding:0}
+.wb .star{position:absolute;right:12px;top:50%;transform:translateY(-50%)}
+.wb{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.wb li{position:relative;background:#fff;border:1px solid var(--line);border-radius:12px}
+.wb li.g-you{border-color:#e8c98a;box-shadow:inset 3px 0 0 #e0a21a}
+.wb li.g-done{opacity:.65}
+.wb a{display:flex;flex-direction:column;gap:6px;padding:12px 14px 12px 16px;color:inherit;text-decoration:none;min-height:118px}
+.wb a:hover{background:#f8faf9;border-radius:12px}
+.wb .wh{display:flex;gap:10px;align-items:baseline;padding-right:22px}
+.wb .wh b{font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wb .wm,.wb .wnx{font-size:12.5px;color:var(--mut)}
+.wb .wnx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wb .wst{margin-top:auto}
+.wempty{color:var(--mut)}
+.sbt{display:inline-flex;gap:6px;flex:none}
+.sbt button{all:unset;cursor:pointer;font-size:12.5px;padding:3px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;white-space:nowrap}
+.sbt button.pri{background:var(--side);color:#fff;border-color:var(--side)}
+.sbt button:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
+.nowk{font-size:12px;color:var(--mut)}
+.sx .when{font-size:12.5px;color:var(--mut);white-space:nowrap;font-variant-numeric:tabular-nums}
+.sx .said{color:var(--mut);font-size:13px}
+.sx .said i{font-style:normal;color:#8a978f}
+ol.sva{list-style:none;margin:0;padding:0}
+ol.sva{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+ol.sva>li.sx{display:grid;grid-template-columns:22px 170px 150px 200px minmax(0,1fr) 70px auto;gap:12px;align-items:center;padding:8px 14px;border:0;border-top:1px solid var(--line);border-radius:0;border-left:3px solid transparent}
+ol.sva>li.sx:first-child{border-top:0}
+ol.sva>li.sx.st-wait{border-left-color:#e8b13a}
+ol.sva .n{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ol.sva .st{justify-self:start;white-space:nowrap}
+ol.sva .w{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+ol.sva .said{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ol.sva .when{text-align:right}
+ol.sva>li.s:not(.sx){grid-column:1/-1}
 </style>
 <script>window.IDX_DATA=/*__DATA__*/null;</script></head><body>
 <header><div class="hd"><span class="conn" id="connbox" hidden><span class="cdot pulse" id="cdot"></span><span id="conn"></span></span><h1>Work with Claude</h1><p class="sub" id="sub"></p><div class="tabs" role="tablist" id="tabs" hidden><button role="tab" id="tS" aria-selected="false">Sessions<span class="n" id="nS"></span></button><button role="tab" id="tF" aria-selected="true">Work<span class="n" id="nF"></span></button><button role="tab" id="tV" aria-selected="false">Favorites<span class="n" id="nV"></span></button></div></div></header>
@@ -121,6 +176,11 @@ body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes w
 <script>
 (function(){
 var D=window.IDX_DATA,$=function(i){return document.getElementById(i)};
+// The lists of the home page: the work as small cards, the sessions as a table; both filtered, in the order that matters.
+function dayStart(n){var d=new Date();d.setHours(0,0,0,0);return d.getTime()-n*864e5}
+var TR=[['any','Any time'],['today','Today'],['yday','Yesterday'],['7','7 days'],['14','14 days'],['30','30 days']];
+function inRange(t,k){if(k==='any')return true;if(k==='today')return t>=dayStart(0);if(k==='yday')return t>=dayStart(1)&&t<dayStart(0);return t>=Date.now()-(+k)*864e5}
+function agoL(t){var m=Math.max(0,Math.round((Date.now()-t)/6e4));return m<2?'now':m<60?m+' min':m<1440?Math.round(m/60)+' h':t>=dayStart(1)&&t<dayStart(0)?'yesterday':Math.round(m/1440)+' d'}
 var KI=D.kinds||{},SST={ok:'done',almost:'almost done',part:'in progress',bad:'has an open problem',no:'not started'};
 var open={},lastJson='',lastOk=Date.now();
 function ago(d){return d<=0?'today':d===1?'yesterday':d+' d ago'}
@@ -157,16 +217,42 @@ function paint(D){
    '<div class="pjs">'+f.projects.map(function(p){var ps=mine.filter(function(s){return s.project===p});return '<span class="pj1"><span class="pn">'+esc(p)+'</span>'+(ps[0]?chip(ps[0],true):'')+'</span>'}).join('')+'</div>'+
    (ev.length?'<button type="button" class="evb" data-k="'+esc(key)+'" aria-expanded="'+(!!isOpen)+'">'+(isOpen?'Hide events':'Events ('+ev.length+')')+'</button>'+(isOpen?'<ul class="evl">'+ev.slice(0,10).map(function(e){return '<li><time>'+hm(e.ts)+'</time><span class="p">'+esc(e.p||'')+'</span><span class="'+e.k+'">'+esc(e.t)+'</span></li>'}).join('')+'</ul>':''):'')+
    '</div></li>'};
- $('list').innerHTML=active.map(fcard).join('');
+
  paintFav(D,fcard);
  $('free').innerHTML='';
  $('legend').hidden=false;
  $('done').innerHTML=finished.length?'Finished:'+finished.map(function(f){return '<a href="'+esc(f.href)+'">'+esc(f.name)+'</a>'}).join(''):'';
+ paintW(D);
 }
+// what a work is now: when you were last asked something there, when anything last happened, its group
+function winfo(f,D){var ss=(D.sessions||[]).filter(function(s){return s.feature===f.id}),op=ss.filter(function(s){return s.state!=='closed'});
+ var upd=Date.now()-f.days*864e5,waitS=op.filter(function(s){return rankS(s)===0}),busy=op.filter(function(s){return s.state==='work'||s.state==='bg'});
+ var askT=Math.max.apply(0,[0].concat(waitS.map(function(s){return s.t}))),lastT=Math.max.apply(0,[upd].concat(ss.map(function(s){return s.t})));
+ if(!askT&&f.waiting)askT=upd;
+ var needs=!f.done&&(f.waiting>0||waitS.length>0);
+ return {ss:op,askT:askT,lastT:lastT,needs:needs,busy:busy[0],wait:waitS[0],active:!f.done&&op.length>0,grp:f.done?'done':needs?'you':op.length?'active':'idle'}}
+var WF={k:'all',t:'any'};try{var wf0=JSON.parse(localStorage.getItem('wn-wf')||'null');if(wf0)WF=wf0}catch(e){}
+var WK=[['all','All'],['you','Needs you'],['active','Active'],['idle','Not active'],['done','Done']];
+function wPass(f,i){return (WF.k==='all'||(WF.k==='you'&&i.needs)||(WF.k==='active'&&i.active)||(WF.k==='idle'&&!f.done&&!i.active)||(WF.k==='done'&&f.done))&&inRange(i.lastT,WF.t)}
+function stateChip(f,i){if(f.done)return '<span class="wc ok">done</span>';
+ if(i.needs)return '<span class="wc you">'+(i.wait&&i.wait.what==='waiting for permission'?'asks permission':f.waiting?f.waiting+' for you':'waits for you')+'</span>';
+ if(i.busy)return '<span class="wc '+(i.busy.state==='bg'?'bg':'work')+'">'+(i.busy.state==='bg'?'background task':'working')+'</span>';
+ if(i.ss.length)return '<span class="wc idle">session open</span>';return ''}
+function strip(f){return '<span class="wsg">'+f.stages.map(function(x){return '<i class="'+x.state+(x.n===f.cur?' cur':'')+'" title="'+esc(x.n+'. '+x.title+': '+SST[x.state])+'"></i>'}).join('')+'</span>'}
+function nowStage(f){var c=f.stages.filter(function(x){return x.n===f.cur})[0];return f.done?'all '+f.stages.length+' stages done':c?'Now: '+c.n+'. '+esc(c.title):''}
+function paintW(D){var all=D.features.map(function(f){return {f:f,i:winfo(f,D)}});
+ all.sort(function(a,b){return (b.i.askT-a.i.askT)||(b.i.lastT-a.i.lastT)});
+ var cnt=function(k){return all.filter(function(x){var s=WF.k;WF.k=k;var r=wPass(x.f,x.i);WF.k=s;return r}).length};
+ var rows=all.filter(function(x){return wPass(x.f,x.i)});
+ var bar='<div class="fl wfl"><span class="flr">'+WK.map(function(k){return '<button type="button" data-wk="'+k[0]+'" aria-pressed="'+(WF.k===k[0])+'">'+k[1]+' <small>'+cnt(k[0])+'</small></button>'}).join('')+'<span class="sp"></span><span class="hint">Asked you last first, then the latest activity</span></span>'+
+  '<span class="flr tr"><span class="lb">Last active</span>'+TR.map(function(x){return '<button type="button" data-wt="'+x[0]+'" aria-pressed="'+(WF.t===x[0])+'">'+x[1]+'</button>'}).join('')+'</span></div>';
+ var body='<ol class="wb">'+rows.map(function(x){var f=x.f,i=x.i;return '<li class="g-'+i.grp+'"><a href="'+esc(f.href)+'"><span class="wh"><b>'+esc(f.name)+'</b><span class="wt">'+agoL(i.lastT)+'</span></span><span class="wm">'+esc(f.projects.join(', '))+' · '+f.pct+'%</span>'+strip(f)+'<span class="wnx">'+nowStage(f)+'</span><span class="wst">'+stateChip(f,i)+'</span></a>'+starBtn('f:'+f.id)+'</li>'}).join('')+'</ol>';
+ $('legend').hidden=true;$('legend').style.display='none';$('done').innerHTML='';$('list').innerHTML='';$('free').innerHTML=bar+(rows.length?body:'<p class="wempty">No work matches these filters.</p>')}
+$('free').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.wk)WF.k=b.dataset.wk;else if(b.dataset.wt)WF.t=b.dataset.wt;else return;try{localStorage.setItem('wn-wf',JSON.stringify(WF))}catch(x){}paintW(window.IDX_DATA)});
 $('list').addEventListener('click',function(e){var b=e.target.closest('.evb');if(!b)return;open[b.dataset.k]=!open[b.dataset.k];paint(window.IDX_DATA)});
 
 // ---------------------------------------------------------------- Sessions tab
-var SF={f:'all',showHidden:false,form:null,attach:null,menu:null,sent:{},err:{},copied:''};
+var SF={t:'open',f:'all',showHidden:false,form:null,attach:null,menu:null,sent:{},err:{},copied:''};
 function post(body){return fetch('/api/act',{method:'POST',headers:{'Content-Type':'application/json','X-Whatnow':'1'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})}
 function agoM(ts){var m=Math.round((Date.now()-ts)/60000);return m<2?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago'}
 function hmS(ts){var d=new Date(ts);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)}
@@ -194,19 +280,27 @@ function sessCard(s,D){var open=SF.form&&SF.form.id===s.id,att=SF.attach===s.id,
   (open?'<div class="fm"><textarea id="stext" placeholder="Message to this session" aria-label="Message to this session">'+esc(SF.form.text||'')+'</textarea><div class="row2"><button type="button" class="go" data-a="send"'+(SF.form.busy?' disabled':'')+'>Send</button><button type="button" data-a="cancel" style="all:unset;cursor:pointer;color:var(--mut);font-size:13px">Cancel</button></div></div>':'')+
   (SF.err[s.id]?'<div class="err">'+esc(SF.err[s.id])+'</div>':'')+sentLine(SF.sent[s.id])+'</li>';
  return h}
-function paintS(D){if(!D.live)return;var all=D.sessions||[];var vis=all.filter(function(s){return s.state!=='closed'&&(SF.showHidden||!s.hidden)});
- var rows=vis.filter(function(s){return SF.f==='all'||(SF.f==='wait'&&rankS(s)===0)||(SF.f==='busy'&&(s.state==='work'||s.state==='bg'))||(SF.f==='feat'&&s.feature)});
+function sPill(s){var st=stOf(s),bare=isBare(s),p=bare&&st==='wait'?['idle','open']:[st,{work:'working',bg:'background task running',wait:'waiting for you',closed:'closed'}[st]];return '<span class="st '+p[0]+'">'+p[1]+'</span>'}
+function sWork(s,D){return s.feature?'<a class="ftg" href="/f/'+esc(s.feature)+'/">'+esc((D.features.filter(function(f){return f.id===s.feature})[0]||{name:s.feature}).name)+'</a>':'<span class="nowk">no work</span>'}
+function sBtns(s){return '<span class="sbt"><button type="button" class="pri" data-a="ask">Write</button>'+(window.WN_TERM?'<button type="button" data-term="'+esc(s.id)+'">Terminal</button>':'')+'<button type="button" data-a="more" aria-expanded="false" title="More">⋯</button></span>'}
+function sName(s){return esc(s.name||s.project||s.id.slice(0,8))}
+function sSaid(s){return s.lastA?esc(s.lastA):s.first?'<i>Started with:</i> '+esc(s.first):''}
+function sItem(s,D){var big=(SF.form&&SF.form.id===s.id)||SF.menu===s.id||SF.attach===s.id||SF.sent[s.id]||SF.err[s.id];if(big)return sessCard(s,D);var st=stOf(s);
+ return '<li class="s sx st-'+st+'" data-id="'+esc(s.id)+'">'+starBtn('s:'+s.id)+'<span class="n">'+sName(s)+'</span>'+sPill(s)+'<span class="w">'+sWork(s,D)+'</span><span class="said">'+sSaid(s)+'</span><span class="when">'+agoL(s.t)+'</span>'+sBtns(s)+'</li>';}
+function paintSessions(D,rows,keys,by){var h;
+ h=keys.map(function(k){var it=by[k].sort(function(a,b){return rankS(a)-rankS(b)||b.t-a.t});return '<h2 class="sg">'+esc(k)+' <small>'+it.length+' session'+(it.length>1?'s':'')+'</small></h2><ol class="sva">'+it.map(function(s){return sItem(s,D)}).join('')+'</ol>'}).join('');
+ $('sess').innerHTML=h||'<div class="welcome"><b>No sessions</b>Nothing matches these filters.</div>'}
+function paintS(D){if(!D.live)return;var all=D.sessions||[];var vis=all.filter(function(s){return (SF.t!=='open'?inRange(s.t,SF.t):s.state!=='closed')&&(SF.showHidden||!s.hidden)});
+ var rows=vis.filter(function(s){return SF.f==='all'||(SF.f==='wait'&&rankS(s)===0)||(SF.f==='busy'&&(s.state==='work'||s.state==='bg'))||(SF.f==='feat'&&s.feature)||(SF.f==='nofeat'&&!s.feature)});
  var by={};rows.forEach(function(s){(by[s.group]=by[s.group]||[]).push(s)});
  var top=function(k){return Math.min.apply(0,by[k].map(rankS))},late=function(k){return Math.max.apply(0,by[k].map(function(s){return s.t}))};
  var keys=Object.keys(by).sort(function(a,b){return top(a)-top(b)||late(b)-late(a)});
  var nh=all.filter(function(s){return s.hidden&&s.state!=='closed'}).length,waitN=all.filter(function(s){return !s.hidden&&s.state!=='closed'&&rankS(s)===0}).length,work=all.filter(function(s){return !s.hidden&&(s.state==='work'||s.state==='bg')}).length,nv=all.filter(function(s){return s.state!=='closed'}).length-all.filter(function(s){return s.hidden&&s.state!=='closed'}).length;
  $('nS').textContent=nv;$('nF').textContent=D.features.filter(function(f){return !f.done}).length;
- $('fl').innerHTML=[['all','All'],['wait','Waiting for you'],['busy','Working now'],['feat','Linked to work']].map(function(f){return '<button type="button" data-f="'+f[0]+'" aria-pressed="'+(SF.f===f[0])+'">'+f[1]+'</button>'}).join('')+'<span class="sp"></span>'+(nh?'<button type="button" data-f="hidden" aria-pressed="'+SF.showHidden+'">Hidden: '+nh+'</button>':'')+'<span class="hint">Grouped by project, what waits for you first</span>';
+ $('fl').innerHTML='<span class="flr">'+[['all','All'],['wait','Waiting for you'],['busy','Working now'],['feat','Linked to work']].concat([['nofeat','Without work']]).map(function(f){return '<button type="button" data-f="'+f[0]+'" aria-pressed="'+(SF.f===f[0])+'">'+f[1]+'</button>'}).join('')+'<span class="sp"></span>'+(nh?'<button type="button" data-f="hidden" aria-pressed="'+SF.showHidden+'">Hidden: '+nh+'</button>':'')+'<span class="hint">Grouped by project, what waits for you first</span>'+'</span><span class="flr tr"><span class="lb">Last active</span>'+[['open','Open now']].concat(TR.slice(1)).map(function(x){return '<button type="button" data-t="'+x[0]+'" aria-pressed="'+(SF.t===x[0])+'">'+x[1]+'</button>'}).join('')+'</span>';
  var ta=document.activeElement&&document.activeElement.id==='stext';
- $('sess').innerHTML=keys.map(function(k){var it=by[k].sort(function(a,b){return rankS(a)-rankS(b)||b.t-a.t});return '<h2 class="sg">'+esc(k)+' <small>'+it.length+' session'+(it.length>1?'s':'')+'</small></h2><ol class="ss">'+it.map(function(s){return sessCard(s,D)}).join('')+'</ol>'}).join('')||'<div class="welcome"><b>No sessions</b>Open sessions of Claude Code show up here.</div>';
- if(ta){var x=$('stext');if(x){x.focus();x.setSelectionRange(x.value.length,x.value.length)}}
- if(D.live)$('sub').textContent=nv+' session'+(nv===1?'':'s')+' open, '+waitN+' waiting for you, '+work+' working now.'}
-$('fl').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.f==='hidden')SF.showHidden=!SF.showHidden;else SF.f=b.dataset.f;paintS(window.IDX_DATA)});
+ paintSessions(D,rows,keys,by);if(ta){var x0=$('stext');if(x0){x0.focus();x0.setSelectionRange(x0.value.length,x0.value.length)}}if(D.live)$('sub').textContent=nv+' session'+(nv===1?'':'s')+' open, '+waitN+' waiting for you, '+work+' working now.';}
+$('fl').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.t){SF.t=b.dataset.t;paintS(window.IDX_DATA);return}if(b.dataset.f==='hidden')SF.showHidden=!SF.showHidden;else SF.f=b.dataset.f;paintS(window.IDX_DATA)});
 // A text that is typed and not sent yet is kept (in this browser), per field: going to another page and back, or
 // closing the app, must not lose it. It is dropped when the text is sent.
 var DRAFT={};try{DRAFT=JSON.parse(localStorage.getItem('wn-draft')||'{}')||{}}catch(e){}
@@ -257,7 +351,7 @@ window.addEventListener('hashchange',function(){var k={'#sessions':'S','#feature
 function sesMark(){var m=/^#sessions\/(.+)$/.exec(location.hash);if(!m)return;var id=decodeURIComponent(m[1]),n=0;(function look(){var el=document.querySelector('[data-id="'+id.replace(/[^A-Za-z0-9_-]/g,'')+'"]');
  if(!el){if(n++<20)setTimeout(look,300);return}el.scrollIntoView({block:'center'});el.classList.add('smk');setTimeout(function(){el.classList.remove('smk')},6000);try{history.replaceState(null,'','#sessions')}catch(e){}})()}
 sesMark();
-function showTab(k){window.WN_TAB=k;document.querySelector('h1').textContent={S:'Sessions',F:'Features',V:'Favorites'}[k]||'Work with Claude';if(window.wnSide)window.wnSide.refresh();$('pS').hidden=k!=='S';$('pF').hidden=k!=='F';$('pV').hidden=k!=='V';$('tS').setAttribute('aria-selected',k==='S');$('tF').setAttribute('aria-selected',k==='F');$('tV').setAttribute('aria-selected',k==='V');try{localStorage.setItem('whatnow-tab',k)}catch(e){}}
+function showTab(k){window.WN_TAB=k;document.querySelector('h1').textContent={S:'Sessions',F:'Work',V:'Favorites'}[k]||'Work with Claude';if(window.wnSide)window.wnSide.refresh();$('pS').hidden=k!=='S';$('pF').hidden=k!=='F';$('pV').hidden=k!=='V';$('tS').setAttribute('aria-selected',k==='S');$('tF').setAttribute('aria-selected',k==='F');$('tV').setAttribute('aria-selected',k==='V');try{localStorage.setItem('whatnow-tab',k)}catch(e){}}
 $('tS').onclick=function(){showTab('S')};$('tF').onclick=function(){showTab('F')};$('tV').onclick=function(){showTab('V')};
 var pollNow=function(){};
 

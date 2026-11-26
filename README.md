@@ -52,8 +52,10 @@ code (a git worktree, so two sessions never overwrite each other's files). Its p
 ![New work](docs/img/newwork.png)
 
 ### Every session in one list
-**Sessions** lists every open Claude Code session, grouped by project, what waits for you first: how it started,
-what Claude last said, and buttons to write to it or open its terminal.
+**Sessions** is a table of your Claude Code sessions, grouped by project, what waits for you first: its state, its
+work, what Claude last said, when, and buttons to write to it or open its terminal. Filters: waiting for you, working,
+linked to a work, *without work*; and when it was last active (open now, today, yesterday, 7, 14 or 30 days), which
+brings back closed sessions too, to resume them.
 
 ![The list of sessions](docs/img/sessions.png)
 
@@ -66,9 +68,10 @@ what Claude last said, and buttons to write to it or open its terminal.
 *The screenshots show made-up projects, sessions and people.*
 
 ## What you see
-- **Home page**: one card per feature. The percent of its plan that is done, the stages of the plan as a strip
-  (with an icon for planning, research, code, tests, review, deployment, docs), problems, when it was last updated, the next step, and whether
-  a session is working on it right now.
+- **Home page, Work**: one small card per work: its project, the percent of its plan that is done, its stages as a
+  strip, the stage it is at, and what it waits for (you, a permission, a working or background session). The work
+  where you were asked something last comes first, then the latest activity. Filters: needs you, active, not active,
+  done, and when it was last active (today, yesterday, 7, 14, 30 days).
 - **Feature page** (tabs: Progress, What is left, Decisions and questions): what was planned
   and what really happened, stage by stage; what is left and who has to act on it.
 - **Buttons on every item**: *Do it*, *Write*, *Not needed*. They send your instruction or question into the
