@@ -131,7 +131,7 @@ body:not(.wnok){visibility:hidden;animation:wnshow 0s 1.5s forwards}@keyframes w
 .wb .star{position:absolute;right:10px;top:10px}
 .wb{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
 .wb li{position:relative;background:#fff;border:1px solid var(--line);border-radius:12px}
-.wb li.g-done{opacity:.65}
+.wb li.g-done,.wb li.g-closed{opacity:.65}
 .wb a{display:flex;flex-direction:column;gap:6px;padding:12px 14px 12px 16px;color:inherit;text-decoration:none;min-height:118px}
 .wb a:hover{background:#f8faf9;border-radius:12px}
 .wb .wh{display:flex;gap:10px;align-items:baseline;padding-right:26px}
@@ -231,12 +231,13 @@ function winfo(f,D){var ss=(D.sessions||[]).filter(function(s){return s.feature=
  var upd=Date.now()-f.days*864e5,waitS=op.filter(function(s){return rankS(s)===0}),busy=op.filter(function(s){return s.state==='work'||s.state==='bg'});
  var askT=Math.max.apply(0,[0].concat(waitS.map(function(s){return s.t}))),lastT=Math.max.apply(0,[upd].concat(ss.map(function(s){return s.t})));
  if(!askT&&f.waiting)askT=upd;
- var needs=!f.done&&(f.waiting>0||waitS.length>0);
- return {ss:op,askT:askT,lastT:lastT,needs:needs,busy:busy[0],wait:waitS[0],active:!f.done&&op.length>0,grp:f.done?'done':needs?'you':op.length?'active':'idle'}}
+ var cl=!!f.closed,needs=!cl&&!f.done&&(f.waiting>0||waitS.length>0);
+ return {ss:op,askT:askT,lastT:lastT,needs:needs,busy:busy[0],wait:waitS[0],active:!cl&&!f.done&&op.length>0,grp:cl?'closed':f.done?'done':needs?'you':op.length?'active':'idle',closed:cl}}
 var WF={k:'all',t:'any'};try{var wf0=JSON.parse(localStorage.getItem('wn-wf')||'null');if(wf0)WF=wf0}catch(e){}
-var WK=[['all','All'],['you','Needs you'],['active','Active'],['idle','Not active'],['done','Done']];
-function wPass(f,i){return (WF.k==='all'||(WF.k==='you'&&i.needs)||(WF.k==='active'&&i.active)||(WF.k==='idle'&&!f.done&&!i.active)||(WF.k==='done'&&f.done))&&inRange(i.lastT,WF.t)}
-function stateChip(f,i){if(f.done)return '<span class="wc ok">done</span>';
+var WK=[['all','All'],['you','Needs you'],['active','Active'],['idle','Not active'],['done','Done'],['closed','Completed']];
+// a work you finished is only under Completed
+function wPass(f,i){if(i.closed!==(WF.k==='closed'))return false;return (WF.k==='all'||WF.k==='closed'||(WF.k==='you'&&i.needs)||(WF.k==='active'&&i.active)||(WF.k==='idle'&&!f.done&&!i.active)||(WF.k==='done'&&f.done&&!i.closed))&&inRange(i.lastT,WF.t)}
+function stateChip(f,i){if(i.closed)return '<span class="wc ok">completed '+agoL(f.closed)+(agoL(f.closed)==='now'||agoL(f.closed)==='yesterday'?'':' ago')+'</span>';if(f.done)return '<span class="wc ok">done</span>';
  if(i.needs)return '<span class="wc you">'+(i.wait&&i.wait.what==='waiting for permission'?'asks permission':f.waiting?f.waiting+' for you':'waits for you')+'</span>';
  if(i.busy)return '<span class="wc '+(i.busy.state==='bg'?'bg':'work')+'">'+(i.busy.state==='bg'?'background task':'working')+'</span>';
  if(i.ss.length)return '<span class="wc idle">session open</span>';return ''}
@@ -298,7 +299,7 @@ function paintS(D){if(!D.live)return;var all=D.sessions||[];var vis=all.filter(f
  var top=function(k){return Math.min.apply(0,by[k].map(rankS))},late=function(k){return Math.max.apply(0,by[k].map(function(s){return s.t}))};
  var keys=Object.keys(by).sort(function(a,b){return top(a)-top(b)||late(b)-late(a)});
  var nh=all.filter(function(s){return s.hidden&&s.state!=='closed'}).length,waitN=all.filter(function(s){return !s.hidden&&s.state!=='closed'&&rankS(s)===0}).length,work=all.filter(function(s){return !s.hidden&&(s.state==='work'||s.state==='bg')}).length,nv=all.filter(function(s){return s.state!=='closed'}).length-all.filter(function(s){return s.hidden&&s.state!=='closed'}).length;
- $('nS').textContent=nv;$('nF').textContent=D.features.filter(function(f){return !f.done}).length;
+ $('nS').textContent=nv;$('nF').textContent=D.features.filter(function(f){return !f.done&&!f.closed}).length;
  $('fl').innerHTML='<span class="flr">'+[['all','All'],['wait','Waiting for you'],['busy','Working now'],['feat','Linked to work']].concat([['nofeat','Without work']]).map(function(f){return '<button type="button" data-f="'+f[0]+'" aria-pressed="'+(SF.f===f[0])+'">'+f[1]+'</button>'}).join('')+'<span class="sp"></span>'+(nh?'<button type="button" data-f="hidden" aria-pressed="'+SF.showHidden+'">Hidden: '+nh+'</button>':'')+'<span class="hint">Grouped by project, what waits for you first</span>'+'</span><span class="flr tr"><span class="lb">Last active</span>'+[['open','Open now']].concat(TR.slice(1)).map(function(x){return '<button type="button" data-t="'+x[0]+'" aria-pressed="'+(SF.t===x[0])+'">'+x[1]+'</button>'}).join('')+'</span>';
  var ta=document.activeElement&&document.activeElement.id==='stext';
  paintSessions(D,rows,keys,by);if(ta){var x0=$('stext');if(x0){x0.focus();x0.setSelectionRange(x0.value.length,x0.value.length)}}if(D.live)$('sub').textContent=nv+' session'+(nv===1?'':'s')+' open, '+waitN+' waiting for you, '+work+' working now.';}

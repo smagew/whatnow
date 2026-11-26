@@ -332,9 +332,13 @@ func readEvents(limit int) map[string]any {
 func stateJSON() map[string]any {
 	now := nowMs()
 	payload := collect(featuresDir())
+	closed := closedWorks()
 	for _, f := range payload["features"].([]any) {
 		m := f.(map[string]any)
 		m["href"] = "/f/" + fmt.Sprint(m["id"]) + "/"
+		if t := closed[fmt.Sprint(m["id"])]; t != 0 {
+			m["closed"] = t
+		}
 	}
 	payload["live"], payload["now"] = true, now
 	payload["sessions"] = readSessions(now, true, true, true)
@@ -747,6 +751,12 @@ func act(body map[string]any) (int, any) {
 	switch action {
 	case "track":
 		return tellSession(sid, trackText)
+	case "finish": // the work is over: its background sessions stop, it leaves the bar (after a confirmation on the page)
+		slug, _ := body["feature"].(string)
+		return finishWork(slug)
+	case "reopen":
+		slug, _ := body["feature"].(string)
+		return reopenWork(slug)
 	case "awake": // keep the computer awake for "minutes" (0: off, -1: until turned off)
 		return setAwake(num(body["minutes"]))
 	case "broadcast": // one message to several sessions; "interrupt" first stops the background ones (after a confirmation on the page)
@@ -1033,10 +1043,13 @@ func featuresList() map[string]any {
 		fav[k] = true
 	}
 	out := []map[string]any{}
-	det := detachedSet()
+	det, closed := detachedSet(), closedWorks()
 	for _, x := range feats {
 		f := x.(map[string]any)
 		id := fmt.Sprint(f["id"])
+		if closed[id] != 0 { // finished by the user: not in the bar any more
+			continue
+		}
 		a := ask[id]
 		project := "" // the first project the plan names: the bar can group the work by it
 		if l, _ := f["projects"].([]any); len(l) > 0 {
@@ -1215,6 +1228,11 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "private, max-age=31536000, immutable")
 		w.WriteHeader(200)
 		_, _ = w.Write(b)
+	case "/api/finish": // what finishing a work does: which sessions stop, which cannot be stopped from here
+		if s, ok := slugArg(); ok {
+			code, obj := finishPlan(s)
+			sendJSON(w, code, obj)
+		}
 	case "/api/targets": // the open sessions, for the "Message sessions" form
 		sendJSON(w, 200, targets())
 	case "/api/sessions":
@@ -1302,7 +1320,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					text(w, 500, "feature.json: "+err.Error())
 					return
 				}
-				send(w, 200, []byte(withSide(html, map[string]any{"ses": pickList(slug), "ver": versionInfo(slug), "inbox": map[string]any{"entries": inboxState()}, "git": gitStateFast(slug)}, h.local)), "text/html; charset=utf-8")
+				send(w, 200, []byte(withSide(html, map[string]any{"ses": pickList(slug), "ver": versionInfo(slug), "inbox": map[string]any{"entries": inboxState()}, "git": gitStateFast(slug), "closed": closedWorks()[slug]}, h.local)), "text/html; charset=utf-8")
 				return
 			}
 		}

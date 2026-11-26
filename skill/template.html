@@ -421,9 +421,12 @@ body{padding-bottom:84px}
 /* A work in a window of its own: no bar, and its name is the title of the window, so not in the page again */
 html.solo header #t,html.solo header .sub,html.solo .back{display:none}html.solo header .meta{margin-top:0}
 .solob{all:unset;cursor:pointer;flex:none;margin-left:auto;font-size:12.5px;font-weight:500;color:#dfe9e3;padding:3px 12px;border-radius:99px;border:1px solid #ffffff3d;white-space:nowrap}.solob:hover{background:#ffffff1f}.solob:focus-visible{outline:3px solid #7ab8ff;outline-offset:2px}.solob[hidden]{display:none}.solob:not([hidden])~.fmw{margin-left:6px}
+
+/* finished by the user */
+.fmn button.fin{color:#b3261e}.fmn button.fin small{color:#8a5a55}.cldn{flex:none;font-size:12px;font-weight:600;color:#0f6b40;background:#dff3e8;border-radius:99px;padding:1px 10px}
 </style>
 <script>window.PANEL=/*__DATA__*/null;</script></head><body>
-<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="rps" id="rps"></span><span class="qb" id="qb"></span><button type="button" class="solob" id="solob" hidden title="Close this window and show the work in the main window">Back to the main window</button><span class="fmw" id="fmw" hidden><button type="button" class="fmb" id="fmb" aria-haspopup="menu" aria-expanded="false" aria-label="More for this work" title="More">⋮</button><span class="fmn" id="fmn" role="menu" hidden><button type="button" role="menuitem" id="fmnew">New work with the same access<small>A clean session: same folders and permissions, empty memory</small></button><button type="button" role="menuitem" id="fmsolo" hidden>Open in a separate window<small>For another monitor; it has its own icon in the Dock</small></button></span></span></div></div></div>
+<header><div class="hd"><div><!--__BACK__--><h1 id="t"></h1><p class="sub" id="sub"></p><div class="meta"><div class="ses" id="ses"></div><span class="rps" id="rps"></span><span class="qb" id="qb"></span><button type="button" class="solob" id="solob" hidden title="Close this window and show the work in the main window">Back to the main window</button><span class="fmw" id="fmw" hidden><button type="button" class="fmb" id="fmb" aria-haspopup="menu" aria-expanded="false" aria-label="More for this work" title="More">⋮</button><span class="fmn" id="fmn" role="menu" hidden><button type="button" role="menuitem" id="fmnew">New work with the same access<small>A clean session: same folders and permissions, empty memory</small></button><button type="button" role="menuitem" id="fmfin" class="fin">Finish the work…<small>Its background sessions stop; it moves to Completed</small></button><button type="button" role="menuitem" id="fmsolo" hidden>Open in a separate window<small>For another monitor; it has its own icon in the Dock</small></button></span></span></div></div></div>
 <div class="tbr"><div class="tabs" role="tablist" id="tabs"></div><span class="frw"><span class="frg"><span id="fr"></span><button type="button" id="rq" hidden>↻ Request status</button></span></span></div></header>
 <div class="syw"><div class="sy" id="sy" role="status" hidden></div></div>
 <div class="chw"><div class="chn" id="chn" role="status" hidden></div></div>
@@ -1088,6 +1091,11 @@ if($('fmw')&&P.live){$('fmw').hidden=false;
  $('fmb').onclick=function(e){e.stopPropagation();var m=$('fmn');m.hidden=!m.hidden;$('fmb').setAttribute('aria-expanded',!m.hidden);if(!m.hidden)$('fmnew').focus()};
  document.addEventListener('click',function(e){if(!e.target.closest('#fmn'))fmShut()});
  $('fmnew').onclick=function(){fmShut();window.wnNewFeature()};
+ // finished by the user: said in the header; the menu reopens it
+ if(INIT.closed){var cl=document.createElement('span');cl.className='cldn';cl.textContent='Completed '+exact(INIT.closed);$('ses').parentNode.insertBefore(cl,$('ses'));
+  $('fmfin').innerHTML='Reopen the work<small>Back to the bar and to the active work</small>';$('fmfin').classList.remove('fin');
+  $('fmfin').onclick=function(){fmShut();fetch('/api/act',{method:'POST',headers:{'Content-Type':'application/json','X-Whatnow':'1'},body:JSON.stringify({action:'reopen',feature:P.slug})}).then(function(){location.reload()}).catch(function(){})}}
+ else $('fmfin').onclick=function(){fmShut();if(window.wnFinish)window.wnFinish(P.slug)};
  // a work in a window of its own (the app window only): from the main window, and back from that window
  var appPost=function(b){return fetch('/api/app',{method:'POST',headers:{'Content-Type':'application/json','X-Whatnow':'1'},body:JSON.stringify(b)})};
  if(window.WN_TERM&&!window.WN_SOLO){$('fmsolo').hidden=false;$('fmsolo').onclick=function(){fmShut();appPost({op:'detach',feature:P.slug}).catch(function(){})}}

@@ -219,6 +219,13 @@ Esc in their terminal does, after a confirmation that says what this cuts off; a
 cannot be stopped from here and gets the message when its turn ends. With *I am going to sleep* the form also asks
 how long the computer stays awake (8 hours unless you change it).
 
+**Finish a work.** *Finish the work…* in the ⋮ menu of a work (in the bar or in the header of its page) asks first
+and says what happens: its background sessions are stopped (what they do at that moment is cut off), sessions open
+in your own terminal cannot be closed from here and are named so you close them yourself, and the plan and its
+history stay. The work leaves the bar and is kept in Work, under **Completed**; its page says when it was finished,
+and *Reopen the work* in the same menu brings it back. Finished works are kept in `~/.whatnow/closed.json`, not in
+`feature.json`, so a session that rewrites its plan cannot undo it.
+
 **A work in a window of its own (app window).** *Open in a separate window* in the ⋮ menu of a work (in the bar
 or in the header of its page) opens that work in a second window, for another monitor: on macOS it has its own icon
 in the Dock. It shows only that work, with its session window, chat and terminal, and reads the same data as the main
