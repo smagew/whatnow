@@ -197,6 +197,11 @@ starts one: a new Claude Code session in the background.
 - *Like existing work*: the folder that work was started in, its added folders and its permission mode; the rules, MCP
   servers and instruction files of the folder come with the folder. The same form opens from the three dots of a
   piece of work, in its header and in the bar.
+- *From a repository*: the address of a repository (`https://host/owner/name`, `git@host:owner/name.git`) and the
+  folder to clone it into. You choose that folder, and it is remembered; the dashboard has no folder of its own for
+  code. The clone is made with your own git access, and nothing is asked: a repository that needs a password typed
+  fails with a message, clone it once in a terminal then. A repository that is already cloned there is not cloned
+  again, and a folder of that name that is something else is left alone. Only http(s) and ssh addresses are taken.
 
 The dashboard opens the page of the new work itself, at once, and links the session to it: named after the task (its
 first words) or, when you give none, after the folder. With a task the session rewrites the page with its plan;

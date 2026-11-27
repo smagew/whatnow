@@ -791,6 +791,11 @@ func act(body map[string]any) (int, any) {
 			}
 			return startWork(p, "", text, place)
 		}
+		if repo, _ := body["repo"].(string); repo != "" { // a new piece of work in a repository cloned for it
+			into, _ := body["into"].(string)
+			mode, _ := body["mode"].(string)
+			return cloneWork(repo, into, mode, text, place)
+		}
 		if dir, _ := body["dir"].(string); dir != "" { // a new piece of work in a folder the user named
 			mode, _ := body["mode"].(string)
 			code, p := folderPlan(dir, mode)
@@ -1306,7 +1311,10 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/demo/motion", "/demo/talk", "/demo/ask", "/demo/reply", "/demo/bar", "/demo/font": // examples of the interface to choose from (skill/demo)
 		send(w, 200, []byte(page("demo"+strings.TrimPrefix(path, "/demo")+".html")), "text/html; charset=utf-8")
 	case "/api/spawn": // what a new session would get: started from a feature, or in a folder
-		if dir := q.Get("dir"); dir != "" {
+		if repo := q.Get("repo"); repo != "" {
+			code, v := clonePlan(repo, q.Get("into"), "")
+			sendJSON(w, code, v)
+		} else if dir := q.Get("dir"); dir != "" {
 			code, v := folderPlan(dir, "")
 			sendJSON(w, code, v)
 		} else if s, ok := slugArg(); ok {
