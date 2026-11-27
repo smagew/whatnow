@@ -100,6 +100,9 @@ func runWindow() {
 			} else if place != nil {
 				runtime.WindowSetPosition(ctx, place[0], place[1])
 			}
+			pickFiles = func() ([]string, error) {
+				return runtime.OpenMultipleFilesDialog(ctx, runtime.OpenDialogOptions{Title: "Attach files to the message"})
+			}
 			pickDir = func() (string, error) {
 				return runtime.OpenDirectoryDialog(ctx, runtime.OpenDialogOptions{Title: "Choose the folder of the new work", CanCreateDirectories: true})
 			}

@@ -262,6 +262,12 @@ is over (a laptop on battery with its lid closed sleeps fully). The hold ends wi
 time is kept in `~/.whatnow/awake.json`, so the app started again takes up what is left. On macOS it is the system's
 `caffeinate`, on Linux `systemd-inhibit`, on Windows `SetThreadExecutionState`.
 
+**Attach files (app window).** The paperclip in the field of the session window opens the system dialog; files can
+also be dropped on the window, and a picture pasted into the field. They are kept with the work (in
+`~/.whatnow/shots/<work>/`, 50 MB a file), shown in the row above the field (a picture as a picture, anything else
+by its name), and go with the next message as paths (`Attached file: …`), which Claude opens itself. In the terminal
+view the path is typed into the prompt of the session.
+
 **Screenshots for Claude (app window, macOS).** The camera in the title of the session window takes a part of the
 screen (the system selection, as Cmd+Shift+4; Space picks a window). The picture is kept with the work in
 `~/.whatnow/shots/<work>/` and shown in a row above the message field; a picked one (blue ring) goes with your next

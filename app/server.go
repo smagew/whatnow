@@ -1191,6 +1191,10 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		text(w, 403, "forbidden")
 		return
 	}
+	if r.Method == http.MethodPost && r.URL.Path == "/api/upload" {
+		h.upload(w, r)
+		return
+	}
 	if r.Method == http.MethodPost {
 		h.post(w, r)
 		return
@@ -1251,7 +1255,16 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			text(w, 404, "not found")
 			return
 		}
-		w.Header().Set("Content-Type", "image/png")
+		ct := "image/png"
+		if fileRe.MatchString(q.Get("name")) {
+			ct = map[string]string{".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp", ".png": "image/png"}[strings.ToLower(filepath.Ext(p))]
+			if ct == "" { // only pictures are shown in the page; anything else is a file to download, never run
+				ct = "application/octet-stream"
+				w.Header().Set("Content-Disposition", "attachment")
+			}
+		}
+		w.Header().Set("Content-Type", ct)
+		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Cache-Control", "private, max-age=31536000, immutable")
 		w.WriteHeader(200)
 		_, _ = w.Write(b)
@@ -1433,6 +1446,22 @@ func (h handler) post(w http.ResponseWriter, r *http.Request) {
 				_ = os.Remove(p)
 			}
 			sendJSON(w, 200, map[string]any{"ok": true})
+		case "pickfiles": // the system dialog for files to attach to a message; they are kept with the work
+			if pickFiles == nil {
+				sendJSON(w, 501, map[string]any{"error": "no file dialog here"})
+				return
+			}
+			paths, err := pickFiles()
+			if err != nil {
+				sendJSON(w, 500, map[string]any{"error": err.Error()})
+				return
+			}
+			names, err := attachPaths(str(body, "feature"), paths)
+			res := map[string]any{"names": names}
+			if err != nil {
+				res["error"] = err.Error()
+			}
+			sendJSON(w, 200, res)
 		case "pickdir": // the system dialog for choosing a folder (the app window has one, a browser tab does not)
 			if pickDir == nil {
 				sendJSON(w, 501, map[string]any{"error": "no folder dialog here"})
@@ -1480,3 +1509,19 @@ func listen(p int) error {
 }
 
 var _ = bufio.NewReader // keeps the import list stable while the file grows
+
+// upload takes a file dropped on (or pasted into) the window of a session: the raw bytes, its name in ?name=.
+// The app window only (as screenshots), with the header no other web page can add.
+func (h handler) upload(w http.ResponseWriter, r *http.Request) {
+	if !h.local || r.Header.Get("X-Whatnow") != "1" {
+		sendJSON(w, 403, map[string]any{"error": "forbidden"})
+		return
+	}
+	q := r.URL.Query()
+	name, err := saveAttach(q.Get("feature"), q.Get("name"), r.Body)
+	if err != nil {
+		sendJSON(w, 400, map[string]any{"error": err.Error()})
+		return
+	}
+	sendJSON(w, 200, map[string]any{"name": name, "path": filepath.Join(shotsDir(q.Get("feature")), name)})
+}
