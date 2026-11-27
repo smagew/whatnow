@@ -277,8 +277,14 @@ func startWork(p map[string]any, from, task, place string) (int, any) {
 	}
 	args = append(args, "--allowedTools")
 	args = append(args, spawnAllow(slug)...)
+	for _, a := range wsStrs(p["allow"], 50) { // the rules of a workspace
+		args = append(args, a.(string))
+	}
+	intro := wsIntro(p) // the context and the skills of a workspace come first
 	if task != "" {
-		args = append(args, "--", spawnPrompt(task, slug)) // "--": the list of tools above takes every word after it
+		args = append(args, "--", intro+spawnPrompt(task, slug)) // "--": the list of tools above takes every word after it
+	} else if intro != "" {
+		args = append(args, "--", intro+"There is no task yet: say in one line that you are ready, and wait for it.")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()

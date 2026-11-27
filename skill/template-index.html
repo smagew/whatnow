@@ -162,6 +162,7 @@ ol.sva .w{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 ol.sva .said{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 ol.sva .when{text-align:right}
 ol.sva>li.s:not(.sx){grid-column:1/-1}
+ol.sva>li.sx{grid-template-columns:22px 170px 150px 200px 86px minmax(0,1fr) 70px auto}
 </style>
 <script>window.IDX_DATA=/*__DATA__*/null;</script></head><body>
 <header><div class="hd"><span class="conn" id="connbox" hidden><span class="cdot pulse" id="cdot"></span><span id="conn"></span></span><h1>Work with Claude</h1><p class="sub" id="sub"></p><div class="tabs" role="tablist" id="tabs" hidden><button role="tab" id="tS" aria-selected="false">Sessions<span class="n" id="nS"></span></button><button role="tab" id="tF" aria-selected="true">Work<span class="n" id="nF"></span></button><button role="tab" id="tV" aria-selected="false">Favorites<span class="n" id="nV"></span></button></div></div></header>
@@ -289,7 +290,7 @@ function sBtns(s){return '<span class="sbt"><button type="button" class="pri" da
 function sName(s){return esc(s.name||s.project||s.id.slice(0,8))}
 function sSaid(s){return s.lastA?esc(s.lastA):s.first?'<i>Started with:</i> '+esc(s.first):''}
 function sItem(s,D){var big=(SF.form&&SF.form.id===s.id)||SF.menu===s.id||SF.attach===s.id||SF.sent[s.id]||SF.err[s.id];if(big)return sessCard(s,D);var st=stOf(s);
- return '<li class="s sx st-'+st+'" data-id="'+esc(s.id)+'">'+starBtn('s:'+s.id)+'<span class="n">'+sName(s)+'</span>'+sPill(s)+'<span class="w">'+sWork(s,D)+'</span><span class="said">'+sSaid(s)+'</span><span class="when">'+agoL(s.t)+'</span>'+sBtns(s)+'</li>';}
+ return '<li class="s sx st-'+st+'" data-id="'+esc(s.id)+'">'+starBtn('s:'+s.id)+'<span class="n">'+sName(s)+'</span>'+sPill(s)+'<span class="w">'+sWork(s,D)+'</span>'+'<span class="cx">'+(s.ctx&&window.wnCtx?window.wnCtx.meter(s.ctx):'')+'</span>'+'<span class="said">'+sSaid(s)+'</span><span class="when">'+agoL(s.t)+'</span>'+sBtns(s)+'</li>';}
 function paintSessions(D,rows,keys,by){var h;
  h=keys.map(function(k){var it=by[k].sort(function(a,b){return rankS(a)-rankS(b)||b.t-a.t});return '<h2 class="sg">'+esc(k)+' <small>'+it.length+' session'+(it.length>1?'s':'')+'</small></h2><ol class="sva">'+it.map(function(s){return sItem(s,D)}).join('')+'</ol>'}).join('');
  $('sess').innerHTML=h||'<div class="welcome"><b>No sessions</b>Nothing matches these filters.</div>'}

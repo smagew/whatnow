@@ -234,6 +234,26 @@ main window** (in the separate window, or in the ⋮ menu of the work in the bar
 main window. Each separate window comes back where it stood and at its size. One session can be in the terminal of
 both windows at once: they show the same screen and type into the same session.
 
+**How full the context is.** Every session shows how full its context window is: a column in Sessions, a meter in
+the title of the session window. It is read from the transcript as Claude Code counts it for its status line (the
+input of the latest reply: input + cache creation + cache read), against the window of the model: 1M tokens for the
+Fable models, Opus 4.7 and later, Sonnet 5 and later, Haiku 5.5 and `[1m]` models, 200K for the others. From 60% the
+session window says so, with **What to do**:
+- *Compact now, keeping what matters*: the session gets `/compact` with what to keep, written from the page of the
+  work (editable). Claude Code compacts by itself anyway at about 967K of 1M; this way you choose what stays.
+- *Continue in a fresh session*: a new session with the same access starts from the page of the work; the old one is
+  stopped.
+- *Summarize only the older part*: the terminal of the session opens, for `/rewind` and "Summarize up to here".
+- *Clear and go on from the page*: `/clear`, then the session reads the page of its work and goes on.
+- *Not now*: asked again at 85%.
+
+A background session gets the command typed in; a session open in your own terminal gets the command shown to paste.
+
+**Workspaces.** What a new session starts with, kept to pick in **New work → From a workspace**: its main folder and
+the other folders it reaches, its permission mode, rules it may follow without asking (like `Bash(npm test:*)`), the
+skills to use and a few lines of context, which open its first message. Made in *Edit workspaces…*, or from the
+menu ⋮ of a work: *Save its access as a workspace*. Kept in `~/.whatnow/workspaces.json`.
+
 **Stay awake.** At the bottom of the bar: the computer does not go to sleep by itself for 1, 2, 3 or 8 hours, or until
 you turn it off; the bar shows the time left. It is what a video player does while it plays: the screen may still go
 dark, the sessions go on. A laptop with its lid closed still sleeps, so leave it open. The hold ends with the app; the

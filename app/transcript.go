@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -140,7 +141,11 @@ type chatLine struct {
 type transcript struct {
 	First, LastU, LastA, Said string
 	Mtime, SaidT              int64
-	Chat                      []chatLine
+	// How full its context is: the input of the latest reply (input + cache creation + cache read, as Claude Code
+	// counts it for the status line), and the model that answered.
+	Ctx   int64
+	Model string
+	Chat  []chatLine
 	// Where the session works, from the "environment" snapshots Claude Code writes into the transcript:
 	// the working directory now, the directories added to it (--add-dir, /add-dir), and the other working
 	// directories it was in lately, newest first.
@@ -320,6 +325,17 @@ func transcriptInfo(sid string) *transcript {
 			info.LastU = q
 		}
 	}
+	for i := len(lines) - 1; i >= 0; i-- {
+		_, m := rowOf(lines[i])
+		if m == nil || m["role"] != "assistant" {
+			continue
+		}
+		u, _ := m["usage"].(map[string]any)
+		if n := num(u["input_tokens"]) + num(u["cache_creation_input_tokens"]) + num(u["cache_read_input_tokens"]); n > 0 {
+			info.Ctx, info.Model = n, str(m, "model")
+			break
+		}
+	}
 	// The recent conversation, for the chat window: what the user typed and what Claude answered. A text that
 	// Claude follows with a tool call is a note made on the way, not an answer: it is left out, except the
 	// newest one, which is all there is to show while a long turn runs.
@@ -400,3 +416,22 @@ func transcriptInfo(sid string) *transcript {
 }
 
 var _ = json.Number("") // parsed transcripts keep numbers as json.Number
+
+// ctxWindow is the size of the context window of a model, as Claude Code documents it: 1M tokens for the Fable
+// models, Opus 4.7 and later, Sonnet 5 and later and Haiku 5.5; "[1m]" asks for it on the others; 200K otherwise.
+// A context already larger than 200K is in a 1M window whatever the name says.
+func ctxWindow(model string, used int64) int64 {
+	m := strings.ToLower(model)
+	big := strings.Contains(m, "[1m]") || strings.Contains(m, "fable") || strings.Contains(m, "haiku-5-5")
+	for _, f := range []string{"opus", "sonnet"} {
+		if i := strings.Index(m, "claude-"+f+"-"); i >= 0 {
+			var maj, min int
+			fmt.Sscanf(strings.ReplaceAll(m[i+len("claude-"+f+"-"):], "-", " "), "%d %d", &maj, &min)
+			big = big || maj >= 5 || (f == "opus" && maj == 4 && min >= 7)
+		}
+	}
+	if big || used > 200_000 {
+		return 1_000_000
+	}
+	return 200_000
+}

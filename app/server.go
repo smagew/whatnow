@@ -140,6 +140,7 @@ type session struct {
 	LastU   *string `json:"lastU,omitempty"`
 	LastA   *string `json:"lastA,omitempty"`
 	Use     any     `json:"use,omitempty"` // what its process and the processes under it take: {cpu, ram, procs}
+	Ctx     any     `json:"ctx,omitempty"` // how full its context is: {used, window, model}
 }
 
 func (s *session) feature() string { f, _ := s.Feature.(string); return f }
@@ -264,6 +265,9 @@ func readSessions(now int64, includeClosed, withHidden, details bool) []*session
 		for _, r := range out {
 			if info := transcriptInfo(r.ID); info != nil {
 				r.First, r.LastU, r.LastA = &info.First, &info.LastU, &info.LastA
+				if info.Ctx > 0 {
+					r.Ctx = map[string]any{"used": info.Ctx, "window": ctxWindow(info.Model, info.Ctx), "model": info.Model}
+				}
 				if info.Mtime > r.T {
 					r.T = info.Mtime
 				}
@@ -583,12 +587,16 @@ func pickList(slug string) map[string]any {
 			}
 		}
 		r := row{"id": s.ID, "name": ag.name(s.ID), "project": s.Project, "what": s.What, "t": s.T, "open": live, "state": state, "other": other}
+		r["bg"] = live && ag[s.ID]["kind"] == "background" // a background session can be typed into from here
 		if s.feature() == slug {
 			info := transcriptInfo(s.ID)
 			if info != nil && info.Said != "" {
 				r["said"], r["saidT"] = info.Said, info.SaidT
 			}
 			r["dirs"] = sessionDirs(s, info)
+			if info != nil && info.Ctx > 0 {
+				r["ctx"] = map[string]any{"used": info.Ctx, "window": ctxWindow(info.Model, info.Ctx), "model": info.Model}
+			}
 			if u := usageOf(ag[s.ID]); u != nil {
 				r["use"] = u
 			}
@@ -751,6 +759,18 @@ func act(body map[string]any) (int, any) {
 	switch action {
 	case "track":
 		return tellSession(sid, trackText)
+	case "compact": // the context of a session is full: /compact with what to keep
+		return compactSession(sid, text)
+	case "clear": // /clear, then the session goes on from the page of its work
+		return clearSession(sid)
+	case "fresh": // a new session with the same access takes over the work from its page
+		return freshSession(sid)
+	case "ws-save":
+		w, _ := body["workspace"].(map[string]any)
+		return wsSave(w)
+	case "ws-delete":
+		id, _ := body["id"].(string)
+		return wsDelete(id)
 	case "finish": // the work is over: its background sessions stop, it leaves the bar (after a confirmation on the page)
 		slug, _ := body["feature"].(string)
 		return finishWork(slug)
@@ -764,6 +784,13 @@ func act(body map[string]any) (int, any) {
 	case "spawn":
 		place, _ := body["place"].(string)
 		slug, _ := body["feature"].(string)
+		if ws, _ := body["workspace"].(string); ws != "" { // a new piece of work from a workspace
+			code, p := wsPlan(ws)
+			if code != 200 {
+				return code, p
+			}
+			return startWork(p, "", text, place)
+		}
 		if dir, _ := body["dir"].(string); dir != "" { // a new piece of work in a folder the user named
 			mode, _ := body["mode"].(string)
 			code, p := folderPlan(dir, mode)
@@ -1228,6 +1255,13 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "private, max-age=31536000, immutable")
 		w.WriteHeader(200)
 		_, _ = w.Write(b)
+	case "/api/workspaces": // the saved workspaces and the skills to pick from; ?from=<work> is the access of a work
+		if f := q.Get("from"); f != "" {
+			code, obj := wsFromWork(f)
+			sendJSON(w, code, obj)
+			return
+		}
+		sendJSON(w, 200, map[string]any{"workspaces": wsList(), "skills": wsSkills()})
 	case "/api/finish": // what finishing a work does: which sessions stop, which cannot be stopped from here
 		if s, ok := slugArg(); ok {
 			code, obj := finishPlan(s)
