@@ -19,7 +19,7 @@ func TestStayAwakeMacOS(t *testing.T) {
 		out, _ := exec.Command("pmset", "-g", "assertions").Output()
 		return strings.Contains(string(out), onBehalf)
 	}
-	stop, err := holdAwake(time.Minute)
+	stop, err := holdAwake(time.Minute, true)
 	if err != nil {
 		t.Fatal(err)
 	}

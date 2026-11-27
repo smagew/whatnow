@@ -21,11 +21,12 @@ const awakeMaxMin = 24 * 60
 var holdAwakeFn = holdAwake
 
 var stayAwake struct {
-	mu    sync.Mutex
-	until int64 // ms since 1970; -1: until turned off; 0: off
-	stop  func()
-	timer *time.Timer
-	gen   int
+	mu     sync.Mutex
+	until  int64 // ms since 1970; -1: until turned off; 0: off
+	screen bool  // the screen stays on too (as while a video plays)
+	stop   func()
+	timer  *time.Timer
+	gen    int
 }
 
 func awakeFile() string { return filepath.Join(home(), "awake.json") }
@@ -37,11 +38,12 @@ func awakeNow() map[string]any {
 	}
 	stayAwake.mu.Lock()
 	defer stayAwake.mu.Unlock()
-	return map[string]any{"until": stayAwake.until}
+	return map[string]any{"until": stayAwake.until, "screen": stayAwake.screen}
 }
 
-// setAwake keeps the computer awake for the given minutes: 0 turns it off, -1 is until it is turned off.
-func setAwake(minutes int64) (int, any) {
+// setAwake keeps the computer awake for the given minutes: 0 turns it off, -1 is until it is turned off. With
+// screen, the screen stays on as well: the computer does not look asleep, and nothing dims it.
+func setAwake(minutes int64, screen bool) (int, any) {
 	if !awakeCan() {
 		return 501, map[string]any{"error": "this system cannot be kept awake from here"}
 	}
@@ -55,19 +57,19 @@ func setAwake(minutes int64) (int, any) {
 	case minutes > 0:
 		until = time.Now().Add(time.Duration(minutes) * time.Minute).UnixMilli()
 	}
-	if err := awakeApply(until); err != nil {
+	if err := awakeApply(until, screen); err != nil {
 		return 500, map[string]any{"error": "could not keep the computer awake: " + err.Error()}
 	}
 	if until == 0 {
 		_ = os.Remove(awakeFile())
 	} else {
-		_ = atomicWriteJSON(awakeFile(), map[string]any{"until": until})
+		_ = atomicWriteJSON(awakeFile(), map[string]any{"until": until, "screen": screen})
 	}
-	return 200, map[string]any{"ok": true, "until": until}
+	return 200, map[string]any{"ok": true, "until": until, "screen": screen}
 }
 
 // awakeApply ends the hold there is and starts the one asked for.
-func awakeApply(until int64) error {
+func awakeApply(until int64, screen bool) error {
 	stayAwake.mu.Lock()
 	defer stayAwake.mu.Unlock()
 	stayAwake.gen++
@@ -89,13 +91,13 @@ func awakeApply(until int64) error {
 			return nil
 		}
 	}
-	stop, err := holdAwakeFn(d)
+	stop, err := holdAwakeFn(d, screen)
 	if err != nil {
 		return err
 	}
 	var once sync.Once
 	stayAwake.stop = func() { once.Do(stop) }
-	stayAwake.until = until
+	stayAwake.until, stayAwake.screen = until, screen
 	if d > 0 {
 		g := stayAwake.gen
 		stayAwake.timer = time.AfterFunc(d, func() {
@@ -117,7 +119,8 @@ func awakeApply(until int64) error {
 
 // awakeResume takes up the time kept by the program that ran before, at the start of the server.
 func awakeResume() {
-	until := num(readJSONMap(awakeFile())["until"])
+	m := readJSONMap(awakeFile())
+	until, screen := num(m["until"]), m["screen"] == true
 	if until == 0 || !awakeCan() {
 		return
 	}
@@ -125,7 +128,7 @@ func awakeResume() {
 		_ = os.Remove(awakeFile())
 		return
 	}
-	_ = awakeApply(until)
+	_ = awakeApply(until, screen)
 }
 
 func readJSONMap(path string) map[string]any {

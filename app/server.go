@@ -778,7 +778,7 @@ func act(body map[string]any) (int, any) {
 		slug, _ := body["feature"].(string)
 		return reopenWork(slug)
 	case "awake": // keep the computer awake for "minutes" (0: off, -1: until turned off)
-		return setAwake(num(body["minutes"]))
+		return setAwake(num(body["minutes"]), body["screen"] != false) // the screen stays on unless the page says no
 	case "broadcast": // one message to several sessions; "interrupt" first stops the background ones (after a confirmation on the page)
 		return broadcast(body)
 	case "spawn":

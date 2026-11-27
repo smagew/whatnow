@@ -11,13 +11,13 @@ import (
 func fakeHold(t *testing.T) (held, started *int32, last *time.Duration) {
 	held, started, last = new(int32), new(int32), new(time.Duration)
 	old := holdAwakeFn
-	holdAwakeFn = func(d time.Duration) (func(), error) {
+	holdAwakeFn = func(d time.Duration, _ bool) (func(), error) {
 		atomic.AddInt32(held, 1)
 		atomic.AddInt32(started, 1)
 		*last = d
 		return func() { atomic.AddInt32(held, -1) }, nil
 	}
-	t.Cleanup(func() { _ = awakeApply(0); holdAwakeFn = old })
+	t.Cleanup(func() { _ = awakeApply(0, false); holdAwakeFn = old })
 	return
 }
 
@@ -27,7 +27,7 @@ func TestStayAwakeForATime(t *testing.T) {
 		t.Skip("this system cannot be kept awake")
 	}
 	held, _, last := fakeHold(t)
-	code, obj := setAwake(120)
+	code, obj := setAwake(120, true)
 	if code != 200 {
 		t.Fatalf("set: %d %v", code, obj)
 	}
@@ -42,11 +42,11 @@ func TestStayAwakeForATime(t *testing.T) {
 		t.Fatal("the time is not kept on disk")
 	}
 	// another time replaces the hold, it does not add one
-	setAwake(60)
+	setAwake(60, true)
 	if atomic.LoadInt32(held) != 1 {
 		t.Fatalf("held %d after a new time", atomic.LoadInt32(held))
 	}
-	setAwake(0)
+	setAwake(0, true)
 	if atomic.LoadInt32(held) != 0 || num(awakeNow()["until"]) != 0 {
 		t.Fatalf("off: held %d, until %v", atomic.LoadInt32(held), awakeNow()["until"])
 	}
@@ -61,11 +61,11 @@ func TestStayAwakeUntilOff(t *testing.T) {
 		t.Skip("this system cannot be kept awake")
 	}
 	held, _, last := fakeHold(t)
-	if code, _ := setAwake(-1); code != 200 || num(awakeNow()["until"]) != -1 || *last != 0 || atomic.LoadInt32(held) != 1 {
+	if code, _ := setAwake(-1, true); code != 200 || num(awakeNow()["until"]) != -1 || *last != 0 || atomic.LoadInt32(held) != 1 {
 		t.Fatalf("until off: %d, until %v, d %v, held %d", code, awakeNow()["until"], *last, atomic.LoadInt32(held))
 	}
 	for _, bad := range []int64{-2, awakeMaxMin + 1} {
-		if code, _ := setAwake(bad); code != 400 {
+		if code, _ := setAwake(bad, true); code != 400 {
 			t.Fatalf("%d minutes: %d", bad, code)
 		}
 	}
@@ -82,7 +82,7 @@ func TestStayAwakeEnds(t *testing.T) {
 	}
 	held, _, _ := fakeHold(t)
 	must(t, atomicWriteJSON(awakeFile(), map[string]any{"until": 1}))
-	must(t, awakeApply(time.Now().Add(150*time.Millisecond).UnixMilli()))
+	must(t, awakeApply(time.Now().Add(150*time.Millisecond).UnixMilli(), true))
 	if atomic.LoadInt32(held) != 1 {
 		t.Fatal("not held")
 	}

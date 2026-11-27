@@ -255,8 +255,10 @@ skills to use and a few lines of context, which open its first message. Made in 
 menu ⋮ of a work: *Save its access as a workspace*. Kept in `~/.whatnow/workspaces.json`.
 
 **Stay awake.** At the bottom of the bar: the computer does not go to sleep by itself for 1, 2, 3 or 8 hours, or until
-you turn it off; the bar shows the time left. It is what a video player does while it plays: the screen may still go
-dark, the sessions go on. A laptop with its lid closed still sleeps, so leave it open. The hold ends with the app; the
+you turn it off; the bar shows the time left. With *Keep the screen on too* (the default) the screen stays on as well,
+as while a video plays, so the computer does not look asleep. Closing the lid, the power button or Apple menu →
+Sleep still send it to sleep: with the hold on it keeps running in the background with the screen off until the time
+is over (a laptop on battery with its lid closed sleeps fully). The hold ends with the app; the
 time is kept in `~/.whatnow/awake.json`, so the app started again takes up what is left. On macOS it is the system's
 `caffeinate`, on Linux `systemd-inhibit`, on Windows `SetThreadExecutionState`.
 

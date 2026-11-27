@@ -9,4 +9,4 @@ import (
 
 func awakeCan() bool { return false }
 
-func holdAwake(time.Duration) (func(), error) { return nil, errors.New("not on this system") }
+func holdAwake(time.Duration, bool) (func(), error) { return nil, errors.New("not on this system") }
