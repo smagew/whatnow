@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -108,7 +109,7 @@ var startFresh = func(p map[string]any, slug string) (string, error) {
 		return "", errString("Claude Code did not start the session: " + msg)
 	}
 	short := string(m[1])
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 40; i++ {
 		for id, a := range readAgents() {
 			if str(a, "id") == short {
 				return id, nil
@@ -121,12 +122,27 @@ var startFresh = func(p map[string]any, slug string) (string, error) {
 
 // freshSession: the work goes on in a new session with the same access and an empty context; the old one, when it
 // runs in the background, is stopped.
+// One fresh session per work at a time: starting one takes up to half a minute, and a second press (or the
+// dialog opened again because nothing seemed to happen) started a second session on the same files.
+var freshMu sync.Mutex
+var freshAt = map[string]time.Time{}
+
 func freshSession(sid string) (int, any) {
 	s := findSession(sid)
 	if s == nil || s.feature() == "" {
 		return 400, map[string]any{"error": "this session has no work, so there is no page to start from"}
 	}
 	slug := s.feature()
+	freshMu.Lock()
+	if t, ok := freshAt[slug]; ok && time.Since(t) < 2*time.Minute {
+		freshMu.Unlock()
+		return 409, map[string]any{"error": "a fresh session for this work is being started already; it shows here in a moment"}
+	}
+	freshAt[slug] = time.Now()
+	freshMu.Unlock()
+	defer func() { // the guard stays a little after the start, until the new session is seen in the list
+		go func() { time.Sleep(20 * time.Second); freshMu.Lock(); delete(freshAt, slug); freshMu.Unlock() }()
+	}()
 	code, p := spawnPlan(slug)
 	if code != 200 {
 		return code, p
@@ -138,6 +154,9 @@ func freshSession(sid string) (int, any) {
 	if nsid != "" {
 		_ = bind(nsid, slug)
 	}
+	// the old session lets the work go: the window of the work shows the new one, and messages to the work no longer
+	// reach (and wake) the old one
+	_ = unbind(sid, slug)
 	stopped := false
 	if a, bg := ctxSession(sid); bg {
 		id := str(a, "id")

@@ -262,6 +262,16 @@ func bind(sid, slug string) error {
 	return atomicWriteJSON(filepath.Join(home(), "bindings.json"), b)
 }
 
+// unbind: the session no longer works on the feature (another one took it over).
+func unbind(sid, slug string) error {
+	b := bindings()
+	if b[sid] != slug {
+		return nil
+	}
+	delete(b, sid)
+	return atomicWriteJSON(filepath.Join(home(), "bindings.json"), b)
+}
+
 // featureVersion changes whenever the feature's files change; the open page compares it to know it must reload.
 func featureVersion(slug string) string {
 	base := filepath.Join(featuresDir(), slug)

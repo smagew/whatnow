@@ -240,11 +240,11 @@ function cxOpen(s,work){cxClose();var c=s.ctx,p=cxPct(c),w=document.createElemen
   if(v==='later'){try{localStorage.setItem('wn-cx-later-'+s.id,'85')}catch(x){}CX=null;w.remove();if(window.wnCtxChanged)window.wnCtxChanged();return}
   if(v==='rewind'){CX=null;w.remove();var b=document.createElement('button');b.dataset.term=s.id;b.hidden=true;document.body.appendChild(b);b.click();b.remove();return}
   var body=v==='compact'?{action:'compact',session:s.id,text:w.querySelector('#cxf').value}:{action:v,session:s.id};
-  CX.busy=true;w.querySelector('[data-cx=go]').disabled=true;say('<p class="nfm">Sending…</p>');
+  CX.busy=true;w.querySelector('[data-cx=go]').disabled=true;w.querySelector('[data-cx=go]').textContent=v==='fresh'?'Starting…':'Sending…';say('<p class="nfm">'+(v==='fresh'?'Starting a fresh session: it takes up to half a minute. The window switches to it by itself.':'Sending…')+'</p>');
   cxPost(body).then(function(r){CX.busy=false;w.querySelector('[data-cx=go]').disabled=false;
    if(r.ok)done('<p class="nfok">'+(v==='compact'?'Sent: the session compacts its context now. It takes a minute; the meter goes down after its next reply.':v==='clear'?'Sent: the session clears its context and goes on from the page of the work.':'Started: the fresh session reads the page of the work and goes on.'+(r.j.stopped?' The old session is stopped.':''))+'</p>');
    else if(r.status===409&&r.j.own)say('<div class="cxpaste"><p>This session is open in your own terminal: paste this there.</p><code>'+esc(r.j.command)+'</code><button type="button" data-cx="copy" data-v="'+esc(r.j.command)+'">Copy</button></div>');
-   else say('<p class="nferr">'+esc(r.j.error||'could not do it')+'</p>')}).catch(function(){CX.busy=false;say('<p class="nferr">no connection to the server</p>')})});
+   else say('<p class="nferr">'+esc(r.j.error||'could not do it')+'</p>');if(r.ok&&v==='fresh'&&/^\/f\//.test(location.pathname))setTimeout(function(){location.reload()},1500)}).catch(function(){CX.busy=false;say('<p class="nferr">no connection to the server</p>')})});
  w.addEventListener('keydown',function(e){if(e.key==='Escape')cxClose()})}
 window.wnCtx={meter:cxMeter,pct:cxPct,lv:cxLv,open:cxOpen,snoozed:cxSnoozed};
 
