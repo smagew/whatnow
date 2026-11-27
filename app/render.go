@@ -235,9 +235,18 @@ func prepare(d map[string]any, overrides map[string]any) (err error) {
 		}
 		last = n
 		nums[n] = true
-		for _, k := range []string{"title", "verdict", "plan", "facts"} {
+		if _, ok := s["title"]; !ok {
+			fail(`stage %d: missing "title"`, n)
+		}
+		// A stage being written may not have all of it yet (a session wrote the plan and asks something before
+		// the rest): what is missing is empty, and the page is shown. Failing on it put an error over the whole
+		// window and a red line on every page until the session came back to the file.
+		if _, ok := s["verdict"]; !ok {
+			s["verdict"] = ""
+		}
+		for _, k := range []string{"plan", "facts"} {
 			if _, ok := s[k]; !ok {
-				fail(`stage %d: missing "%s"`, n, k)
+				s[k] = []any{}
 			}
 		}
 		facts := s["facts"].([]any)

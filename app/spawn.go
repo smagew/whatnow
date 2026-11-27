@@ -133,11 +133,21 @@ func spawnName(task string) string {
 
 func spawnPrompt(task, slug string) string {
 	file := filepath.Join(featuresDir(), slug, "feature.json")
+	// The first thing the session does is the page, from the task alone and in seconds: the shape of the file is
+	// given here, so it reads no instructions and no code for it. A short or unclear task ("Messaging
+	// improvement") is not a reason to explore a whole folder: the plan is one stage, agree on the task, and the
+	// session asks. A session told to plan first read the instructions, listed the folders and the other works,
+	// and took minutes before it asked what the task was.
 	return task + "\n\n---\nThis is a new piece of work, started from the whatnow dashboard, which has opened a page for it already: " + file +
-		" (slug \"" + slug + "\"). Before you start the work, read ~/.claude/skills/whatnow/SKILL.md and SCHEMA.md and rewrite that file with the " +
-		"Write tool: a title that says what this work is (from the task above) and the plan as stages. Keep the file where it is; you are " +
-		"allowed to edit it and to run " + cliPath + " without asking. Write the content in the language of the task. Then do the work and " +
-		"keep the page in step with it."
+		" (slug \"" + slug + "\"). First give it a title and a plan, from the task above alone: do not read code, other files or other works " +
+		"for this. Read that file, then rewrite it with the Write tool in this shape, in the language of the task, keeping its \"projects\":\n" +
+		`{"title": "what this work is", "projects": [...], "stages": [{"n": 1, "title": "...", "verdict": "Not started", "plan": ["..."], "facts": []}], ` +
+		`"decisions": [], "questions": [], "blockers": [], "nextSteps": []}` + "\n" +
+		"Then run " + cliPath + " render " + file + ". If the task is short or unclear (it does not say what to change, where, or what the " +
+		"result should be), make the plan a single stage \"Agree on the task\", ask the user what exactly to do, and wait for the answer; do " +
+		"not explore the code before that. When the task is clear, do the work and keep the page in step with it; read " +
+		"~/.claude/skills/whatnow/SKILL.md when you need more of the page (items for the user, problems, decisions). You may edit that file " +
+		"and run " + cliPath + " without asking."
 }
 
 // spawnAllow is what a session of a new piece of work may do without asking, besides its permission mode: edit
